@@ -1,6 +1,7 @@
 name: Decompile
 
-# Dev aid: prints the decompiled source of Valheim types named in TYPES to the job log,
+# Dev aid: prints the decompiled source of Valheim types named in TYPES to the job log (and
+# uploads it as the "decompiled" artifact),
 # so patches can be written against the current game code without a local install.
 
 on:
@@ -57,7 +58,9 @@ jobs:
           set -o pipefail
           dotnet tool install -g ilspycmd --version 8.2.0.7535
           MANAGED="$RUNNER_TEMP/valheim/valheim_server_Data/Managed"
+          mkdir -p decompiled
           for t in $TYPES; do
+            ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" > "decompiled/$t.cs" || true
             echo "=================== $t ==================="
             if [ -n "$GREP" ]; then
               ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" | grep -n -E "$GREP" || true
@@ -65,3 +68,9 @@ jobs:
               ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" | cat -n
             fi
           done
+
+      # Full sources too, for types too long to read back from the job log.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: decompiled
+          path: decompiled/
