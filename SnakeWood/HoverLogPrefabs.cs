@@ -52,6 +52,17 @@ public static class HoverLogPrefabs
 		RegisterWithZNetScene();
 	}
 
+	public static void RefreshDescriptions()
+	{
+		foreach (HoverLogVariant variant in HoverLogVariant.All)
+		{
+			if (s_prefabs.TryGetValue(variant.Key, out GameObject prefab))
+			{
+				prefab.GetComponent<Piece>().m_description = variant.Describe();
+			}
+		}
+	}
+
 	// ZNetScene can wake before or after ObjectDB; whichever runs second registers the prefabs.
 	public static void RegisterWithZNetScene()
 	{
@@ -79,12 +90,23 @@ public static class HoverLogPrefabs
 			return null;
 		}
 		GameObject? template = FindTemplate(variant, hammer);
-		if (template == null)
+		GameObject? rawWood = db.GetItemPrefab(variant.WoodItem);
+		ModelStyle style = SnakeWoodPlugin.Model.Value;
+		if (style != ModelStyle.BuildPiece && !HasMesh(rawWood))
 		{
-			SnakeWoodPlugin.Log.LogWarning($"{variant.Name}: couldn't find any wooden pole or beam to borrow a look from, so this log is skipped.");
+			style = ModelStyle.BuildPiece;
+		}
+		if (style != ModelStyle.RawWood && template == null)
+		{
+			style = HasMesh(rawWood) ? ModelStyle.RawWood : style;
+		}
+		if (style == ModelStyle.BuildPiece && template == null)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant.Name}: no model to borrow, so this log is skipped.");
 			return null;
 		}
-		SnakeWoodPlugin.Log.LogInfo($"{variant.Name}: using {template.name} for its look.");
+		SnakeWoodPlugin.Log.LogInfo($"{variant.Name}: {style} model from {(style == ModelStyle.BuildPiece ? template!.name : rawWood!.name)}" +
+			(style == ModelStyle.Mixed ? $" with a {template!.name} saddle." : "."));
 
 		if (s_holder == null)
 		{
@@ -99,13 +121,24 @@ public static class HoverLogPrefabs
 		int vehicleLayer = LayerMask.NameToLayer("vehicle");
 		prefab.layer = vehicleLayer;
 
-		GameObject visual = Object.Instantiate(template, prefab.transform, false);
-		visual.name = "visual";
-		StripToVisual(visual);
-		LayFlat(visual, prefab.transform, variant);
-		if (variant.Tint != Color.white)
+		GameObject body = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, prefab.transform, false);
+		body.name = "visual";
+		StripToVisual(body);
+		LayFlat(body, prefab.transform, variant);
+		if (variant.Tint != Color.white && style == ModelStyle.BuildPiece)
 		{
-			Tint(visual, variant.Tint);
+			Tint(body, variant.Tint);
+		}
+		if (style == ModelStyle.Mixed)
+		{
+			// The build piece shrunk into a little saddle on top of the raw log.
+			GameObject saddle = Object.Instantiate(template!, prefab.transform, false);
+			saddle.name = "saddle";
+			StripToVisual(saddle);
+			float radius = 0.225f * variant.Thickness;
+			FitToBox(saddle, prefab.transform,
+				new Vector3(2.4f * radius, 0.12f, 0.35f * variant.Length),
+				new Vector3(0f, radius + 0.04f, -0.12f * variant.Length));
 		}
 		foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
 		{
@@ -135,14 +168,17 @@ public static class HoverLogPrefabs
 		sync.m_syncRotation = true;
 		sync.m_syncBodyVelocity = true;
 
-		Piece templatePiece = template.GetComponent<Piece>();
+		Piece? templatePiece = template != null ? template.GetComponent<Piece>() : null;
 		Piece piece = prefab.AddComponent<Piece>();
 		piece.m_name = variant.Name;
-		piece.m_description = variant.Description;
-		piece.m_icon = Icon(variant) ?? templatePiece.m_icon;
+		piece.m_description = variant.Describe();
+		piece.m_icon = Icon(variant) ?? templatePiece?.m_icon;
 		piece.m_category = Piece.PieceCategory.Misc;
 		piece.m_craftingStation = workbench;
-		piece.m_placeEffect = templatePiece.m_placeEffect;
+		if (templatePiece != null)
+		{
+			piece.m_placeEffect = templatePiece.m_placeEffect;
+		}
 		piece.m_resources = Requirements(variant, db);
 
 		GameObject seat = new("attach");
@@ -260,6 +296,30 @@ public static class HoverLogPrefabs
 		visual.transform.localPosition -= bounds.center;
 	}
 
+	// Squashes and stretches a model to fill a box: longest side along the log, flattest side up.
+	private static void FitToBox(GameObject visual, Transform root, Vector3 size, Vector3 center)
+	{
+		Bounds bounds = Bounds(visual.transform, root);
+		Vector3 s = bounds.size;
+		Quaternion alongZ = s.y >= s.x && s.y >= s.z ? Quaternion.Euler(90f, 0f, 0f)
+			: s.x >= s.z ? Quaternion.Euler(0f, 90f, 0f)
+			: Quaternion.identity;
+		visual.transform.localRotation = alongZ;
+		bounds = Bounds(visual.transform, root);
+		if (bounds.size.x < bounds.size.y)
+		{
+			visual.transform.localRotation = Quaternion.Euler(0f, 0f, 90f) * alongZ;
+			bounds = Bounds(visual.transform, root);
+		}
+		Vector3 factor = new(size.x / Mathf.Max(0.01f, bounds.size.x), size.y / Mathf.Max(0.01f, bounds.size.y), size.z / Mathf.Max(0.01f, bounds.size.z));
+		Vector3 local = Quaternion.Inverse(visual.transform.localRotation) * factor;
+		visual.transform.localScale = Vector3.Scale(visual.transform.localScale, new Vector3(Mathf.Abs(local.x), Mathf.Abs(local.y), Mathf.Abs(local.z)));
+		bounds = Bounds(visual.transform, root);
+		visual.transform.localPosition += center - bounds.center;
+	}
+
+	private static bool HasMesh(GameObject? go) => go != null && go.GetComponentsInChildren<MeshFilter>(true).Any(f => f.sharedMesh != null);
+
 	private static Bounds Bounds(Transform t) => Bounds(t, t);
 
 	// Mesh bounds in `space`'s local coordinates. Works on inactive objects, where Renderer.bounds doesn't.
@@ -375,17 +435,105 @@ internal static class ZNetSceneAwakePatch
 	private static void Postfix() => HoverLogPrefabs.RegisterWithZNetScene();
 }
 
-// While riding, Jump hops instead of getting off (vanilla treats Jump as "dismount" for every
-// mount). Use (E) still gets you off.
+// Controls while on a log. Vanilla's Player.SetControls drops you off any mount on Jump or attack.
+// Here Jump hops instead, Crouch is held to brake (so it mustn't toggle crouching), and with Mounted
+// Combat on, attacks are kept away from that check and restored afterwards so they still happen.
 [HarmonyPatch(typeof(Player), nameof(Player.SetControls))]
-internal static class JumpHopsPatch
+internal static class RidingControlsPatch
 {
-	private static void Prefix(Player __instance, ref bool jump)
+	internal struct HeldAttacks
 	{
-		if (jump && __instance.GetDoodadController() is HoverLog log)
+		public bool Active, Attack, AttackHold, Secondary, SecondaryHold;
+	}
+
+	private static void Prefix(Player __instance, ref bool jump, ref bool crouch, ref bool attack, ref bool attackHold,
+		ref bool secondaryAttack, ref bool secondaryAttackHold, out HeldAttacks __state)
+	{
+		__state = default;
+		if (__instance.GetDoodadController() is not HoverLog log)
+		{
+			return;
+		}
+		if (jump)
 		{
 			log.QueueHop();
 			jump = false;
+		}
+		crouch = false;
+		if (SnakeWoodPlugin.MountedCombat.Value)
+		{
+			__state = new HeldAttacks
+			{
+				Active = true, Attack = attack, AttackHold = attackHold, Secondary = secondaryAttack, SecondaryHold = secondaryAttackHold,
+			};
+			attack = attackHold = secondaryAttack = secondaryAttackHold = false;
+		}
+	}
+
+	private static void Postfix(Player __instance, HeldAttacks __state)
+	{
+		if (!__state.Active)
+		{
+			return;
+		}
+		__instance.m_attack = __state.Attack;
+		__instance.m_attackHold = __state.AttackHold;
+		__instance.m_secondaryAttack = __state.Secondary;
+		__instance.m_secondaryAttackHold = __state.SecondaryHold;
+	}
+}
+
+// Player.UpdateAttackBowDraw cancels any bow draw while the player IsAttached(). For a rider on a
+// log with Mounted Combat, that one check is told "not attached" so bows can be drawn.
+[HarmonyPatch(typeof(Player), nameof(Player.UpdateAttackBowDraw))]
+internal static class BowDrawWhileRidingPatch
+{
+	internal static bool InBowDraw;
+
+	private static void Prefix(Player __instance) =>
+		InBowDraw = SnakeWoodPlugin.MountedCombat.Value && __instance.GetDoodadController() is HoverLog;
+
+	private static void Finalizer() => InBowDraw = false;
+}
+
+[HarmonyPatch(typeof(Player), nameof(Player.IsAttached))]
+internal static class IsAttachedDuringBowDrawPatch
+{
+	private static bool Prefix(ref bool __result)
+	{
+		if (!BowDrawWhileRidingPatch.InBowDraw)
+		{
+			return true;
+		}
+		__result = false;
+		return false;
+	}
+}
+
+// Projectiles fired from a log spread more: each log's flat Aim Penalty, plus more with speed.
+// Attack.FireProjectileBurst reads m_projectileAccuracy(Min) as its spread in degrees.
+[HarmonyPatch(typeof(Attack), nameof(Attack.FireProjectileBurst))]
+internal static class AimWhileRidingPatch
+{
+	private static void Prefix(Attack __instance, out (bool applied, float accuracy, float accuracyMin) __state)
+	{
+		__state = default;
+		if (__instance.m_character is not Player player || player.GetDoodadController() is not HoverLog log)
+		{
+			return;
+		}
+		float penalty = log.Variant.AimPenaltyCfg.Value + log.Speed * SnakeWoodPlugin.AimPenaltyPerSpeed.Value;
+		__state = (true, __instance.m_projectileAccuracy, __instance.m_projectileAccuracyMin);
+		__instance.m_projectileAccuracy += penalty;
+		__instance.m_projectileAccuracyMin += penalty;
+	}
+
+	private static void Finalizer(Attack __instance, (bool applied, float accuracy, float accuracyMin) __state)
+	{
+		if (__state.applied)
+		{
+			__instance.m_projectileAccuracy = __state.accuracy;
+			__instance.m_projectileAccuracyMin = __state.accuracyMin;
 		}
 	}
 }

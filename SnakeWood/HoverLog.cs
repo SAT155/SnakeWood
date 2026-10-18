@@ -28,10 +28,17 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private Vector3 m_lookDir;
 	private bool m_boost;
 	private bool m_brake;
+	private bool m_crouchBrake;
 	private bool m_hopQueued;
 
 	private float m_yaw;
 	private float m_roll;
+	private bool m_airborne;
+	private int m_airHopsUsed;
+	private readonly List<(Vector3 pos, float time)> m_cloud = new();
+	private readonly Dictionary<int, float> m_lastCloudHit = new();
+	private float m_cloudTimer;
+	private static readonly List<Character> s_inCloud = new();
 	private float m_validUserTimer;
 	private bool m_haveValidUser;
 	private readonly Dictionary<int, float> m_lastRamTime = new();
@@ -57,12 +64,16 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			s_groundMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
 		}
 
+		HoverLogFx.Attach(this, m_v);
+
 		m_nview.Register<long>("SnakeWood_RequestControl", RPC_RequestControl);
 		m_nview.Register<long>("SnakeWood_ReleaseControl", RPC_ReleaseControl);
 		m_nview.Register<bool>("SnakeWood_RequestResponse", RPC_RequestResponse);
 	}
 
 	public HoverLogVariant Variant => m_v;
+
+	public float Speed => m_body.linearVelocity.magnitude;
 
 	// ---- Hover text and mounting -------------------------------------------------------------
 
@@ -165,7 +176,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_moveInput = moveDir;
 		m_lookDir = lookDir;
 		m_boost = run;
-		m_brake = block;
+		// With Mounted Combat, block raises your shield and Crouch brakes instead (see Update).
+		m_brake = block && !SnakeWoodPlugin.MountedCombat.Value;
+	}
+
+	private void Update()
+	{
+		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 	}
 
 	public void OnUseStop(Player player)
@@ -194,6 +211,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_lookDir = transform.forward;
 		m_boost = false;
 		m_brake = false;
+		m_crouchBrake = false;
 		m_hopQueued = false;
 	}
 
@@ -263,28 +281,41 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 		Vector3 pos = m_body.position;
 		Vector3 vel = m_body.linearVelocity;
-		GetSurface(pos, out float surfaceY, out Vector3 surfaceNormal);
+		GetSurface(pos, out float surfaceY, out Vector3 surfaceNormal, out bool overWater, out float waterDepth);
+		bool deepWater = overWater && waterDepth > SnakeWoodPlugin.DeepWaterDepth.Value;
 
-		// Vertical: a damped spring toward hover height, or a (scaled) free fall when well above it.
-		float hoverHeight = m_v.HoverHeightCfg.Value;
+		if (driving && !UpdateRiderStamina(dt))
+		{
+			driving = false;
+		}
+
+		// Going under the water's surface knocks you off; the log bobs back up on its own.
+		if (driving && overWater && m_attachPoint.position.y < surfaceY - 0.3f)
+		{
+			ThrowRider("You went under and lost your grip");
+			driving = false;
+		}
+
+		// Vertical. An empty log rests on water like a real one; over deep water a ridden log sinks
+		// to skim the surface. Otherwise a damped spring holds the hover height. Well above that
+		// (after a hop or off a cliff) it's in the air and falls under its own gravity instead.
+		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : m_v.HoverHeightCfg.Value;
 		float error = surfaceY + hoverHeight - pos.y;
-		float verticalAccel;
-		if (error < -FreeFallMargin)
+		float airGravity = Physics.gravity.y * m_v.FallGravityCfg.Value;
+		if (m_airborne && (vel.y <= 0f && error > -0.2f))
 		{
-			verticalAccel = Physics.gravity.y * m_v.FallGravityCfg.Value;
+			m_airborne = false;
 		}
-		else
+		bool inAir = m_airborne || error < -FreeFallMargin;
+		if (!inAir)
 		{
-			verticalAccel = Mathf.Clamp(error * 14f - vel.y * 6f, -40f, 40f);
+			m_airHopsUsed = 0;
 		}
-		vel.y += verticalAccel * dt;
+		vel.y += (inAir ? airGravity : Mathf.Clamp(error * 14f - vel.y * 6f, -40f, 40f)) * dt;
 		if (m_hopQueued)
 		{
 			m_hopQueued = false;
-			if (error > -FreeFallMargin && m_v.HopSpeedCfg.Value > 0f)
-			{
-				vel.y = Mathf.Max(vel.y, m_v.HopSpeedCfg.Value);
-			}
+			TryHop(ref vel, inAir, airGravity);
 		}
 
 		// Steering.
@@ -313,16 +344,19 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Quaternion yawRot = Quaternion.Euler(0f, m_yaw, 0f);
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
-		float topSpeed = m_v.MaxSpeedCfg.Value * (m_boost && throttle > 0f ? m_v.BoostCfg.Value : 1f);
-		float targetForward = throttle >= 0f ? throttle * topSpeed : throttle * m_v.MaxSpeedCfg.Value * 0.4f;
-		float targetSide = strafe * m_v.MaxSpeedCfg.Value * 0.5f;
-		if (m_brake)
+		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f);
+		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
+		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
+		float targetForward = throttle >= 0f ? throttle * topSpeed : throttle * baseSpeed * 0.4f;
+		float targetSide = strafe * baseSpeed * 0.5f;
+		bool braking = m_brake || m_crouchBrake;
+		if (braking)
 		{
 			targetForward = 0f;
 			targetSide = 0f;
 		}
 		float accel = m_v.AccelerationCfg.Value;
-		float brake = accel * (m_brake ? 3f : 1.5f);
+		float brake = accel * (braking ? 3f : 1.5f) * (deepWater ? 2f : 1f);
 		float forwardSpeed = Vector3.Dot(vel, forward);
 		float sideSpeed = Vector3.Dot(vel, right);
 		forwardSpeed = Mathf.MoveTowards(forwardSpeed, targetForward,
@@ -334,14 +368,97 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Rotation: heading, a lean into turns, and a partial tilt to match the ground.
 		float targetRoll = -turnInput * Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value)) * 18f;
 		m_roll = Mathf.Lerp(m_roll, targetRoll, 4f * dt);
-		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, error > -FreeFallMargin ? 0.6f : 0f);
+		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, inAir ? 0f : 0.6f);
 		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(0f, 0f, m_roll);
 		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
+
+		if (driving)
+		{
+			UpdatePoisonCloud(dt);
+		}
 	}
 
-	// Height and normal of whatever's under the log: ground, build pieces, or the sea surface.
-	private void GetSurface(Vector3 pos, out float height, out Vector3 normal)
+	// A hop launches the log to Hop Height above where it is, under the same gravity it falls with,
+	// so the hover spring can't drag it straight back down. Air hops work the same way in mid-air.
+	private void TryHop(ref Vector3 vel, bool inAir, float airGravity)
+	{
+		float height = m_v.HopHeightCfg.Value;
+		if (height <= 0f || (inAir && m_airHopsUsed >= m_v.AirHopsCfg.Value))
+		{
+			return;
+		}
+		Player player = Player.m_localPlayer;
+		float cost = SnakeWoodPlugin.HopStamina.Value;
+		if (player != null && cost > 0f)
+		{
+			if (!player.HaveStamina(cost))
+			{
+				Hud.instance?.StaminaBarEmptyFlash();
+				return;
+			}
+			player.UseStamina(cost);
+		}
+		if (inAir)
+		{
+			m_airHopsUsed++;
+		}
+		vel.y = Mathf.Max(vel.y, Mathf.Sqrt(2f * -airGravity * height));
+		m_airborne = true;
+	}
+
+	// Riding takes a steady trickle of stamina to keep your balance; run dry and you fall off.
+	private bool UpdateRiderStamina(float dt)
+	{
+		Player player = Player.m_localPlayer;
+		float drain = m_v.RideStaminaCfg.Value;
+		if (player == null || drain <= 0f)
+		{
+			return true;
+		}
+		if (player.GetStamina() <= 0f)
+		{
+			ThrowRider("You're too tired to hold on");
+			return false;
+		}
+		player.UseStamina(drain * dt);
+		return true;
+	}
+
+	private bool UseBoostStamina(float dt)
+	{
+		Player player = Player.m_localPlayer;
+		float drain = SnakeWoodPlugin.BoostStamina.Value;
+		if (player == null || drain <= 0f)
+		{
+			return true;
+		}
+		if (player.GetStamina() <= drain * dt)
+		{
+			return false;
+		}
+		player.UseStamina(drain * dt);
+		return true;
+	}
+
+	// Knocks the local rider off, keeping some of the log's momentum and a little bounce.
+	private void ThrowRider(string message)
+	{
+		Player player = Player.m_localPlayer;
+		if (player == null || !ReferenceEquals(player.GetDoodadController(), this))
+		{
+			return;
+		}
+		Vector3 velocity = m_body.linearVelocity;
+		player.StopDoodadControl();
+		player.AttachStop();
+		player.m_body.linearVelocity = velocity * 0.7f + Vector3.up * 3f;
+		player.Message(MessageHud.MessageType.Center, message);
+	}
+
+	// Height and normal of whatever's under the log (ground, build pieces or the water surface),
+	// whether that's water, and how deep the water is down to the sea bed.
+	private void GetSurface(Vector3 pos, out float height, out Vector3 normal, out bool overWater, out float waterDepth)
 	{
 		height = float.NegativeInfinity;
 		normal = Vector3.up;
@@ -358,16 +475,76 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			height = hit.point.y;
 			normal = hit.normal;
 		}
-		if (float.IsNegativeInfinity(height) && ZoneSystem.instance != null)
+		overWater = false;
+		waterDepth = 0f;
+		ZoneSystem zones = ZoneSystem.instance;
+		if (zones == null)
 		{
-			height = ZoneSystem.instance.GetGroundHeight(pos);
+			return;
 		}
-		if (ZoneSystem.instance != null && ZoneSystem.instance.m_waterLevel > height)
+		float seabed = zones.GetGroundHeight(pos);
+		if (float.IsNegativeInfinity(height))
 		{
-			height = ZoneSystem.instance.m_waterLevel;
+			height = seabed;
+		}
+		if (zones.m_waterLevel > height)
+		{
+			overWater = true;
+			waterDepth = zones.m_waterLevel - Mathf.Min(seabed, height);
+			height = zones.m_waterLevel;
 			normal = Vector3.up;
 		}
 	}
+
+	// ---- Ancient Bark's poison cloud --------------------------------------------------------------
+
+	private void UpdatePoisonCloud(float dt)
+	{
+		if (m_v.Fx != TrailFx.Poison || m_v.PoisonCloudCfg == null || m_v.PoisonCloudCfg.Value <= 0f)
+		{
+			return;
+		}
+		Vector3 pos = transform.position;
+		if (m_cloud.Count == 0 || Vector3.Distance(m_cloud[m_cloud.Count - 1].pos, pos) > 1.5f)
+		{
+			m_cloud.Add((pos, Time.time));
+		}
+		m_cloud.RemoveAll(p => Time.time - p.time > PoisonCloud.Lifetime);
+		m_cloudTimer -= dt;
+		if (m_cloudTimer > 0f)
+		{
+			return;
+		}
+		m_cloudTimer = 0.5f;
+		Player rider = Player.m_localPlayer;
+		foreach ((Vector3 point, float _) in m_cloud)
+		{
+			s_inCloud.Clear();
+			Character.GetCharactersInRange(point, PoisonCloud.Radius, s_inCloud);
+			foreach (Character character in s_inCloud)
+			{
+				if (character == rider || character.IsDead() || !CanHarm(character))
+				{
+					continue;
+				}
+				int id = character.GetInstanceID();
+				if (m_lastCloudHit.TryGetValue(id, out float last) && Time.time - last < 1f)
+				{
+					continue;
+				}
+				m_lastCloudHit[id] = Time.time;
+				HitData hit = new();
+				hit.m_damage.m_poison = m_v.PoisonCloudCfg.Value;
+				hit.m_point = character.GetCenterPoint();
+				hit.m_dir = Vector3.up;
+				hit.SetAttacker(rider);
+				character.Damage(hit);
+			}
+		}
+	}
+
+	private static bool CanHarm(Character character) =>
+		SnakeWoodPlugin.RamFriendlies.Value || !(character.IsPlayer() || character.IsTamed());
 
 	// ---- Ramming --------------------------------------------------------------------------------
 
@@ -377,6 +554,29 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return;
 		}
+		Ram(collision);
+		CheckCrash(collision);
+	}
+
+	// Slamming into something solid (not a creature) hard enough throws the rider off. Only the
+	// sideways part of the impact counts, so landings don't.
+	private void CheckCrash(Collision collision)
+	{
+		float crashSpeed = m_v.CrashSpeedCfg.Value;
+		if (crashSpeed <= 0f || collision.collider.GetComponentInParent<Character>() != null)
+		{
+			return;
+		}
+		Vector3 impulse = collision.impulse;
+		impulse.y = 0f;
+		if (impulse.magnitude / m_body.mass >= crashSpeed)
+		{
+			ThrowRider("You crashed!");
+		}
+	}
+
+	private void Ram(Collision collision)
+	{
 		float damage = m_v.RamDamageCfg.Value;
 		float speed = collision.relativeVelocity.magnitude;
 		float minSpeed = Mathf.Max(3f, m_v.MaxSpeedCfg.Value * 0.35f);
@@ -394,7 +594,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return;
 		}
-		if (target is Character character && (character.IsPlayer() || character.IsTamed()) && !SnakeWoodPlugin.RamFriendlies.Value)
+		if (target is Character character && !CanHarm(character))
 		{
 			return;
 		}
