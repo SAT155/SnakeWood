@@ -95,6 +95,7 @@ fast you were going. By default Core Wood, Ancient Bark and Ashwood ram.
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.
 - **Hover Glow**: the coloured light under each log.
+- **Trails** and **Trail Opacity**: turn the particle trails off, or make them fainter.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity** and **Fuel Per Minute** (0 turns fuel off).

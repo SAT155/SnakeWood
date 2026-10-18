@@ -26,7 +26,7 @@ public static class HoverLogFx
 			light.shadows = LightShadows.None;
 		}
 
-		Material? material = ParticleMaterial();
+		Material? material = SnakeWoodPlugin.Trails.Value ? ParticleMaterial() : null;
 		if (material == null)
 		{
 			return;
@@ -55,14 +55,13 @@ public static class HoverLogFx
 		{
 			case TrailFx.Poison:
 				// A thick, slow-drifting green cloud that lingers where the log has been.
-				color = new Color(0.35f, 0.75f, 0.2f, 0.45f);
-				lifetime = PoisonCloud.Lifetime; sizeMin = 1.6f; sizeMax = 2.8f; perMetre = 1.4f; gravity = -0.01f;
+				color = new Color(0.35f, 0.75f, 0.2f, 0.2f);
+				lifetime = PoisonCloud.Lifetime; sizeMin = 0.8f; sizeMax = 1.5f; perMetre = 0.9f; gravity = -0.01f;
 				shape.radius = 0.8f;
 				break;
 			case TrailFx.Sparkles:
 				// Small bright motes that drift upward, alternating sky blue and gold.
 				lifetime = 2.5f; sizeMin = 0.08f; sizeMax = 0.22f; perMetre = 6f; gravity = -0.15f;
-				main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.55f, 0.85f, 1f, 1f), new Color(1f, 0.85f, 0.4f, 1f));
 				shape.radius = 0.5f;
 				break;
 			case TrailFx.Embers:
@@ -70,18 +69,25 @@ public static class HoverLogFx
 				lifetime = 1.2f; sizeMin = 0.06f; sizeMax = 0.16f; perMetre = 5f; gravity = -0.3f;
 				break;
 			case TrailFx.Dust:
-				color = new Color(0.55f, 0.45f, 0.35f, 0.35f);
-				lifetime = 1.5f; sizeMin = 0.6f; sizeMax = 1.2f; perMetre = 1.2f; gravity = 0.02f;
-				shape.radius = 0.6f;
+				// A light haze of kicked-up dust, not a smoke screen.
+				color = new Color(0.6f, 0.52f, 0.42f, 0.12f);
+				lifetime = 1.2f; sizeMin = 0.2f; sizeMax = 0.45f; perMetre = 0.6f; gravity = 0.02f;
+				shape.radius = 0.5f;
 				break;
 			default:
 				color.a = 0.8f;
 				lifetime = 1f; sizeMin = 0.05f; sizeMax = 0.12f; perMetre = 2.5f; gravity = -0.05f;
 				break;
 		}
+		float opacity = SnakeWoodPlugin.TrailOpacity.Value;
 		if (variant.Fx != TrailFx.Sparkles)
 		{
+			color.a *= opacity;
 			main.startColor = color;
+		}
+		else
+		{
+			main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.55f, 0.85f, 1f, opacity), new Color(1f, 0.85f, 0.4f, opacity));
 		}
 		main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime * 0.7f, lifetime);
 		main.startSize = new ParticleSystem.MinMaxCurve(sizeMin, sizeMax);
