@@ -209,7 +209,7 @@ public static class HoverLogPrefabs
 			.Any(r => r.m_resItem != null && r.m_resItem.gameObject.name == item);
 
 		GameObject? byWood = pieces
-			.Where(p => LooksLikeLog(p) && MadeOf(p, variant.WoodItem) && p.GetComponentInChildren<MeshFilter>(true) != null)
+			.Where(p => LooksLikeLog(p) && MadeOf(p, variant.WoodItem) && HasMesh(p))
 			.OrderByDescending(p => LongestAxis(Bounds(p.transform)))
 			.FirstOrDefault();
 		if (byWood != null)
@@ -323,7 +323,9 @@ public static class HoverLogPrefabs
 		visual.transform.localPosition += center - bounds.center;
 	}
 
-	private static bool HasMesh(GameObject? go) => go != null && go.GetComponentsInChildren<MeshFilter>(true).Any(f => f.sharedMesh != null);
+	private static bool HasMesh(GameObject? go) => go != null &&
+		(go.GetComponentsInChildren<MeshFilter>(true).Any(f => f.sharedMesh != null)
+		 || go.GetComponentsInChildren<SkinnedMeshRenderer>(true).Any(r => r.sharedMesh != null));
 
 	private static Bounds Bounds(Transform t) => Bounds(t, t);
 
@@ -332,14 +334,15 @@ public static class HoverLogPrefabs
 	{
 		bool any = false;
 		Bounds result = default;
-		foreach (MeshFilter filter in t.GetComponentsInChildren<MeshFilter>(true))
+		List<(Mesh mesh, Transform transform)> meshes = t.GetComponentsInChildren<MeshFilter>(true)
+			.Where(f => f.sharedMesh != null).Select(f => (f.sharedMesh, f.transform))
+			.Concat(t.GetComponentsInChildren<SkinnedMeshRenderer>(true)
+				.Where(r => r.sharedMesh != null).Select(r => (r.sharedMesh, r.transform)))
+			.ToList();
+		foreach ((Mesh sharedMesh, Transform meshTransform) in meshes)
 		{
-			if (filter.sharedMesh == null)
-			{
-				continue;
-			}
-			Matrix4x4 toSpace = space.worldToLocalMatrix * filter.transform.localToWorldMatrix;
-			Bounds mesh = filter.sharedMesh.bounds;
+			Matrix4x4 toSpace = space.worldToLocalMatrix * meshTransform.localToWorldMatrix;
+			Bounds mesh = sharedMesh.bounds;
 			for (int i = 0; i < 8; i++)
 			{
 				Vector3 corner = mesh.center + Vector3.Scale(mesh.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));

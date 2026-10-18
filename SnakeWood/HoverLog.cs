@@ -34,6 +34,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private float m_yaw;
 	private float m_roll;
 	private bool m_airborne;
+	// The velocity the log was driven at this physics step, before any collision changed it.
+	private Vector3 m_driveVelocity;
 	private int m_airHopsUsed;
 	private readonly List<(Vector3 pos, float time)> m_cloud = new();
 	private readonly Dictionary<int, float> m_lastCloudHit = new();
@@ -452,6 +454,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		sideSpeed = Mathf.MoveTowards(sideSpeed, targetSide, (targetSide != 0f ? accel : m_v.Grip) * dt);
 		Vector3 horizontal = forward * forwardSpeed + right * sideSpeed;
 		m_body.linearVelocity = new Vector3(horizontal.x, vel.y, horizontal.z);
+		m_driveVelocity = m_body.linearVelocity;
 
 		// Rotation: heading, a lean into turns, and a partial tilt to match the ground.
 		float targetRoll = -turnInput * Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value)) * 18f;
@@ -673,7 +676,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private void Ram(Collision collision)
 	{
 		float damage = m_v.RamDamageCfg.Value;
-		float speed = collision.relativeVelocity.magnitude;
+		// Only the log's own speed into the target counts, so things running into a parked or
+		// stopped log don't get hurt by it.
+		Vector3 contact = collision.contactCount > 0 ? collision.GetContact(0).point : collision.collider.bounds.center;
+		Vector3 toTarget = contact - m_body.position;
+		toTarget.y = 0f;
+		float speed = toTarget.sqrMagnitude > 0.0001f ? Vector3.Dot(m_driveVelocity, toTarget.normalized) : 0f;
 		float minSpeed = Mathf.Max(3f, m_v.MaxSpeedCfg.Value * 0.35f);
 		if (damage <= 0f || speed < minSpeed)
 		{

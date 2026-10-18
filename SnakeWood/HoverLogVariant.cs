@@ -79,6 +79,15 @@ public class HoverLogVariant
 			Fx = TrailFx.Embers, Glow = new Color(1f, 0.45f, 0.15f),
 			RamDamage = 15f, RamFire = 25f, RamPush = 30f,
 		},
+		new HoverLogVariant("Fish2", "Hover Pike", "A giant enchanted pike, made for the open sea: faster than a longship over deep water, but a floundering mess on land. Long crossings are a test of stamina.")
+		{
+			WoodItem = "Fish2", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.6f, Thickness = 1f, Mass = 60f,
+			AimPenalty = 5f, RideStamina = 0.7f, MaxSpeed = 6f, Boost = 1.3f, Acceleration = 8f, TurnSpeed = 110f, Grip = 6f,
+			HoverHeight = 0.6f, HopHeight = 2.5f, FallGravity = 1f, CrashSpeed = 6f, DeepWaterSpeed = 2f,
+			Fx = TrailFx.Motes, Glow = new Color(0.35f, 0.8f, 1f),
+		},
 	};
 
 	public static HoverLogVariant? Get(string key)
@@ -204,7 +213,7 @@ public class HoverLogVariant
 		CrashSpeedCfg = config.Bind(section, "Crash Speed", CrashSpeed,
 			new ConfigDescription("Hitting a tree, rock or wall this hard (speed lost in the impact, metres per second) throws you off. 0 means it never throws you.", new AcceptableValueRange<float>(0f, 50f)));
 		DeepWaterSpeedCfg = config.Bind(section, "Deep Water Speed", DeepWaterSpeed,
-			new ConfigDescription("Over deep water the log sinks to skim the surface and its top speed is multiplied by this. 1 makes deep water no different from land.", new AcceptableValueRange<float>(0.05f, 1f)));
+			new ConfigDescription("Over deep water the log sinks to skim the surface and its top speed is multiplied by this. 1 makes deep water no different from land; above 1 it is faster at sea (the Hover Pike).", new AcceptableValueRange<float>(0.05f, 3f)));
 		RamDamageCfg = config.Bind(section, "Ram Damage", RamDamage,
 			new ConfigDescription("Damage dealt at full speed to what the log runs into. Scales down at lower speeds. 0 turns ramming off.", new AcceptableValueRange<float>(0f, 500f)));
 		if (Fx == TrailFx.Poison)

@@ -22,6 +22,7 @@ server admin can change them.
 | Core Wood Battering Log | 20 Core Wood, 10 Resin, 3 Ancient Seeds | Heavy and slow, but **nothing knocks you off it**. Rams creatures and fells trees in its way. |
 | Ancient Bark Hover Log | 20 Ancient Bark, 10 Resin, 3 Withered Bones | Floats high over swamp roots, handles water best, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
 | Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | Floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. |
+| Hover Pike | 1 Pike, 10 Resin, 5 Serpent Scales | A giant enchanted pike for the open sea: faster than a longship over deep water (twice its land speed), but slow and floppy on land. Gentle stamina drain, but long crossings still wear you down. |
 | Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest. Trails embers, and its ram sets things on fire. |
 
 ## Fuel
@@ -71,13 +72,13 @@ crash limit, aim, deep-water speed and any ram or cloud.
 
 Over shallow water (rivers, lakes, the shore) logs ride as they do on land. Over **deep water**
 the log sinks to skim the surface and slows right down (about a third of its land speed; the
-Ancient Bark log keeps more). Crossing the ocean on a log is possible, but slow and tiring;
+Ancient Bark log keeps more). The **Hover Pike** is the exception: it's twice as fast at sea. Crossing the ocean on a log is possible, but slow and tiring;
 boats are still the way to sail. An empty log rests on the water like a real one.
 
 ## Ramming
 
 Logs with **Ram Damage** above 0 hit whatever they run into at speed. Damage scales with how
-fast you were going. By default Core Wood, Ancient Bark and Ashwood ram.
+fast the log was moving into it; a parked or stopped log doesn't hurt anything that walks into it. By default Core Wood, Ancient Bark and Ashwood ram.
 
 - Creatures take the hit and get knocked back.
 - Core Wood also chops trees, logs and stumps, and chips rock.
