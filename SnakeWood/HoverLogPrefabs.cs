@@ -1,0 +1,391 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using HarmonyLib;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
+namespace SnakeWood;
+
+// Builds one networked prefab per wood type at startup and adds it to the hammer. The look is
+// borrowed from a vanilla pole or beam built from the same wood, laid flat and resized; the
+// physics, sync and riding parts are added fresh. No asset bundle needed.
+public static class HoverLogPrefabs
+{
+	private static GameObject? s_holder;
+	private static readonly Dictionary<string, GameObject> s_prefabs = new();
+	private static Texture2D? s_iconTexture;
+
+	public static IEnumerable<GameObject> Prefabs => s_prefabs.Values;
+
+	// Called from ObjectDB.Awake: the hammer's piece table and the item prefabs both live there.
+	public static void Build(ObjectDB db)
+	{
+		PieceTable? hammer = db.GetItemPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
+		if (hammer == null)
+		{
+			return;
+		}
+		CraftingStation? workbench = hammer.m_pieces
+			.Select(p => p ? p.GetComponent<CraftingStation>() : null)
+			.FirstOrDefault(s => s != null && s.gameObject.name == "piece_workbench");
+
+		foreach (HoverLogVariant variant in HoverLogVariant.All)
+		{
+			if (!s_prefabs.TryGetValue(variant.Key, out GameObject prefab))
+			{
+				GameObject? created = Create(variant, db, hammer, workbench);
+				if (created == null)
+				{
+					continue;
+				}
+				s_prefabs[variant.Key] = prefab = created;
+			}
+			// Requirements point at this ObjectDB's items, which are recreated with each scene.
+			prefab.GetComponent<Piece>().m_resources = Requirements(variant, db);
+			if (variant.Enabled.Value && !hammer.m_pieces.Contains(prefab))
+			{
+				hammer.m_pieces.Add(prefab);
+			}
+		}
+		RegisterWithZNetScene();
+	}
+
+	// ZNetScene can wake before or after ObjectDB; whichever runs second registers the prefabs.
+	public static void RegisterWithZNetScene()
+	{
+		ZNetScene scene = ZNetScene.instance;
+		if (scene == null)
+		{
+			return;
+		}
+		foreach (GameObject prefab in s_prefabs.Values)
+		{
+			int hash = prefab.name.GetStableHashCode();
+			if (!scene.m_prefabs.Contains(prefab))
+			{
+				scene.m_prefabs.Add(prefab);
+			}
+			scene.m_namedPrefabs[hash] = prefab;
+		}
+	}
+
+	private static GameObject? Create(HoverLogVariant variant, ObjectDB db, PieceTable hammer, CraftingStation? workbench)
+	{
+		if (db.GetItemPrefab(variant.WoodItem) == null)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant.Name}: item {variant.WoodItem} isn't in this game version, so this log is skipped.");
+			return null;
+		}
+		GameObject? template = FindTemplate(variant, hammer);
+		if (template == null)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant.Name}: couldn't find any wooden pole or beam to borrow a look from, so this log is skipped.");
+			return null;
+		}
+		SnakeWoodPlugin.Log.LogInfo($"{variant.Name}: using {template.name} for its look.");
+
+		if (s_holder == null)
+		{
+			// Inactive, so nothing parented under it runs Awake: these are templates, not live objects.
+			s_holder = new GameObject("SnakeWood_Prefabs");
+			s_holder.SetActive(false);
+			Object.DontDestroyOnLoad(s_holder);
+		}
+
+		GameObject prefab = new(variant.PrefabName);
+		prefab.transform.SetParent(s_holder.transform, false);
+		int vehicleLayer = LayerMask.NameToLayer("vehicle");
+		prefab.layer = vehicleLayer;
+
+		GameObject visual = Object.Instantiate(template, prefab.transform, false);
+		visual.name = "visual";
+		StripToVisual(visual);
+		LayFlat(visual, prefab.transform, variant);
+		if (variant.Tint != Color.white)
+		{
+			Tint(visual, variant.Tint);
+		}
+		foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
+		{
+			t.gameObject.layer = vehicleLayer;
+		}
+
+		// One smooth capsule instead of the template's colliders: mesh colliders can't go on a
+		// moving rigidbody, and a capsule glides over bumps instead of catching on them.
+		CapsuleCollider capsule = prefab.AddComponent<CapsuleCollider>();
+		capsule.direction = 2;
+		capsule.radius = 0.225f * variant.Thickness;
+		capsule.height = variant.Length;
+
+		ZNetView nview = prefab.AddComponent<ZNetView>();
+		nview.m_persistent = true;
+
+		Rigidbody body = prefab.AddComponent<Rigidbody>();
+		body.mass = variant.Mass;
+		body.useGravity = false;
+		body.freezeRotation = true;
+		body.interpolation = RigidbodyInterpolation.Interpolate;
+		body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+		body.maxDepenetrationVelocity = 2f;
+
+		ZSyncTransform sync = prefab.AddComponent<ZSyncTransform>();
+		sync.m_syncPosition = true;
+		sync.m_syncRotation = true;
+		sync.m_syncBodyVelocity = true;
+
+		Piece templatePiece = template.GetComponent<Piece>();
+		Piece piece = prefab.AddComponent<Piece>();
+		piece.m_name = variant.Name;
+		piece.m_description = variant.Description;
+		piece.m_icon = Icon(variant) ?? templatePiece.m_icon;
+		piece.m_category = Piece.PieceCategory.Misc;
+		piece.m_craftingStation = workbench;
+		piece.m_placeEffect = templatePiece.m_placeEffect;
+		piece.m_resources = Requirements(variant, db);
+
+		GameObject seat = new("attach");
+		seat.transform.SetParent(prefab.transform, false);
+		HoverLog log = prefab.AddComponent<HoverLog>();
+		log.m_variant = variant.Key;
+		log.m_attachPoint = seat.transform;
+
+		return prefab;
+	}
+
+	// The vanilla pole/beam built from the same wood (the longest one), so each log looks like its
+	// wood. Falls back to the variant's named hints, then to any plain wooden pole.
+	private static GameObject? FindTemplate(HoverLogVariant variant, PieceTable hammer)
+	{
+		List<GameObject> pieces = hammer.m_pieces.Where(p => p != null && p.GetComponent<Piece>() != null).ToList();
+		bool LooksLikeLog(GameObject p)
+		{
+			string n = p.name.ToLowerInvariant();
+			return n.Contains("pole") || n.Contains("beam") || n.Contains("log");
+		}
+		bool MadeOf(GameObject p, string item) => p.GetComponent<Piece>().m_resources
+			.Any(r => r.m_resItem != null && r.m_resItem.gameObject.name == item);
+
+		GameObject? byWood = pieces
+			.Where(p => LooksLikeLog(p) && MadeOf(p, variant.WoodItem) && p.GetComponentInChildren<MeshFilter>(true) != null)
+			.OrderByDescending(p => LongestAxis(Bounds(p.transform)))
+			.FirstOrDefault();
+		if (byWood != null)
+		{
+			return byWood;
+		}
+		foreach (string hint in variant.TemplateHints)
+		{
+			GameObject? named = pieces.FirstOrDefault(p => p.name == hint);
+			if (named != null)
+			{
+				return named;
+			}
+		}
+		return pieces.FirstOrDefault(p => p.name == "wood_pole2") ?? pieces.FirstOrDefault(p => LooksLikeLog(p) && MadeOf(p, "Wood"));
+	}
+
+	// Keeps just the meshes; drops the piece's game logic and its worn/broken alternates.
+	private static void StripToVisual(GameObject visual)
+	{
+		WearNTear? wear = visual.GetComponent<WearNTear>();
+		if (wear != null)
+		{
+			foreach (GameObject? alternate in new[] { wear.m_worn, wear.m_broken, wear.m_wet })
+			{
+				if (alternate != null && alternate != wear.m_new && alternate != visual)
+				{
+					Object.DestroyImmediate(alternate);
+				}
+			}
+		}
+		foreach (Transform t in visual.GetComponentsInChildren<Transform>(true).ToArray())
+		{
+			if (t != null && t != visual.transform && t.CompareTag("snappoint"))
+			{
+				Object.DestroyImmediate(t.gameObject);
+			}
+		}
+		// Unity won't remove a component another one [RequireComponent]s, so go newest-first (the
+		// dependent ones are usually added later) and repeat; ZNetView goes last.
+		for (int pass = 0; pass < 4; pass++)
+		{
+			MonoBehaviour[] behaviours = visual.GetComponentsInChildren<MonoBehaviour>(true);
+			if (behaviours.Length == 0)
+			{
+				break;
+			}
+			foreach (MonoBehaviour behaviour in behaviours.Reverse())
+			{
+				if (behaviour is not ZNetView || behaviours.All(b => b is ZNetView))
+				{
+					Object.DestroyImmediate(behaviour);
+				}
+			}
+		}
+		foreach (Rigidbody rb in visual.GetComponentsInChildren<Rigidbody>(true))
+		{
+			Object.DestroyImmediate(rb);
+		}
+		foreach (Collider collider in visual.GetComponentsInChildren<Collider>(true))
+		{
+			Object.DestroyImmediate(collider);
+		}
+	}
+
+	// Turns the template so its longest side runs along the log's forward axis, then scales it to
+	// the variant's length and thickness and centres it on the log's origin.
+	private static void LayFlat(GameObject visual, Transform root, HoverLogVariant variant)
+	{
+		Bounds bounds = Bounds(visual.transform, root);
+		Vector3 size = bounds.size;
+		if (size.y >= size.x && size.y >= size.z)
+		{
+			visual.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+		}
+		else if (size.x >= size.z)
+		{
+			visual.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+		}
+		bounds = Bounds(visual.transform, root);
+		float length = Mathf.Max(0.01f, bounds.size.z);
+		float girth = Mathf.Max(0.01f, Mathf.Max(bounds.size.x, bounds.size.y));
+		// A log reads as a log at about 0.45 m across; Thickness scales from there.
+		float lengthScale = variant.Length / length;
+		float girthScale = 0.45f * variant.Thickness / girth;
+		Vector3 local = Quaternion.Inverse(visual.transform.localRotation) * new Vector3(girthScale, girthScale, lengthScale);
+		visual.transform.localScale = Vector3.Scale(visual.transform.localScale, new Vector3(Mathf.Abs(local.x), Mathf.Abs(local.y), Mathf.Abs(local.z)));
+		bounds = Bounds(visual.transform, root);
+		visual.transform.localPosition -= bounds.center;
+	}
+
+	private static Bounds Bounds(Transform t) => Bounds(t, t);
+
+	// Mesh bounds in `space`'s local coordinates. Works on inactive objects, where Renderer.bounds doesn't.
+	private static Bounds Bounds(Transform t, Transform space)
+	{
+		bool any = false;
+		Bounds result = default;
+		foreach (MeshFilter filter in t.GetComponentsInChildren<MeshFilter>(true))
+		{
+			if (filter.sharedMesh == null)
+			{
+				continue;
+			}
+			Matrix4x4 toSpace = space.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+			Bounds mesh = filter.sharedMesh.bounds;
+			for (int i = 0; i < 8; i++)
+			{
+				Vector3 corner = mesh.center + Vector3.Scale(mesh.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+				Vector3 p = toSpace.MultiplyPoint3x4(corner);
+				if (!any)
+				{
+					result = new Bounds(p, Vector3.zero);
+					any = true;
+				}
+				else
+				{
+					result.Encapsulate(p);
+				}
+			}
+		}
+		return result;
+	}
+
+	private static float LongestAxis(Bounds b) => Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+
+	private static void Tint(GameObject visual, Color tint)
+	{
+		foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
+		{
+			Material[] materials = renderer.sharedMaterials;
+			for (int i = 0; i < materials.Length; i++)
+			{
+				if (materials[i] != null && materials[i].HasProperty("_Color"))
+				{
+					materials[i] = new Material(materials[i]) { color = materials[i].color * tint };
+				}
+			}
+			renderer.sharedMaterials = materials;
+		}
+	}
+
+	private static Piece.Requirement[] Requirements(HoverLogVariant variant, ObjectDB db)
+	{
+		List<Piece.Requirement> requirements = new();
+		void Add(string item, int amount)
+		{
+			ItemDrop? drop = db.GetItemPrefab(item)?.GetComponent<ItemDrop>();
+			if (drop != null && amount > 0)
+			{
+				requirements.Add(new Piece.Requirement { m_resItem = drop, m_amount = amount, m_recover = true });
+			}
+		}
+		Add(variant.WoodItem, variant.WoodAmount);
+		Add(variant.ExtraItem, variant.ExtraAmount);
+		return requirements.ToArray();
+	}
+
+	// The embedded icon, with the bark recoloured to roughly match each wood.
+	private static Sprite? Icon(HoverLogVariant variant)
+	{
+		if (s_iconTexture == null)
+		{
+			using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SnakeWood.icon.png");
+			if (stream == null)
+			{
+				return null;
+			}
+			byte[] bytes = new byte[stream.Length];
+			stream.Read(bytes, 0, bytes.Length);
+			s_iconTexture = new Texture2D(2, 2);
+			s_iconTexture.LoadImage(bytes);
+		}
+		Texture2D texture = s_iconTexture;
+		if (variant.Tint != Color.white)
+		{
+			texture = new Texture2D(s_iconTexture.width, s_iconTexture.height, TextureFormat.RGBA32, false);
+			Color[] pixels = s_iconTexture.GetPixels();
+			for (int i = 0; i < pixels.Length; i++)
+			{
+				Color c = pixels[i];
+				// Leave the blue hover glow alone.
+				if (!(c.b > c.r + 0.15f))
+				{
+					pixels[i] = new Color(c.r * variant.Tint.r, c.g * variant.Tint.g, c.b * variant.Tint.b, c.a);
+				}
+			}
+			texture.SetPixels(pixels);
+			texture.Apply();
+		}
+		return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+	}
+}
+
+[HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
+internal static class ObjectDBAwakePatch
+{
+	private static void Postfix(ObjectDB __instance) => HoverLogPrefabs.Build(__instance);
+}
+
+[HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
+internal static class ZNetSceneAwakePatch
+{
+	private static void Postfix() => HoverLogPrefabs.RegisterWithZNetScene();
+}
+
+// While riding, Jump hops instead of getting off (vanilla treats Jump as "dismount" for every
+// mount). Use (E) still gets you off.
+[HarmonyPatch(typeof(Player), nameof(Player.SetControls))]
+internal static class JumpHopsPatch
+{
+	private static void Prefix(Player __instance, ref bool jump)
+	{
+		if (jump && __instance.GetDoodadController() is HoverLog log)
+		{
+			log.QueueHop();
+			jump = false;
+		}
+	}
+}

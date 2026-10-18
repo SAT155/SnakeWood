@@ -42,6 +42,10 @@
         <BepInExDir Condition="'$(BepInExDir)' == ''">$(GamePath)/BepInEx</BepInExDir>
     </PropertyGroup>
     <ItemGroup>
+        <!-- Build-menu icon (tools/make_icon.py), under the name HoverLogPrefabs.Icon looks up. -->
+        <EmbeddedResource Include="icon.png" LogicalName="SnakeWood.icon.png"/>
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all"/>
     </ItemGroup>
     <ItemGroup>
