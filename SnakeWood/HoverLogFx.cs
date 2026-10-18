@@ -115,8 +115,8 @@ public static class HoverLogFx
 			sheet.numTilesX = tiles.x;
 			sheet.numTilesY = tiles.y;
 			sheet.animation = ParticleSystemAnimationType.WholeSheet;
-			sheet.frameOverTime = new ParticleSystem.MinMaxCurve(0f);
-			sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, tiles.x * tiles.y - 1);
+			// frameOverTime is normalised over the sheet; a random constant picks one frame for life.
+			sheet.frameOverTime = new ParticleSystem.MinMaxCurve(0f, 0.999f);
 			sheet.cycleCount = 1;
 		}
 
