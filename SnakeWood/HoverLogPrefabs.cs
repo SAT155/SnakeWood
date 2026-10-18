@@ -121,13 +121,13 @@ public static class HoverLogPrefabs
 		int vehicleLayer = LayerMask.NameToLayer("vehicle");
 		prefab.layer = vehicleLayer;
 
-		GameObject body = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, prefab.transform, false);
-		body.name = "visual";
-		StripToVisual(body);
-		LayFlat(body, prefab.transform, variant);
+		GameObject model = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, prefab.transform, false);
+		model.name = "visual";
+		StripToVisual(model);
+		LayFlat(model, prefab.transform, variant);
 		if (variant.Tint != Color.white && style == ModelStyle.BuildPiece)
 		{
-			Tint(body, variant.Tint);
+			Tint(model, variant.Tint);
 		}
 		if (style == ModelStyle.Mixed)
 		{
