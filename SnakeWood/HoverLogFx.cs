@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 namespace SnakeWood;
@@ -8,7 +9,10 @@ namespace SnakeWood;
 // a soft round texture drawn here, so no asset bundle is needed.
 public static class HoverLogFx
 {
-	private static Material? s_material;
+	private static Material? s_cloudMaterial;
+	private static Material? s_sparkMaterial;
+	// Frame grids for borrowed textures that are sprite sheets (columns, rows; 0 when not a sheet).
+	private static readonly System.Collections.Generic.Dictionary<Material, Vector2Int> s_sheets = new();
 	private static bool s_searched;
 
 	public static void Attach(HoverLog log, HoverLogVariant variant)
@@ -26,7 +30,8 @@ public static class HoverLogFx
 			light.shadows = LightShadows.None;
 		}
 
-		Material? material = SnakeWoodPlugin.Trails.Value ? ParticleMaterial() : null;
+		bool cloud = variant.Fx is TrailFx.Poison or TrailFx.Dust;
+		Material? material = SnakeWoodPlugin.Trails.Value ? ParticleMaterial(cloud) : null;
 		if (material == null)
 		{
 			return;
@@ -102,24 +107,54 @@ public static class HoverLogFx
 			new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) });
 		fade.color = new ParticleSystem.MinMaxGradient(gradient);
 
+		if (s_sheets.TryGetValue(material, out Vector2Int tiles) && tiles.x * tiles.y > 1)
+		{
+			// One random frame of the borrowed sprite sheet per particle.
+			ParticleSystem.TextureSheetAnimationModule sheet = particles.textureSheetAnimation;
+			sheet.enabled = true;
+			sheet.numTilesX = tiles.x;
+			sheet.numTilesY = tiles.y;
+			sheet.animation = ParticleSystemAnimationType.WholeSheet;
+			sheet.frameOverTime = new ParticleSystem.MinMaxCurve(0f);
+			sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, tiles.x * tiles.y - 1);
+			sheet.cycleCount = 1;
+		}
+
 		ParticleSystemRenderer renderer = trail.GetComponent<ParticleSystemRenderer>();
 		renderer.sharedMaterial = material;
 		renderer.renderMode = ParticleSystemRenderMode.Billboard;
 		particles.Play();
 	}
 
-	// Borrows the first particle material in the game that has a texture, and swaps in a soft dot.
-	private static Material? ParticleMaterial()
+	// Particle materials borrowed from the game's own effects. Clouds (dust, poison) use a smoke
+	// material with its own soft texture, since that's built to blend as see-through puffs;
+	// sparks and embers use a spark or fire one. Either falls back to any particle material,
+	// given a soft round texture drawn here.
+	private static Material? ParticleMaterial(bool cloud)
 	{
-		if (s_searched)
+		if (!s_searched)
 		{
-			return s_material;
+			if (ZNetScene.instance == null)
+			{
+				return null;
+			}
+			s_searched = true;
+			s_cloudMaterial = Find(new[] { "smoke" }, keepTexture: true) ?? Find(new string[0], keepTexture: false);
+			s_sparkMaterial = Find(new[] { "spark", "ember", "fire", "flare" }, keepTexture: true) ?? Find(new string[0], keepTexture: false);
+			if (s_cloudMaterial == null && s_sparkMaterial == null)
+			{
+				SnakeWoodPlugin.Log.LogWarning("No particle material found in the game; logs won't leave trails.");
+			}
 		}
-		if (ZNetScene.instance == null)
-		{
-			return null;
-		}
-		s_searched = true;
+		return cloud ? s_cloudMaterial : s_sparkMaterial;
+	}
+
+	// The first particle material whose material or prefab name contains one of the keywords (any
+	// particle material when there are none).
+	private static Material? Find(string[] keywords, bool keepTexture)
+	{
+		bool Matches(string name) => keywords.Length == 0 ||
+			keywords.Any(k => name.IndexOf(k, System.StringComparison.OrdinalIgnoreCase) >= 0);
 		foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
 		{
 			if (prefab == null)
@@ -129,25 +164,30 @@ public static class HoverLogFx
 			foreach (ParticleSystemRenderer candidate in prefab.GetComponentsInChildren<ParticleSystemRenderer>(true))
 			{
 				Material shared = candidate.sharedMaterial;
-				if (shared == null || shared.shader == null || !shared.HasProperty("_MainTex")
-					|| shared.shader.name.IndexOf("particle", System.StringComparison.OrdinalIgnoreCase) < 0)
+				if (shared == null || shared.shader == null || !shared.HasProperty("_MainTex") || shared.mainTexture == null
+					|| shared.shader.name.IndexOf("particle", System.StringComparison.OrdinalIgnoreCase) < 0
+					|| !(Matches(shared.name) || Matches(prefab.name)))
 				{
 					continue;
 				}
-				s_material = new Material(shared) { name = "snakewood_particle", mainTexture = SoftDot() };
-				if (s_material.HasProperty("_Color"))
+				Material material = new(shared) { name = "snakewood_" + shared.name };
+				if (!keepTexture)
 				{
-					s_material.SetColor("_Color", Color.white);
+					material.mainTexture = SoftDot();
 				}
-				if (s_material.HasProperty("_TintColor"))
+				else if (candidate.GetComponent<ParticleSystem>() is ParticleSystem source && source.textureSheetAnimation.enabled)
 				{
-					s_material.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.5f, 0.5f));
+					ParticleSystem.TextureSheetAnimationModule sheet = source.textureSheetAnimation;
+					s_sheets[material] = new Vector2Int(sheet.numTilesX, sheet.numTilesY);
 				}
-				SnakeWoodPlugin.Log.LogInfo($"Trail particles use the {shared.shader.name} shader from {prefab.name}.");
-				return s_material;
+				if (material.HasProperty("_Color"))
+				{
+					material.SetColor("_Color", Color.white);
+				}
+				SnakeWoodPlugin.Log.LogInfo($"Trail particles: using material {shared.name} ({shared.shader.name}) from {prefab.name}.");
+				return material;
 			}
 		}
-		SnakeWoodPlugin.Log.LogWarning("No particle material found in the game; logs won't leave trails.");
 		return null;
 	}
 
