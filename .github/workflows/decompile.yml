@@ -13,10 +13,14 @@ on:
       grep:
         description: Optional regex; print only matching lines (with line numbers)
         default: ""
+      after:
+        description: With grep, also print this many lines after each match
+        default: "0"
 
 env:
   TYPES: ${{ inputs.types }}
   GREP: ${{ inputs.grep }}
+  AFTER: ${{ inputs.after }}
   # ilspycmd targets .NET 6, which the runner image no longer ships.
   DOTNET_ROLL_FORWARD: Major
 
@@ -63,7 +67,7 @@ jobs:
             ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" > "decompiled/$t.cs" || true
             echo "=================== $t ==================="
             if [ -n "$GREP" ]; then
-              ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" | grep -n -E "$GREP" || true
+              ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" | cat -n | grep -E -A "${AFTER:-0}" "$GREP" || true
             else
               ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" | cat -n
             fi
