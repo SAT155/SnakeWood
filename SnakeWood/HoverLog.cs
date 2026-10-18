@@ -69,9 +69,74 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_nview.Register<long>("SnakeWood_RequestControl", RPC_RequestControl);
 		m_nview.Register<long>("SnakeWood_ReleaseControl", RPC_ReleaseControl);
 		m_nview.Register<bool>("SnakeWood_RequestResponse", RPC_RequestResponse);
+		m_nview.Register<int>("SnakeWood_AddFuel", RPC_AddFuel);
 	}
 
 	public HoverLogVariant Variant => m_v;
+
+	// ---- Fuel (resin by default) ----------------------------------------------------------------
+
+	private static readonly int s_fuelKey = "SnakeWood_fuel".GetStableHashCode();
+
+	private static bool FuelEnabled => SnakeWoodPlugin.FuelPerMinute.Value > 0f;
+
+	private float GetFuel() => m_nview.IsValid() ? m_nview.GetZDO().GetFloat(s_fuelKey, 0f) : 0f;
+
+	private static ItemDrop.ItemData? FuelItemData() =>
+		ObjectDB.instance?.GetItemPrefab(SnakeWoodPlugin.FuelItem.Value)?.GetComponent<ItemDrop>()?.m_itemData;
+
+	private static string FuelName() => FuelItemData()?.m_shared.m_name ?? SnakeWoodPlugin.FuelItem.Value;
+
+	// Moves as much fuel as fits from the player's inventory into the log.
+	private bool AddFuelFrom(Player player, int max)
+	{
+		string fuelName = FuelName();
+		int room = SnakeWoodPlugin.FuelCapacity.Value - Mathf.CeilToInt(GetFuel());
+		int amount = Mathf.Min(max, room, player.GetInventory().CountItems(fuelName));
+		if (room <= 0)
+		{
+			player.Message(MessageHud.MessageType.Center, "It's full");
+			return false;
+		}
+		if (amount <= 0)
+		{
+			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize("You have no " + fuelName));
+			return false;
+		}
+		player.GetInventory().RemoveItem(fuelName, amount);
+		m_nview.InvokeRPC("SnakeWood_AddFuel", amount);
+		player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"Added {amount} {fuelName}"));
+		return true;
+	}
+
+	private void RPC_AddFuel(long sender, int amount)
+	{
+		if (m_nview.IsOwner())
+		{
+			m_nview.GetZDO().Set(s_fuelKey, Mathf.Min(SnakeWoodPlugin.FuelCapacity.Value, GetFuel() + amount));
+		}
+	}
+
+	// Burns fuel while ridden; false once the tank is dry.
+	private bool BurnFuel(float dt)
+	{
+		if (!FuelEnabled)
+		{
+			return true;
+		}
+		float fuel = GetFuel();
+		if (fuel <= 0f)
+		{
+			return false;
+		}
+		fuel = Mathf.Max(0f, fuel - SnakeWoodPlugin.FuelPerMinute.Value / 60f * dt);
+		m_nview.GetZDO().Set(s_fuelKey, fuel);
+		if (fuel <= 0f)
+		{
+			Player.m_localPlayer?.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"Out of {FuelName()}! The log sputters"));
+		}
+		return fuel > 0f;
+	}
 
 	public float Speed => m_body.linearVelocity.magnitude;
 
@@ -85,21 +150,30 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return "";
 		}
+		string fuel = FuelEnabled
+			? $"\n{FuelName()}: {Mathf.CeilToInt(GetFuel())}/{SnakeWoodPlugin.FuelCapacity.Value}" +
+			  $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Add {FuelName()}"
+			: "";
 		if (IsLocalUser())
 		{
-			return Localization.instance.Localize(m_v.Name + "\n[<color=yellow><b>$KEY_Use</b></color>] Get off");
+			return Localization.instance.Localize(m_v.Name + fuel + "\n[<color=yellow><b>$KEY_Use</b></color>] Get off");
 		}
 		if (!InUseDistance(Player.m_localPlayer))
 		{
 			return Localization.instance.Localize("<color=#888888>$piece_toofar</color>");
 		}
-		return Localization.instance.Localize(m_v.Name + "\n[<color=yellow><b>$KEY_Use</b></color>] Ride");
+		return Localization.instance.Localize(m_v.Name + fuel + "\n[<color=yellow><b>$KEY_Use</b></color>] Ride");
 	}
 
 	public bool Interact(Humanoid character, bool hold, bool alt)
 	{
 		if (hold || !m_nview.IsValid() || character is not Player player)
 		{
+			return false;
+		}
+		if (alt && FuelEnabled)
+		{
+			AddFuelFrom(player, int.MaxValue);
 			return false;
 		}
 		// Looking at your own log while riding it and pressing Use gets you off, like looking away does.
@@ -112,11 +186,18 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return false;
 		}
+		if (FuelEnabled && GetFuel() <= 0f)
+		{
+			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It needs {FuelName()} to fly (Shift+E to add)"));
+			return false;
+		}
 		m_nview.InvokeRPC("SnakeWood_RequestControl", player.GetZDOID().UserID);
 		return false;
 	}
 
-	public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
+	// Using the fuel item on the log from the hotbar adds one.
+	public bool UseItem(Humanoid user, ItemDrop.ItemData item) =>
+		FuelEnabled && user is Player player && item.m_shared.m_name == FuelName() && AddFuelFrom(player, 1);
 
 	public float GetHoverOffset() => 0f;
 
@@ -288,6 +369,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			driving = false;
 		}
+		// Out of fuel the log still carries you, but only just: low, slow, no boost or hops.
+		bool sputtering = driving && !BurnFuel(dt);
+		if (sputtering)
+		{
+			m_boost = false;
+			m_hopQueued = false;
+		}
 
 		// Going under the water's surface knocks you off; the log bobs back up on its own.
 		if (driving && overWater && m_attachPoint.position.y < surfaceY - 0.3f)
@@ -299,7 +387,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Vertical. An empty log rests on water like a real one; over deep water a ridden log sinks
 		// to skim the surface. Otherwise a damped spring holds the hover height. Well above that
 		// (after a hop or off a cliff) it's in the air and falls under its own gravity instead.
-		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : m_v.HoverHeightCfg.Value;
+		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : sputtering ? 0.3f : m_v.HoverHeightCfg.Value;
 		float error = surfaceY + hoverHeight - pos.y;
 		float airGravity = Physics.gravity.y * m_v.FallGravityCfg.Value;
 		if (m_airborne && (vel.y <= 0f && error > -0.2f))
@@ -344,7 +432,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Quaternion yawRot = Quaternion.Euler(0f, m_yaw, 0f);
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
-		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f);
+		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f);
 		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
 		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
 		float targetForward = throttle >= 0f ? throttle * topSpeed : throttle * baseSpeed * 0.4f;
@@ -420,6 +508,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			ThrowRider("You're too tired to hold on");
 			return false;
+		}
+		// Eitr, if you have any, steadies the log: a slow trickle of it takes most of the strain.
+		float eitr = SnakeWoodPlugin.EitrPerSecond.Value * dt;
+		if (eitr > 0f && player.GetMaxEitr() > 0f && player.HaveEitr(eitr))
+		{
+			player.UseEitr(eitr);
+			drain *= SnakeWoodPlugin.EitrStaminaFactor.Value;
 		}
 		player.UseStamina(drain * dt);
 		return true;

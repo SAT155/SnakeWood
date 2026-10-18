@@ -11,14 +11,28 @@ anyone without the mod won't see them.
 All are under the hammer's **Misc** tab and need a workbench nearby. Each one is that wood's
 raw log, floating on a coloured glow, with a little saddle made from the wood's build piece.
 
+Each log is gated behind a boss: the magic that makes wood float comes from that boss's
+summoning item. Recipes are config entries (`Recipe = Wood:20,Resin:10,TrophyDeer:2`), so a
+server admin can change them.
+
 | Log | Cost | How it rides |
 | --- | --- | --- |
-| Hover Log | 20 Wood, 5 Resin | Balanced and forgiving. |
-| Fine Hover Log | 20 Fine Wood, 5 Feathers | Light, quick and twitchy. |
-| Core Wood Battering Log | 20 Core Wood, 10 Resin | Heavy and slow, but **nothing knocks you off it**. Rams creatures and fells trees in its way. |
-| Ancient Bark Hover Log | 20 Ancient Bark, 3 Guck | Floats high over swamp roots, handles water best, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
-| Yggdrasil Hover Log | 20 Yggdrasil Wood, 3 Sap | Floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. |
-| Ashwood Hover Log | 20 Ashwood, 2 Surtling Cores | The fastest. Trails embers, and its ram sets things on fire. |
+| Hover Log | 20 Wood, 10 Resin, 2 Deer Trophies | Balanced and forgiving. |
+| Fine Hover Log | 20 Fine Wood, 10 Resin, 3 Ancient Seeds | Light, quick and twitchy. |
+| Core Wood Battering Log | 20 Core Wood, 10 Resin, 3 Ancient Seeds | Heavy and slow, but **nothing knocks you off it**. Rams creatures and fells trees in its way. |
+| Ancient Bark Hover Log | 20 Ancient Bark, 10 Resin, 3 Withered Bones | Floats high over swamp roots, handles water best, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
+| Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | Floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. |
+| Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest. Trails embers, and its ram sets things on fire. |
+
+## Fuel
+
+Every log burns **resin**. A new log starts empty.
+
+- **Shift+E** on a log tops it up from your inventory (up to 20). Using resin on it from the
+  hotbar adds one at a time.
+- Riding burns about 1 resin a minute. A parked log burns nothing.
+- An empty log won't lift off. If one runs dry mid-ride it sputters along low and slow, with no
+  boost or hops, until you refuel.
 
 ## Controls
 
@@ -46,6 +60,8 @@ crash limit, aim, deep-water speed and any ram or cloud.
 - **Balance takes stamina.** Riding drains a little stamina the whole time, and stamina doesn't
   regenerate meanwhile. Fine Wood and Ashwood are hardest to hold on to and Core Wood easiest.
   Run out and you fall off.
+- **Eitr helps.** If you have eitr (Mistlands food), riding draws a slow trickle of it
+  (0.5/s) and your balance stamina drain drops to a quarter.
 - **Crashes throw you.** Slam into a tree, rock or wall hard enough and you're thrown off, carrying
   some of your speed. The Core Wood log never throws you.
 - **Going under water throws you.** If a dive takes you below the surface you lose your grip,
@@ -79,10 +95,11 @@ fast you were going. By default Core Wood, Ancient Bark and Ashwood ram.
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.
 - **Hover Glow**: the coloured light under each log.
-- **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth** and
-  **Aim Penalty Per Speed**.
+- **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
+  **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
+- **Fuel**: **Fuel Item** (Resin), **Fuel Capacity** and **Fuel Per Minute** (0 turns fuel off).
 - **Ram Damages Buildings / Players And Tames**: both off by default.
-- One section per log: **Buildable**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
+- One section per log: **Buildable**, **Recipe**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
   **Boost Multiplier**, **Acceleration**, **Turn Speed**, **Hover Height**, **Hop Height**,
   **Air Hops**, **Fall Gravity**, **Crash Speed**, **Deep Water Speed**, **Ram Damage**, and
   **Poison Cloud Damage** for Ancient Bark.

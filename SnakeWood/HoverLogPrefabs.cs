@@ -52,13 +52,18 @@ public static class HoverLogPrefabs
 		RegisterWithZNetScene();
 	}
 
-	public static void RefreshDescriptions()
+	public static void RefreshPieces()
 	{
 		foreach (HoverLogVariant variant in HoverLogVariant.All)
 		{
 			if (s_prefabs.TryGetValue(variant.Key, out GameObject prefab))
 			{
-				prefab.GetComponent<Piece>().m_description = variant.Describe();
+				Piece piece = prefab.GetComponent<Piece>();
+				piece.m_description = variant.Describe();
+				if (ObjectDB.instance != null)
+				{
+					piece.m_resources = Requirements(variant, ObjectDB.instance);
+				}
 			}
 		}
 	}
@@ -371,19 +376,35 @@ public static class HoverLogPrefabs
 		}
 	}
 
+	// Parses the variant's Recipe config ("Item:Amount,Item:Amount") into build requirements.
 	private static Piece.Requirement[] Requirements(HoverLogVariant variant, ObjectDB db)
 	{
 		List<Piece.Requirement> requirements = new();
-		void Add(string item, int amount)
+		foreach (string part in variant.RecipeCfg.Value.Split(','))
 		{
+			string[] pair = part.Split(':');
+			string item = pair[0].Trim();
+			if (item.Length == 0)
+			{
+				continue;
+			}
+			int amount = 1;
+			if (pair.Length > 1 && !int.TryParse(pair[1].Trim(), out amount))
+			{
+				SnakeWoodPlugin.Log.LogWarning($"{variant.Name} recipe: '{part.Trim()}' needs a whole number after the colon.");
+				continue;
+			}
 			ItemDrop? drop = db.GetItemPrefab(item)?.GetComponent<ItemDrop>();
-			if (drop != null && amount > 0)
+			if (drop == null)
+			{
+				SnakeWoodPlugin.Log.LogWarning($"{variant.Name} recipe: there's no item called '{item}', so it's left out.");
+				continue;
+			}
+			if (amount > 0)
 			{
 				requirements.Add(new Piece.Requirement { m_resItem = drop, m_amount = amount, m_recover = true });
 			}
 		}
-		Add(variant.WoodItem, variant.WoodAmount);
-		Add(variant.ExtraItem, variant.ExtraAmount);
 		return requirements.ToArray();
 	}
 

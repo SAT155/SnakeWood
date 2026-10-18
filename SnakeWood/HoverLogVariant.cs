@@ -21,7 +21,7 @@ public class HoverLogVariant
 	{
 		new HoverLogVariant("Wood", "Hover Log", "A plain log that floats a little above the ground. Steady and forgiving, but crash into a tree or rock and you're off.")
 		{
-			WoodItem = "Wood", WoodAmount = 20, ExtraItem = "Resin", ExtraAmount = 5,
+			WoodItem = "Wood", Recipe = "Wood:20,Resin:10,TrophyDeer:2",
 			TemplateHints = new[] { "wood_pole2", "wood_pole", "wood_beam" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
 			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 11f, Boost = 1.5f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
@@ -30,7 +30,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("FineWood", "Fine Hover Log", "Light, quick and twitchy. Turns on a coin, but a hard knock throws you off.")
 		{
-			WoodItem = "FineWood", WoodAmount = 20, ExtraItem = "Feathers", ExtraAmount = 5,
+			WoodItem = "FineWood", Recipe = "FineWood:20,Resin:10,AncientSeed:3",
 			TemplateHints = new[] { "darkwood_pole", "darkwood_pole4", "darkwood_beam" },
 			Length = 2.3f, Thickness = 0.8f, Mass = 35f,
 			AimPenalty = 6f, RideStamina = 2f, MaxSpeed = 15f, Boost = 1.6f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
@@ -39,7 +39,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("RoundLog", "Core Wood Battering Log", "Bulky and slow to get going, but nothing knocks you off it. Rams creatures and fells trees in its way.")
 		{
-			WoodItem = "RoundLog", WoodAmount = 20, ExtraItem = "Resin", ExtraAmount = 10,
+			WoodItem = "RoundLog", Recipe = "RoundLog:20,Resin:10,AncientSeed:3",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log", "wood_log_45", "wood_log_26" },
 			Length = 3.6f, Thickness = 1.5f, Mass = 250f,
 			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 8f, Boost = 1.35f, Acceleration = 4.5f, TurnSpeed = 65f, Grip = 5f,
@@ -49,7 +49,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("ElderBark", "Ancient Bark Hover Log", "Rides high enough to clear swamp roots and shallow water. It trails a poison cloud that sickens creatures caught in it, and its bark poisons whatever it rams.")
 		{
-			WoodItem = "ElderBark", WoodAmount = 20, ExtraItem = "Guck", ExtraAmount = 3,
+			WoodItem = "ElderBark", Recipe = "ElderBark:20,Resin:10,WitheredBone:3",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log" },
 			Tint = new Color(0.55f, 0.6f, 0.45f),
 			Length = 2.8f, Thickness = 1.15f, Mass = 90f,
@@ -60,7 +60,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("YggdrasilWood", "Yggdrasil Hover Log", "Floats and hops highest, can hop again in mid-air, and glides gently down from cliffs, trailing sparks of light.")
 		{
-			WoodItem = "YggdrasilWood", WoodAmount = 20, ExtraItem = "Sap", ExtraAmount = 3,
+			WoodItem = "YggdrasilWood", Recipe = "YggdrasilWood:20,Resin:10,DvergrKeyFragment:2",
 			TemplateHints = new[] { "yggdrasil_wood_beam", "Yggdrasil_wood_beam", "yggdrasil_wood_pole", "Yggdrasil_wood_pole" },
 			Tint = new Color(0.8f, 0.9f, 1.15f),
 			Length = 2.8f, Thickness = 1f, Mass = 50f,
@@ -70,7 +70,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Blackwood", "Ashwood Hover Log", "The fastest log there is, and it runs hot: it trails embers and anything it rams catches fire.")
 		{
-			WoodItem = "Blackwood", WoodAmount = 20, ExtraItem = "SurtlingCore", ExtraAmount = 2,
+			WoodItem = "Blackwood", Recipe = "Blackwood:20,Resin:10,BellFragment:1",
 			TemplateHints = new[] { "ashwood_pole", "ashwood_beam", "blackwood_pole", "blackwood_beam" },
 			Tint = new Color(0.55f, 0.45f, 0.42f),
 			Length = 2.7f, Thickness = 1f, Mass = 70f,
@@ -100,9 +100,7 @@ public class HoverLogVariant
 
 	// Recipe and look; fixed once the prefab is built.
 	public string WoodItem = "Wood";
-	public int WoodAmount = 20;
-	public string ExtraItem = "";
-	public int ExtraAmount;
+	public string Recipe = "";
 	public string[] TemplateHints = new string[0];
 	public Color Tint = Color.white;
 	public float Length = 2.6f;
@@ -119,6 +117,7 @@ public class HoverLogVariant
 	public int RamToolTier;
 
 	public ConfigEntry<bool> Enabled = null!;
+	public ConfigEntry<string> RecipeCfg = null!;
 	public ConfigEntry<float> AimPenaltyCfg = null!;
 	public ConfigEntry<float> RideStaminaCfg = null!;
 	public ConfigEntry<float> MaxSpeedCfg = null!;
@@ -180,6 +179,8 @@ public class HoverLogVariant
 		string section = "Log - " + Name;
 		Enabled = config.Bind(section, "Buildable", true,
 			"Shows this log in the hammer's build menu. Logs already built stay rideable either way. Takes effect after a restart.");
+		RecipeCfg = config.Bind(section, "Recipe", Recipe,
+			"What it costs to build, as Item:Amount pairs separated by commas, using the game's item names (for example Wood, Resin, TrophyDeer, AncientSeed, WitheredBone, DvergrKeyFragment, BellFragment). Unknown items are skipped with a warning in the log.");
 		AimPenaltyCfg = config.Bind(section, "Aim Penalty", AimPenalty,
 			new ConfigDescription("Extra spread, in degrees, on arrows and other projectiles fired from this log, even standing still. Speed adds more on top (see Aim Penalty Per Speed).", new AcceptableValueRange<float>(0f, 45f)));
 		RideStaminaCfg = config.Bind(section, "Riding Stamina Per Second", RideStamina,

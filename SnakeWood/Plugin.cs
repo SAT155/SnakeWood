@@ -26,7 +26,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.1.0";
+	internal const string PluginVersion = "1.2.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -41,6 +41,11 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> HopStamina = null!;
 	internal static ConfigEntry<float> DeepWaterDepth = null!;
 	internal static ConfigEntry<float> AimPenaltyPerSpeed = null!;
+	internal static ConfigEntry<string> FuelItem = null!;
+	internal static ConfigEntry<int> FuelCapacity = null!;
+	internal static ConfigEntry<float> FuelPerMinute = null!;
+	internal static ConfigEntry<float> EitrPerSecond = null!;
+	internal static ConfigEntry<float> EitrStaminaFactor = null!;
 	internal static ConfigEntry<bool> RamBuildings = null!;
 	internal static ConfigEntry<bool> RamFriendlies = null!;
 
@@ -70,6 +75,16 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Water deeper than this (metres from surface to sea bed) counts as deep: the log sinks to skim the surface and slows to its Deep Water Speed.", new AcceptableValueRange<float>(0.5f, 100f)));
 		AimPenaltyPerSpeed = Config.Bind("3 - Balance", "Aim Penalty Per Speed", 0.6f,
 			new ConfigDescription("Extra projectile spread, in degrees, for every metre per second the log is moving, on top of each log's own Aim Penalty.", new AcceptableValueRange<float>(0f, 5f)));
+		FuelItem = Config.Bind("4 - Fuel", "Fuel Item", "Resin",
+			"The item logs burn to stay up (the game's item name). Add it with Shift+E on a log, or use it on the log from your hotbar.");
+		FuelCapacity = Config.Bind("4 - Fuel", "Fuel Capacity", 20,
+			new ConfigDescription("How much fuel a log holds.", new AcceptableValueRange<int>(1, 200)));
+		FuelPerMinute = Config.Bind("4 - Fuel", "Fuel Per Minute", 1f,
+			new ConfigDescription("Fuel burned per minute of riding. A parked log burns nothing. Out of fuel, a log won't lift off, and one running dry mid-ride sputters along low and slow. 0 turns fuel off.", new AcceptableValueRange<float>(0f, 20f)));
+		EitrPerSecond = Config.Bind("3 - Balance", "Eitr Per Second", 0.5f,
+			new ConfigDescription("If you have eitr, riding draws this much per second to help hold the log steady, and your stamina drain drops (see Stamina Drain With Eitr). 0 turns this off.", new AcceptableValueRange<float>(0f, 10f)));
+		EitrStaminaFactor = Config.Bind("3 - Balance", "Stamina Drain With Eitr", 0.25f,
+			new ConfigDescription("While eitr is helping, riding stamina drain is multiplied by this.", new AcceptableValueRange<float>(0f, 1f)));
 		RamBuildings = Config.Bind("2 - Ramming", "Ram Damages Buildings", false,
 			"Ramming logs (Core Wood, Ashwood, Ancient Bark) also damage build pieces they hit. Off by default so a bad landing can't knock a hole in your base.");
 		RamFriendlies = Config.Bind("2 - Ramming", "Ram Damages Players And Tames", false,
@@ -84,7 +99,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Click to reload this plugin's settings from the .cfg file on disk immediately, without restarting Valheim - for after hand-editing the file.",
 				null, new ConfigurationManagerAttributes { CustomDrawer = DrawReloadConfigButton }));
 
-		Config.SettingChanged += (_, _) => HoverLogPrefabs.RefreshDescriptions();
+		Config.SettingChanged += (_, _) => HoverLogPrefabs.RefreshPieces();
 
 		new Harmony(PluginGUID).PatchAll(Assembly.GetExecutingAssembly());
 	}
