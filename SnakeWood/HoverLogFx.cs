@@ -97,7 +97,7 @@ public static class HoverLogFx
 		main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime * 0.7f, lifetime);
 		main.startSize = new ParticleSystem.MinMaxCurve(sizeMin, sizeMax);
 		main.gravityModifier = gravity;
-		emission.rateOverDistance = perMetre;
+		emission.rateOverDistance = perMetre * SnakeWoodPlugin.TrailDensity.Value;
 
 		ParticleSystem.ColorOverLifetimeModule fade = particles.colorOverLifetime;
 		fade.enabled = true;

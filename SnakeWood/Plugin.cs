@@ -49,6 +49,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<bool> Glow = null!;
 	internal static ConfigEntry<bool> Trails = null!;
 	internal static ConfigEntry<float> TrailOpacity = null!;
+	internal static ConfigEntry<float> TrailDensity = null!;
 	internal static ConfigEntry<float> BoostStamina = null!;
 	internal static ConfigEntry<float> HopStamina = null!;
 	internal static ConfigEntry<float> DeepWaterDepth = null!;
@@ -91,6 +92,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"The particle trail each log leaves (dust, sparks, embers, poison cloud). Off hides them; the Ancient Bark poison cloud still hurts. Takes effect for logs that load after you change it.");
 		TrailOpacity = Config.Bind("1 - Riding", "Trail Opacity", 1f,
 			new ConfigDescription("Multiplies how see-through trails are. Lower is fainter. Takes effect for logs that load after you change it.", new AcceptableValueRange<float>(0f, 2f)));
+		TrailDensity = Config.Bind("1 - Riding", "Trail Density", 1.4f,
+			new ConfigDescription("Multiplies how many particles trails leave per metre. Takes effect for logs that load after you change it.", new AcceptableValueRange<float>(0.1f, 5f)));
 		BoostStamina = Config.Bind("3 - Balance", "Boost Stamina Per Second", 6f,
 			new ConfigDescription("Stamina boosting (Run) drains per second. You can't boost with an empty stamina bar. 0 makes boosting free.", new AcceptableValueRange<float>(0f, 50f)));
 		HopStamina = Config.Bind("3 - Balance", "Hop Stamina", 8f,

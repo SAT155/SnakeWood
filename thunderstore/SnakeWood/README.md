@@ -109,7 +109,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.
 - **Hover Glow**: the coloured light under each log.
-- **Trails** and **Trail Opacity**: turn the particle trails off, or make them fainter.
+- **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity** and **Fuel Per Minute** (0 turns fuel off).
