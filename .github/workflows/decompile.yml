@@ -80,7 +80,7 @@ jobs:
       - name: Search asset names
         if: ${{ inputs.assets != '' }}
         run: |
-          pip install --quiet UnityPy==1.10.18
+          pip install --quiet "UnityPy>=1.10,<2"
           python3 - "$RUNNER_TEMP/valheim/valheim_server_Data" <<'PY'
           import os, re, sys, UnityPy
           pattern = re.compile(os.environ["ASSETS"])
