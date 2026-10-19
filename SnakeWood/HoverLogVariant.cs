@@ -87,7 +87,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish2", "Hover Pike", "A giant enchanted pike, made for the open sea: faster than a longship over deep water, but a floundering mess on land. Long crossings are a test of stamina.")
 		{
-			WoodItem = "Fish2", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
+			WoodItem = "Fish2", RepairItem = "FishRaw", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
 			AimPenalty = 5f, RideStamina = 0.7f, MaxSpeed = 5f, Boost = 1.3f, Acceleration = 8f, TurnSpeed = 110f, Grip = 6f,
@@ -116,6 +116,8 @@ public class HoverLogVariant
 
 	// Recipe and look; fixed once the prefab is built.
 	public string WoodItem = "Wood";
+	// Defaults to WoodItem.
+	public string? RepairItem;
 	public string Recipe = "";
 	public string[] TemplateHints = new string[0];
 	public Color Tint = Color.white;
@@ -150,6 +152,7 @@ public class HoverLogVariant
 	public ConfigEntry<float> MaxClimbCfg = null!;
 	public ConfigEntry<float> LoadCapacityCfg = null!;
 	public ConfigEntry<float> DurabilityCfg = null!;
+	public ConfigEntry<string> RepairItemCfg = null!;
 	public ConfigEntry<float> NoiseCfg = null!;
 	public ConfigEntry<float> RamDamageCfg = null!;
 	public ConfigEntry<float> PoisonCloudCfg = null!;
@@ -239,6 +242,8 @@ public class HoverLogVariant
 			new ConfigDescription("How much inventory weight (your carry weight, gear included) it can lift. The fuller it is, the lower its top speed, hover height and handling; over this it won't lift off (see the Load settings under 3 - Balance).", new AcceptableValueRange<float>(10f, 5000f)));
 		DurabilityCfg = config.Bind(section, "Durability", Durability,
 			new ConfigDescription("How much wear (crashes, rams, riding) it takes before it's too battered to fly. See 5 - Wear.", new AcceptableValueRange<float>(1f, 5000f)));
+		RepairItemCfg = config.Bind(section, "Repair Item", RepairItem ?? WoodItem,
+			"What repairs it (the game's item name): Shift+E on a worn log uses these before adding fuel. Each fixes Repair Per Item wear (see 5 - Wear).");
 		NoiseCfg = config.Bind(section, "Noise", Noise,
 			new ConfigDescription("Multiplies how far away creatures hear you riding it (see Noise settings under 3 - Balance).", new AcceptableValueRange<float>(0f, 5f)));
 		if (SnakeWoodPlugin.ResetSpeeds)

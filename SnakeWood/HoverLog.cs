@@ -230,10 +230,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private float Condition() => Mathf.Clamp01(1f - GetWear() / Mathf.Max(1f, m_v.DurabilityCfg.Value));
 
-	private static ItemDrop.ItemData? RepairItemData() =>
-		ObjectDB.instance?.GetItemPrefab(SnakeWoodPlugin.RepairItem.Value)?.GetComponent<ItemDrop>()?.m_itemData;
-
-	private static string RepairName() => RepairItemData()?.m_shared.m_name ?? SnakeWoodPlugin.RepairItem.Value;
+	// Each log is mended with the raw material it's made of (its Repair Item).
+	private string RepairName() =>
+		ObjectDB.instance?.GetItemPrefab(m_v.RepairItemCfg.Value)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name
+		?? m_v.RepairItemCfg.Value;
 
 	// Owner only (whoever is riding owns the log).
 	private void AddWear(float amount)
@@ -787,14 +787,6 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			driving = false;
 		}
 		float load = driving ? Mathf.Min(1f, m_load) : 0f;
-		if (driving)
-		{
-			AddWear(SnakeWoodPlugin.WearPerMinute.Value / 60f * dt);
-			if (!m_nview.IsValid())
-			{
-				return; // Broke apart.
-			}
-		}
 		// Out of fuel, worn out or overloaded, the log still carries you, but only just: low, slow,
 		// no boost or hops.
 		bool outOfFuel = driving && !BurnFuel(dt);

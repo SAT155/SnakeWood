@@ -68,10 +68,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> NoiseAtRest = null!;
 	internal static ConfigEntry<float> NoiseAtSpeed = null!;
 	internal static ConfigEntry<bool> WearEnabled = null!;
-	internal static ConfigEntry<float> WearPerMinute = null!;
 	internal static ConfigEntry<float> CrashWear = null!;
 	internal static ConfigEntry<float> RamWear = null!;
-	internal static ConfigEntry<string> RepairItem = null!;
 	internal static ConfigEntry<float> RepairPerItem = null!;
 	internal static ConfigEntry<bool> BreakWhenWornOut = null!;
 	internal static ConfigEntry<float> BrokenMaterialReturn = null!;
@@ -150,15 +148,11 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		NoiseAtSpeed = Config.Bind("3 - Balance", "Noise At Top Speed", 35f,
 			new ConfigDescription("How far away creatures can hear a log at top speed, before each log's own Noise multiplier. A running player is heard from about 30 m.", new AcceptableValueRange<float>(0f, 200f)));
 		WearEnabled = Config.Bind("5 - Wear", "Wear", true,
-			"Logs wear out from crashes, rams and riding. A worn-out log won't fly until it's repaired with resin (Shift+E). Off: logs never wear.");
-		WearPerMinute = Config.Bind("5 - Wear", "Wear Per Minute", 1f,
-			new ConfigDescription("Wear from each minute of riding.", new AcceptableValueRange<float>(0f, 50f)));
+			"Logs wear out from crashes and rams. A worn-out log won't fly until it's repaired with its own wood (Shift+E; each log's Repair Item). Off: logs never wear.");
 		CrashWear = Config.Bind("5 - Wear", "Crash Wear", 1f,
 			new ConfigDescription("Multiplies the wear from hitting trees, rocks and walls (harder hits wear more).", new AcceptableValueRange<float>(0f, 10f)));
 		RamWear = Config.Bind("5 - Wear", "Ram Wear", 1f,
 			new ConfigDescription("Multiplies the wear from ramming things (a twentieth of the ram's damage).", new AcceptableValueRange<float>(0f, 10f)));
-		RepairItem = Config.Bind("5 - Wear", "Repair Item", "Resin",
-			"The item that repairs logs (the game's item name). Shift+E on a worn log repairs it before adding fuel.");
 		RepairPerItem = Config.Bind("5 - Wear", "Repair Per Item", 10f,
 			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
 		BreakWhenWornOut = Config.Bind("5 - Wear", "Break When Worn Out", false,
