@@ -25,8 +25,28 @@ server admin can change them.
 | Core Wood Battering Log | 20 Core Wood, 10 Resin, 3 Ancient Seeds | Heavy and slow, but **nothing knocks you off it** and it hauls the heaviest loads. Rams creatures and fells trees in its way. |
 | Ancient Bark Hover Log | 20 Ancient Bark, 10 Resin, 3 Withered Bones | Floats high over swamp roots (and leeches), handles water best, carries a lot, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
 | Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | The Mistlands scout: quiet, climbs steepest, floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. Fast enough to catch a hare. |
-| Hover Pike | 1 Pike, 10 Resin, 5 Serpent Scales | A giant enchanted pike for the open sea: faster than a longship over deep water (twice its land speed), but slow and floppy on land. Gentle stamina drain, but long crossings still wear you down. |
 | Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest, just. Trails embers, and its ram sets things on fire. |
+
+### Fish logs
+
+Every kind of fish can be ridden too, but only a **level 5 fish** will do (the rarest catch;
+`Fish Quality Required`). They're hard to get, so they ride well: light on stamina, mostly
+fast on water, and each has a trick. Repair them with raw fish.
+
+| Log | Cost (plus 1 level-5 fish, 10 Resin) | How it rides |
+| --- | --- | --- |
+| Hover Perch | 2 Deer Trophies | The easy one: steady, cheap on stamina, quick on rivers and sea. |
+| Hover Pike | 5 Serpent Scales | Built for the open sea, 2.2x its land speed over deep water. |
+| Hover Tuna | 5 Serpent Scales | The fastest thing at sea (2.7x) and tireless, but sluggish on land. |
+| Hover Tetra | 5 Freeze Glands | Mountain goat of a fish: climbs 45° slopes, hops with an extra mid-air hop, trails frost. |
+| Hover Trollfish | 3 Withered Bones | Tough swamp brute: never throws you, rides high over leeches, hauls 600, rams. |
+| Hover Herring | 1 Dvergr Key Fragment | Quiet, agile scout for the Mistlands coast. |
+| Hover Grouper | 2 Fuling Totems | Broad sea hauler (600) that rams and shoves. |
+| Hover Coral Cod | 2 Fuling Totems | Smooth and steady: the best fish to shoot from. |
+| Hover Anglerfish | 1 Dvergr Key Fragment | Its lure is a bright lamp for night and mist. Quiet. |
+| Hover Salmon | 1 Bell Fragment | Leaps: big hops plus a mid-air hop, fast in northern seas. |
+| Hover Magmafish | 1 Bell Fragment | Trails embers and sets what it rams on fire. |
+| Hover Pufferfish | 5 Serpent Scales | Poisons what it rams and trails a toxic cloud. |
 
 Logs are scouting and utility rides, not a faster way to haul everything: the quickest are only
 a little faster than a ridden Lox, and only with light packs.
@@ -38,7 +58,6 @@ a little faster than a ridden Lox, and only with light packs.
 | Core Wood Battering Log | 5.5 (7.2) m/s | 22° | 700 | 300 | loud |
 | Ancient Bark Hover Log | 7 (9.5) m/s | 30° | 500 | 150 | normal |
 | Yggdrasil Hover Log | 9 (13) m/s | 40° | 200 | 120 | quiet |
-| Hover Pike | 5 (6.5) m/s, 10 (13) at sea | 20° | 250 | 80 | a little quieter |
 | Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 250 | 150 | a little louder |
 
 Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new defaults once
@@ -118,7 +137,7 @@ and from ramming. Just riding doesn't wear them. Hover over a log to see its con
 
 - A worn-out log won't take off, and one that wears out mid-ride sputters along low and slow.
 - **Shift+E** repairs it with **its own wood** (Wood, Fine Wood, Core Wood, Ancient Bark,
-  Yggdrasil Wood, Ashwood; raw fish for the Hover Pike), 10 wear per piece, before it adds any fuel.
+  Yggdrasil Wood, Ashwood; raw fish for the fish logs), 10 wear per piece, before it adds any fuel.
 - Logs never break or lose materials by default. `Break When Worn Out` makes a worn-out log fall
   apart instead, dropping its fuel and `Broken Material Return` (half) of its materials.
 
@@ -126,7 +145,7 @@ and from ramming. Just riding doesn't wear them. Hover over a log to see its con
 
 Over shallow water (rivers, lakes, the shore) logs ride as they do on land. Over **deep water**
 the log sinks to skim the surface and slows right down (about a third of its land speed; the
-Ancient Bark log keeps more). The **Hover Pike** is the exception: it's twice as fast at sea. Crossing the ocean on a log is possible, but slow and tiring;
+Ancient Bark log keeps more). The **fish logs** are the exception: most are faster at sea than on land. Crossing the ocean on a log is possible, but slow and tiring;
 boats are still the way to sail. An empty log rests on the water like a real one.
 
 ## Ramming
@@ -156,7 +175,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
-  Also **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
+  Also **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
   **Load Height Penalty**, **Load Handling Penalty**), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
   **Take Out Fuel Key** (R).

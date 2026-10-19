@@ -25,8 +25,8 @@ public static class HoverLogFx
 			Light light = glow.AddComponent<Light>();
 			light.type = LightType.Point;
 			light.color = variant.Glow;
-			light.range = 3.5f;
-			light.intensity = 1.6f;
+			light.range = variant.GlowRange;
+			light.intensity = variant.GlowIntensity;
 			light.shadows = LightShadows.None;
 		}
 

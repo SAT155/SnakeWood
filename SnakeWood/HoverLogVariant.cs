@@ -85,15 +85,131 @@ public class HoverLogVariant
 			Fx = TrailFx.Embers, Glow = new Color(1f, 0.45f, 0.15f),
 			RamDamage = 15f, RamFire = 25f, RamPush = 30f,
 		},
-		new HoverLogVariant("Fish2", "Hover Pike", "A giant enchanted pike, made for the open sea: faster than a longship over deep water, but a floundering mess on land. Long crossings are a test of stamina.")
+		// The fish logs. Each needs a top-level (5) fish (Fish Quality Required), so they're rare and
+		// ride well: most are made for water, and each has a trick of its own.
+		new HoverLogVariant("Fish1", "Hover Perch", "A top-level perch, enchanted. The friendliest fish to learn on: steady, light on stamina, and quick over rivers and the sea.")
+		{
+			WoodItem = "Fish1", RepairItem = "FishRaw", Recipe = "Fish1:1,Resin:10,TrophyDeer:2",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.3f, Thickness = 0.95f, Mass = 50f,
+			AimPenalty = 3f, RideStamina = 0.6f, MaxSpeed = 7.5f, Boost = 1.35f, Acceleration = 10f, TurnSpeed = 130f, Grip = 8f,
+			HoverHeight = 0.9f, HopHeight = 3f, FallGravity = 1f, CrashSpeed = 7f, DeepWaterSpeed = 1.6f,
+			MaxClimb = 30f, LoadCapacity = 250f, Durability = 90f, Noise = 0.8f,
+			Fx = TrailFx.Motes, Glow = new Color(0.8f, 1f, 0.5f),
+		},
+		new HoverLogVariant("Fish2", "Hover Pike", "A top-level pike, made for the open sea: much faster than a longship over deep water, though slower on land. Long crossings still test your stamina.")
 		{
 			WoodItem = "Fish2", RepairItem = "FishRaw", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
-			AimPenalty = 5f, RideStamina = 0.7f, MaxSpeed = 5f, Boost = 1.3f, Acceleration = 8f, TurnSpeed = 110f, Grip = 6f,
-			HoverHeight = 0.6f, HopHeight = 2.5f, FallGravity = 1f, CrashSpeed = 6f, DeepWaterSpeed = 2f,
-			MaxClimb = 20f, LoadCapacity = 250f, Durability = 80f, Noise = 0.7f,
+			AimPenalty = 4f, RideStamina = 0.6f, MaxSpeed = 6f, Boost = 1.35f, Acceleration = 9f, TurnSpeed = 120f, Grip = 7f,
+			HoverHeight = 0.7f, HopHeight = 3f, FallGravity = 1f, CrashSpeed = 7f, DeepWaterSpeed = 2.2f,
+			MaxClimb = 25f, LoadCapacity = 300f, Durability = 110f, Noise = 0.7f,
 			Fx = TrailFx.Motes, Glow = new Color(0.35f, 0.8f, 1f),
+		},
+		new HoverLogVariant("Fish3", "Hover Tuna", "A top-level tuna: the fastest thing on the open sea, and tireless. Out of the water it's a heavy, sluggish lump.")
+		{
+			WoodItem = "Fish3", RepairItem = "FishRaw", Recipe = "Fish3:1,Resin:10,SerpentScale:5",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.8f, Thickness = 1.2f, Mass = 90f,
+			AimPenalty = 4f, RideStamina = 0.5f, MaxSpeed = 5f, Boost = 1.35f, Acceleration = 9f, TurnSpeed = 100f, Grip = 7f,
+			HoverHeight = 0.6f, HopHeight = 2.5f, FallGravity = 1.1f, CrashSpeed = 8f, DeepWaterSpeed = 2.7f,
+			MaxClimb = 20f, LoadCapacity = 400f, Durability = 140f, Noise = 0.8f,
+			Fx = TrailFx.Motes, Glow = new Color(0.3f, 0.55f, 1f),
+		},
+		new HoverLogVariant("Fish4_cave", "Hover Tetra", "A top-level tetra from the mountain caves. Sure-footed on steep, icy slopes and quick to hop, trailing a glitter of frost.")
+		{
+			WoodItem = "Fish4_cave", RepairItem = "FishRaw", Recipe = "Fish4_cave:1,Resin:10,FreezeGland:5",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.1f, Thickness = 0.85f, Mass = 40f,
+			AimPenalty = 3f, RideStamina = 0.9f, MaxSpeed = 8f, Boost = 1.4f, Acceleration = 12f, TurnSpeed = 150f, Grip = 10f,
+			HoverHeight = 1.1f, HopHeight = 4f, AirHops = 1, FallGravity = 0.8f, CrashSpeed = 7f, DeepWaterSpeed = 0.9f,
+			MaxClimb = 45f, LoadCapacity = 200f, Durability = 100f, Noise = 0.6f,
+			Fx = TrailFx.Sparkles, Glow = new Color(0.6f, 0.9f, 1f),
+		},
+		new HoverLogVariant("Fish5", "Hover Trollfish", "A top-level trollfish from the swamp: tough, heavy-shouldered and hard to knock off. Rides high over roots and leeches and bowls creatures over.")
+		{
+			WoodItem = "Fish5", RepairItem = "FishRaw", Recipe = "Fish5:1,Resin:10,WitheredBone:3",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.8f, Thickness = 1.3f, Mass = 150f,
+			AimPenalty = 3f, RideStamina = 0.8f, MaxSpeed = 6.5f, Boost = 1.3f, Acceleration = 7f, TurnSpeed = 95f, Grip = 7f,
+			HoverHeight = 1.6f, HopHeight = 2.5f, FallGravity = 1.1f, CrashSpeed = 0f, DeepWaterSpeed = 1.4f,
+			MaxClimb = 26f, LoadCapacity = 600f, Durability = 250f, Noise = 1.3f,
+			Fx = TrailFx.Dust, Glow = new Color(0.55f, 0.8f, 0.4f),
+			RamDamage = 30f, RamPush = 50f,
+		},
+		new HoverLogVariant("Fish6", "Hover Herring", "A top-level giant herring: quiet, agile and quick both on the sea and along misty shores. A scout's fish.")
+		{
+			WoodItem = "Fish6", RepairItem = "FishRaw", Recipe = "Fish6:1,Resin:10,DvergrKeyFragment:1",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.5f, Thickness = 0.9f, Mass = 45f,
+			AimPenalty = 4f, RideStamina = 0.9f, MaxSpeed = 8.5f, Boost = 1.45f, Acceleration = 14f, TurnSpeed = 170f, Grip = 11f,
+			HoverHeight = 1f, HopHeight = 3.5f, FallGravity = 0.8f, CrashSpeed = 7f, DeepWaterSpeed = 1.8f,
+			MaxClimb = 33f, LoadCapacity = 200f, Durability = 90f, Noise = 0.4f,
+			Fx = TrailFx.Motes, Glow = new Color(0.7f, 0.85f, 1f),
+		},
+		new HoverLogVariant("Fish7", "Hover Grouper", "A top-level grouper: a broad, sturdy sea cruiser that hauls heavy loads across the water and shoves aside whatever it hits.")
+		{
+			WoodItem = "Fish7", RepairItem = "FishRaw", Recipe = "Fish7:1,Resin:10,GoblinTotem:2",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.9f, Thickness = 1.35f, Mass = 130f,
+			AimPenalty = 3f, RideStamina = 0.7f, MaxSpeed = 6f, Boost = 1.3f, Acceleration = 7f, TurnSpeed = 95f, Grip = 7f,
+			HoverHeight = 0.9f, HopHeight = 2.5f, FallGravity = 1.1f, CrashSpeed = 10f, DeepWaterSpeed = 2.1f,
+			MaxClimb = 24f, LoadCapacity = 600f, Durability = 220f, Noise = 1.1f,
+			Fx = TrailFx.Motes, Glow = new Color(0.9f, 0.75f, 0.5f),
+			RamDamage = 25f, RamPush = 60f,
+		},
+		new HoverLogVariant("Fish8", "Hover Coral Cod", "A top-level coral cod: smooth and steady, the best fish to shoot from, and swift at sea.")
+		{
+			WoodItem = "Fish8", RepairItem = "FishRaw", Recipe = "Fish8:1,Resin:10,GoblinTotem:2",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.5f, Thickness = 1.05f, Mass = 70f,
+			AimPenalty = 1f, RideStamina = 0.7f, MaxSpeed = 7f, Boost = 1.35f, Acceleration = 10f, TurnSpeed = 125f, Grip = 9f,
+			HoverHeight = 1f, HopHeight = 3f, FallGravity = 1f, CrashSpeed = 8f, DeepWaterSpeed = 2f,
+			MaxClimb = 30f, LoadCapacity = 300f, Durability = 130f, Noise = 0.8f,
+			Fx = TrailFx.Motes, Glow = new Color(1f, 0.55f, 0.45f),
+		},
+		new HoverLogVariant("Fish9", "Hover Anglerfish", "A top-level anglerfish whose lure lights the way: a bright lamp for night rides and dark mist, and quiet with it.")
+		{
+			WoodItem = "Fish9", RepairItem = "FishRaw", Recipe = "Fish9:1,Resin:10,DvergrKeyFragment:1",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.4f, Thickness = 1.15f, Mass = 70f,
+			AimPenalty = 3f, RideStamina = 0.8f, MaxSpeed = 7.5f, Boost = 1.4f, Acceleration = 10f, TurnSpeed = 130f, Grip = 8f,
+			HoverHeight = 1.3f, HopHeight = 3.5f, FallGravity = 0.7f, CrashSpeed = 7f, DeepWaterSpeed = 1.8f,
+			MaxClimb = 32f, LoadCapacity = 250f, Durability = 120f, Noise = 0.5f,
+			Fx = TrailFx.Sparkles, Glow = new Color(0.55f, 1f, 0.85f), GlowRange = 14f, GlowIntensity = 2.2f,
+		},
+		new HoverLogVariant("Fish10", "Hover Salmon", "A top-level northern salmon: born to leap. Hops high, leaps again in mid-air, and runs fast through icy northern seas.")
+		{
+			WoodItem = "Fish10", RepairItem = "FishRaw", Recipe = "Fish10:1,Resin:10,BellFragment:1",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.5f, Thickness = 0.95f, Mass = 55f,
+			AimPenalty = 4f, RideStamina = 0.9f, MaxSpeed = 8.5f, Boost = 1.45f, Acceleration = 12f, TurnSpeed = 140f, Grip = 9f,
+			HoverHeight = 1.2f, HopHeight = 5f, AirHops = 1, FallGravity = 0.7f, CrashSpeed = 8f, DeepWaterSpeed = 2.1f,
+			MaxClimb = 36f, LoadCapacity = 250f, Durability = 130f, Noise = 0.7f,
+			Fx = TrailFx.Sparkles, Glow = new Color(1f, 0.6f, 0.5f),
+		},
+		new HoverLogVariant("Fish11", "Hover Magmafish", "A top-level magmafish, still smouldering: trails embers, sets what it rams on fire, and runs fast across the Ashlands.")
+		{
+			WoodItem = "Fish11", RepairItem = "FishRaw", Recipe = "Fish11:1,Resin:10,BellFragment:1",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2.5f, Thickness = 1f, Mass = 70f,
+			AimPenalty = 4f, RideStamina = 1f, MaxSpeed = 9f, Boost = 1.45f, Acceleration = 12f, TurnSpeed = 130f, Grip = 9f,
+			HoverHeight = 1.1f, HopHeight = 3.5f, FallGravity = 1f, CrashSpeed = 9f, DeepWaterSpeed = 1.5f,
+			MaxClimb = 35f, LoadCapacity = 250f, Durability = 150f, Noise = 1f,
+			Fx = TrailFx.Embers, Glow = new Color(1f, 0.4f, 0.1f),
+			RamDamage = 15f, RamFire = 30f, RamPush = 30f,
+		},
+		new HoverLogVariant("Fish12", "Hover Pufferfish", "A top-level pufferfish, puffed up and prickly: anything it rams is poisoned, and it trails a toxic cloud.")
+		{
+			WoodItem = "Fish12", RepairItem = "FishRaw", Recipe = "Fish12:1,Resin:10,SerpentScale:5",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Length = 2f, Thickness = 1.4f, Mass = 60f,
+			AimPenalty = 4f, RideStamina = 0.8f, MaxSpeed = 7f, Boost = 1.35f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
+			HoverHeight = 1.2f, HopHeight = 3f, FallGravity = 0.8f, CrashSpeed = 8f, DeepWaterSpeed = 1.8f,
+			MaxClimb = 30f, LoadCapacity = 250f, Durability = 120f, Noise = 0.8f,
+			Fx = TrailFx.Poison, Glow = new Color(0.9f, 1f, 0.4f), PoisonCloud = 6f,
+			RamDamage = 10f, RamPoison = 20f, RamPush = 25f,
 		},
 	};
 
@@ -127,6 +243,11 @@ public class HoverLogVariant
 
 	public TrailFx Fx;
 	public Color Glow = Color.white;
+	public float GlowRange = 3.5f;
+	public float GlowIntensity = 1.6f;
+
+	// Fish logs need a high-quality fish (see Fish Quality Required).
+	public bool IsFish => WoodItem.StartsWith("Fish");
 
 	// Defaults for the handling config entries below.
 	public float MaxClimb, LoadCapacity, Durability, Noise;
@@ -169,6 +290,10 @@ public class HoverLogVariant
 	{
 		string Line(string label, string value) => $"\n<color=orange>{label}</color> {value}";
 		string text = Description + "\n";
+		if (IsFish && SnakeWoodPlugin.FishQuality.Value > 1)
+		{
+			text += Line("Needs", $"a level {SnakeWoodPlugin.FishQuality.Value} fish or better");
+		}
 		text += Line("Speed", $"{MaxSpeedCfg.Value:0.#} m/s, boost x{BoostCfg.Value:0.##}");
 		text += Line("Turning", $"{TurnSpeedCfg.Value:0}°/s");
 		text += Line("Climbs", $"slopes up to {MaxClimbCfg.Value:0}°");

@@ -32,7 +32,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.3.0";
+	internal const string PluginVersion = "1.4.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -61,6 +61,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> EitrStaminaFactor = null!;
 	internal static ConfigEntry<KeyboardShortcut> TakeFuelKey = null!;
 	internal static ConfigEntry<bool> NoMetal = null!;
+	internal static ConfigEntry<int> FishQuality = null!;
 	internal static ConfigEntry<float> LightLoad = null!;
 	internal static ConfigEntry<float> LoadSpeedPenalty = null!;
 	internal static ConfigEntry<float> LoadHeightPenalty = null!;
@@ -135,6 +136,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Press while looking at a log to take the fuel out of it (into your inventory, or onto the ground if there's no room).");
 		NoMetal = Config.Bind("3 - Balance", "No Ore Or Metal", false,
 			"Logs refuse to carry anything you couldn't take through a portal (ore, metal bars, eggs...): you can't get on carrying it, and picking it up mid-ride throws you off.");
+		FishQuality = Config.Bind("3 - Balance", "Fish Quality Required", 5,
+			new ConfigDescription("Lowest level (quality) the fish in a fish log's recipe can be. Fish are caught at levels 1 to 5; 5 is the rarest. 1 takes any fish.", new AcceptableValueRange<int>(1, 10)));
 		LightLoad = Config.Bind("3 - Balance", "Load Free Share", 0.35f,
 			new ConfigDescription("Share of a log's Load Capacity you can carry with no effect. Above it, top speed, hover height and handling drop off until the log is full; over capacity it won't lift off.", new AcceptableValueRange<float>(0f, 1f)));
 		LoadSpeedPenalty = Config.Bind("3 - Balance", "Load Speed Penalty", 0.45f,

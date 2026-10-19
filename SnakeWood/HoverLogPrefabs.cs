@@ -674,3 +674,107 @@ internal static class RiderAttacksPassThroughLogPatch
 
 	private static void Finalizer(HoverLog? __state) => __state?.EndRiderPassThrough();
 }
+
+// Fish logs need a high-level fish (Fish Quality Required). Vanilla build costs ignore item
+// quality, so for a fish log the fish requirement is checked and taken by quality here.
+internal static class FishQuality
+{
+	// The requirement in a fish log's piece that's the fish itself, or null.
+	public static Piece.Requirement? FishRequirement(Piece.Requirement[] requirements)
+	{
+		if (SnakeWoodPlugin.FishQuality.Value <= 1)
+		{
+			return null;
+		}
+		foreach (HoverLogVariant variant in HoverLogVariant.All)
+		{
+			if (!variant.IsFish || HoverLogPrefabs.PrefabFor(variant.Key) is not GameObject prefab
+				|| prefab.GetComponent<Piece>().m_resources != requirements)
+			{
+				continue;
+			}
+			foreach (Piece.Requirement requirement in requirements)
+			{
+				if (requirement.m_resItem != null && requirement.m_resItem.name == variant.WoodItem)
+				{
+					return requirement;
+				}
+			}
+		}
+		return null;
+	}
+
+	public static int Count(Inventory inventory, string name)
+	{
+		int count = 0;
+		foreach (ItemDrop.ItemData item in inventory.GetAllItems())
+		{
+			if (item.m_shared.m_name == name && item.m_quality >= SnakeWoodPlugin.FishQuality.Value)
+			{
+				count += item.m_stack;
+			}
+		}
+		return count;
+	}
+
+	// Takes the lowest good-enough fish first.
+	public static void Remove(Inventory inventory, string name, int amount)
+	{
+		for (int quality = SnakeWoodPlugin.FishQuality.Value; quality <= 10 && amount > 0; quality++)
+		{
+			int here = Mathf.Min(amount, inventory.CountItems(name, quality));
+			if (here > 0)
+			{
+				inventory.RemoveItem(name, here, quality);
+				amount -= here;
+			}
+		}
+	}
+}
+
+[HarmonyPatch(typeof(Player), nameof(Player.HaveRequirements), typeof(Piece), typeof(Player.RequirementMode))]
+internal static class FishQualityRequirementPatch
+{
+	private static void Postfix(Player __instance, Piece piece, Player.RequirementMode mode, ref bool __result)
+	{
+		if (!__result || mode != Player.RequirementMode.CanBuild || __instance.NoCostCheat()
+			|| FishQuality.FishRequirement(piece.m_resources) is not Piece.Requirement fish)
+		{
+			return;
+		}
+		if (FishQuality.Count(__instance.GetInventory(), fish.m_resItem.m_itemData.m_shared.m_name) < fish.m_amount)
+		{
+			__result = false;
+		}
+	}
+}
+
+[HarmonyPatch(typeof(Player), nameof(Player.ConsumeResources))]
+internal static class FishQualityConsumePatch
+{
+	private static bool Prefix(Player __instance, Piece.Requirement[] requirements, int itemQuality)
+	{
+		if (itemQuality >= 0 || FishQuality.FishRequirement(requirements) is not Piece.Requirement fish)
+		{
+			return true;
+		}
+		Inventory inventory = __instance.GetInventory();
+		foreach (Piece.Requirement requirement in requirements)
+		{
+			if (requirement.m_resItem == null || requirement.m_amount <= 0)
+			{
+				continue;
+			}
+			string name = requirement.m_resItem.m_itemData.m_shared.m_name;
+			if (requirement == fish)
+			{
+				FishQuality.Remove(inventory, name, requirement.m_amount);
+			}
+			else
+			{
+				inventory.RemoveItem(name, requirement.m_amount);
+			}
+		}
+		return false;
+	}
+}

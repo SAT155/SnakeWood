@@ -99,7 +99,7 @@ internal static class HoverLogDisguise
 		Vector3 offset = Vector3.zero;
 		if (ZNetScene.instance != null)
 		{
-			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : new string[0];
+			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : variant.StartsWith("Fish") ? s_hints["Fish2"] : new string[0];
 			// Half logs (what a felled trunk splits into) are the right sort of size; whole trunks are
 			// the entire tree. The real hover log is then sized to match (SizeOf).
 			var logs = ZNetScene.instance.m_prefabs
