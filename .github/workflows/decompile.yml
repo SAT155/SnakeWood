@@ -104,8 +104,9 @@ jobs:
                               data = obj.read()
                               text = data.m_Script if isinstance(data.m_Script, str) else bytes(data.m_Script).decode("utf-8", "ignore")
                               for line in text.splitlines():
-                                  if pattern.search(line) and len(line) < 300:
-                                      texts.append(line)
+                                  if pattern.search(line):
+                                      # Localization rows: just the key and the English text.
+                                      texts.append(",".join(line.split('","')[:2])[:200])
                       except Exception:
                           pass
           print("=================== matching GameObjects ===================")
