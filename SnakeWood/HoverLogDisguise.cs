@@ -31,6 +31,7 @@ internal static class HoverLogDisguise
 		["Fish2"] = new[] { "beech" },
 	};
 	private static readonly Dictionary<string, (int hash, Vector3 offset)> s_disguises = new();
+	private static bool s_listed;
 
 	// The offset already applied to a log's synced rotation (none for a log never seen by this code).
 	public static Quaternion StoredOffset(ZDO zdo) =>
@@ -74,14 +75,32 @@ internal static class HoverLogDisguise
 		Vector3 offset = Vector3.zero;
 		if (ZNetScene.instance != null)
 		{
-			List<GameObject> logs = ZNetScene.instance.m_prefabs
-				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null)
-				// The half logs a felled trunk splits into are log-sized; whole trunks are the entire tree.
-				.OrderBy(p => p.name.ToLowerInvariant().Contains("half") ? 0 : 1)
-				.ToList();
+			HoverLogVariant? v = HoverLogVariant.Get(variant);
+			float wantLength = v?.Length ?? 2.6f;
+			float wantGirth = 0.45f * (v?.Thickness ?? 1f);
 			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : new string[0];
-			GameObject? pick = logs.FirstOrDefault(p => hints.Any(hint => p.name.ToLowerInvariant().Contains(hint)))
-				?? logs.FirstOrDefault();
+			// Vanilla tree logs can't be scaled for players without the mod, so pick the one whose size
+			// is closest to this log's; its own tree's log wins only when it's nearly as close.
+			var logs = ZNetScene.instance.m_prefabs
+				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null)
+				.Select(p =>
+				{
+					Vector3 size = HoverLogPrefabs.Bounds(p.transform).size;
+					float length = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+					float girth = size.x + size.y + size.z - length - Mathf.Min(size.x, Mathf.Min(size.y, size.z));
+					float misfit = Mathf.Abs(Mathf.Log(length / wantLength)) + Mathf.Abs(Mathf.Log(Mathf.Max(0.05f, girth) / wantGirth));
+					bool ownTree = hints.Any(hint => p.name.ToLowerInvariant().Contains(hint));
+					return (prefab: p, size, misfit: misfit * (ownTree ? 0.8f : 1f));
+				})
+				.OrderBy(c => c.misfit)
+				.ToList();
+			if (!s_listed)
+			{
+				s_listed = true;
+				SnakeWoodPlugin.Log.LogInfo("Vanilla tree logs available as disguises: " +
+					string.Join(", ", logs.Select(c => $"{c.prefab.name} {c.size}")));
+			}
+			GameObject? pick = logs.Count > 0 ? logs[0].prefab : null;
 			if (pick != null)
 			{
 				hash = pick.name.GetStableHashCode();
