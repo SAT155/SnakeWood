@@ -762,8 +762,34 @@ internal static class FishQuality
 [HarmonyPatch(typeof(Player), nameof(Player.HaveRequirements), typeof(Piece), typeof(Player.RequirementMode))]
 internal static class FishQualityRequirementPatch
 {
+	private static float s_lastLevelHint;
+
 	private static void Postfix(Player __instance, Piece piece, Player.RequirementMode mode, ref bool __result)
 	{
+		if (__result && piece.GetComponent<HoverLog>() is HoverLog log && HoverLogVariant.Get(log.m_variant) is HoverLogVariant variant)
+		{
+			// Locked logs stay out of the build menu until their boss is down (Require Boss Kills).
+			if (!variant.Unlocked(__instance))
+			{
+				__result = false;
+				return;
+			}
+			// Vanilla only checks that the station is near, not its level.
+			if (mode == Player.RequirementMode.CanBuild && !__instance.NoCostCheat() && piece.m_craftingStation != null
+				&& variant.StationLevelCfg.Value > 1
+				&& (CraftingStation.HaveBuildStationInRange(piece.m_craftingStation.m_name, __instance.transform.position) is not CraftingStation station
+					|| station.GetLevel() < variant.StationLevelCfg.Value))
+			{
+				if (Time.time - s_lastLevelHint > 5f)
+				{
+					s_lastLevelHint = Time.time;
+					__instance.Message(MessageHud.MessageType.TopLeft,
+						Localization.instance.Localize($"Needs a level {variant.StationLevelCfg.Value} {piece.m_craftingStation.m_name}"));
+				}
+				__result = false;
+				return;
+			}
+		}
 		if (!__result || mode != Player.RequirementMode.CanBuild || __instance.NoCostCheat()
 			|| FishQuality.FishRequirement(piece.m_resources) is not Piece.Requirement fish)
 		{

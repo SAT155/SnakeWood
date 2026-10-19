@@ -28,6 +28,19 @@ public enum RiderPose
 	LieDown,
 }
 
+// The boss whose defeat unlocks a log, by its global key (optional; see Require Boss Kills).
+public enum Boss
+{
+	None,
+	Eikthyr,
+	TheElder,
+	Bonemass,
+	Moder,
+	Yagluth,
+	TheQueen,
+	Fader,
+}
+
 // The crafting station a log has to be built near.
 public enum Station
 {
@@ -51,7 +64,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.7.0";
+	internal const string PluginVersion = "1.8.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -66,6 +79,20 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		RiderPose.LieDown => "attach_bed",
 		_ => "attach_lox",
 	};
+
+	internal static string BossKey(Boss boss) => boss switch
+	{
+		Boss.Eikthyr => "defeated_eikthyr",
+		Boss.TheElder => "defeated_gdking",
+		Boss.Bonemass => "defeated_bonemass",
+		Boss.Moder => "defeated_dragon",
+		Boss.Yagluth => "defeated_goblinking",
+		Boss.TheQueen => "defeated_queen",
+		Boss.Fader => "defeated_fader",
+		_ => "",
+	};
+
+	internal static ConfigEntry<bool> BossGate = null!;
 
 	internal static string StationPrefab(Station station) => station switch
 	{
@@ -176,6 +203,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Press while looking at a log to take the fuel out of it (into your inventory, or onto the ground if there's no room).");
 		NoMetal = Config.Bind("3 - Balance", "No Ore Or Metal", false,
 			"Logs refuse to carry anything you couldn't take through a portal (ore, metal bars, eggs...): you can't get on carrying it, and picking it up mid-ride throws you off.");
+		BossGate = Config.Bind("3 - Balance", "Require Boss Kills", false,
+			"On: each log only shows up in the build menu once its Required Boss has been defeated, on top of its crafting station.");
 		FishQuality = Config.Bind("3 - Balance", "Fish Quality Required", 5,
 			new ConfigDescription("Lowest level (quality) the fish in a fish log's recipe can be. Fish are caught at levels 1 to 5; 5 is the rarest. 1 takes any fish.", new AcceptableValueRange<int>(1, 10)));
 		LightLoad = Config.Bind("3 - Balance", "Load Free Share", 0.35f,

@@ -14,12 +14,23 @@ saved logs become ordinary tree logs. `Vanilla Disguise` turns this off.
 All are under the hammer's **Misc** tab. Each one is that wood's
 raw log, floating on a coloured glow, with a little saddle made from the wood's build piece.
 
-Each log has to be built at a better crafting station the further into the game its materials
-come from: a **Workbench** for the Hover Log and Perch, a **Forge** for Fine Wood, Core Wood,
-Ancient Bark and the Pike, Tuna, Tetra, Trollfish and Pufferfish, an **Artisan Table** for the
-Grouper and Coral Cod, a **Galdr Table** for Yggdrasil, the Herring and the Anglerfish, and a
-**Black Forge** for Ashwood, the Salmon and the Magmafish. Each log's `Crafting Station` is a
-drop-down. The recipes call for boss summoning items too. Recipes are config entries (`Recipe = Wood:50,Resin:20,TrophyDeer:4,DeerHide:10`), so a
+Each log has to be built at a better, more upgraded crafting station the further into the game
+its materials come from, so the later logs come with the later station upgrades:
+
+| Station | Logs |
+| --- | --- |
+| Workbench level 2 | Hover Log, Perch |
+| Forge level 2 | Fine Wood, Pike |
+| Forge level 3 | Core Wood |
+| Forge level 4 | Ancient Bark, Trollfish |
+| Forge level 5 | Tuna, Tetra, Pufferfish |
+| Artisan Table | Grouper, Coral Cod |
+| Galdr Table level 2 | Yggdrasil, Herring, Anglerfish |
+| Black Forge level 2 | Ashwood, Salmon, Magmafish |
+
+Each log's `Crafting Station` (a drop-down) and `Crafting Station Level` can be changed. Turn on
+`Require Boss Kills` to also hide each log until its biome's boss is dead (`Required Boss`).
+The recipes call for boss summoning items too. Recipes are config entries (`Recipe = Wood:50,Resin:20,TrophyDeer:4,DeerHide:10`), so a
 server admin can change them.
 
 | Log | Cost | How it rides |
@@ -181,13 +192,13 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
-  Also **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
+  Also **Require Boss Kills** (off), **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
   **Load Height Penalty**, **Load Handling Penalty**), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
   **Take Out Fuel Key** (R).
 - **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, **Repair Per Item**, **Break When Worn Out** (off) and **Broken Material Return**.
 - **Ram Damages Buildings / Players And Tames**: both off by default.
-- One section per log: **Buildable**, **Recipe**, **Crafting Station**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
+- One section per log: **Buildable**, **Recipe**, **Crafting Station**, **Crafting Station Level**, **Required Boss**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
   **Boost Multiplier**, **Acceleration**, **Turn Speed**, **Hover Height**, **Hop Height**,
   **Air Hops**, **Fall Gravity**, **Crash Speed**, **Deep Water Speed**, **Max Climb Angle**,
   **Load Capacity**, **Durability**, **Repair Item**, **Noise**, **Ram Damage**, and
