@@ -583,7 +583,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_loadTimer = 0.5f;
 		player.StartDoodadControl(this);
 		player.AttachStart(m_attachPoint, gameObject, hideWeapons: false, isBed: false, onShip: false,
-			SnakeWoodPlugin.AttachAnimation.Value, m_detachOffset);
+			SnakeWoodPlugin.AttachAnimation, m_detachOffset);
 	}
 
 	// ---- IDoodadController: the rider's game feeds us its input every frame ---------------------

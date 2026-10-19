@@ -20,6 +20,27 @@ public enum CombatStance
 	Seated,
 }
 
+public enum RiderPose
+{
+	Straddle,
+	SideSaddle,
+	Surf,
+	LieDown,
+}
+
+// The boss whose defeat unlocks a log, by its global key.
+public enum Boss
+{
+	None,
+	Eikthyr,
+	TheElder,
+	Bonemass,
+	Moder,
+	Yagluth,
+	TheQueen,
+	Fader,
+}
+
 public enum ModelStyle
 {
 	Mixed,
@@ -32,13 +53,35 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.5.0";
+	internal const string PluginVersion = "1.6.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
 
 	internal static ConfigEntry<SteeringMode> Steering = null!;
-	internal static ConfigEntry<string> AttachAnimation = null!;
+	internal static ConfigEntry<RiderPose> Pose = null!;
+
+	// Surf stands on the log: it attaches with the Lox pose and stands up (see RidingControlsPatch).
+	internal static string AttachAnimation => Pose.Value switch
+	{
+		RiderPose.SideSaddle => "attach_chair",
+		RiderPose.LieDown => "attach_bed",
+		_ => "attach_lox",
+	};
+
+	internal static string BossKey(Boss boss) => boss switch
+	{
+		Boss.Eikthyr => "defeated_eikthyr",
+		Boss.TheElder => "defeated_gdking",
+		Boss.Bonemass => "defeated_bonemass",
+		Boss.Moder => "defeated_dragon",
+		Boss.Yagluth => "defeated_goblinking",
+		Boss.TheQueen => "defeated_queen",
+		Boss.Fader => "defeated_fader",
+		_ => "",
+	};
+
+	internal static ConfigEntry<bool> BossGate = null!;
 	internal static ConfigEntry<float> SeatHeight = null!;
 	internal static ConfigEntry<bool> MountedCombat = null!;
 	internal static ConfigEntry<bool> Disguise = null!;
@@ -91,8 +134,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 
 		Steering = Config.Bind("1 - Riding", "Steering", SteeringMode.Camera,
 			"Camera: the log turns toward where you look (like the Lox) and A/D strafe. Keys: A/D turn the log and the camera is free.");
-		AttachAnimation = Config.Bind("1 - Riding", "Rider Pose", "attach_lox",
-			"Animation the rider uses while on a log. attach_lox straddles it like the Lox saddle; attach_chair sits side-saddle like a chair.");
+		Pose = Config.Bind("1 - Riding", "Riding Pose", RiderPose.Straddle,
+			"How you ride. Straddle: astride like the Lox saddle. SideSaddle: sitting sideways, like a chair. Surf: standing on it like a surfboard. LieDown: flat on your back. Takes effect next time you get on.");
 		SeatHeight = Config.Bind("1 - Riding", "Seat Height", 0.25f,
 			new ConfigDescription("How far above the log's centre the rider sits, in metres. Only affects logs that load after you change it.",
 				new AcceptableValueRange<float>(-0.5f, 1.5f)));
@@ -138,6 +181,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Press while looking at a log to take the fuel out of it (into your inventory, or onto the ground if there's no room).");
 		NoMetal = Config.Bind("3 - Balance", "No Ore Or Metal", false,
 			"Logs refuse to carry anything you couldn't take through a portal (ore, metal bars, eggs...): you can't get on carrying it, and picking it up mid-ride throws you off.");
+		BossGate = Config.Bind("3 - Balance", "Boss Unlocks", true,
+			"Each log can only be built once its biome's boss has been defeated (each log's Required Boss). Off: all logs are available from the start.");
 		FishQuality = Config.Bind("3 - Balance", "Fish Quality Required", 5,
 			new ConfigDescription("Lowest level (quality) the fish in a fish log's recipe can be. Fish are caught at levels 1 to 5; 5 is the rarest. 1 takes any fish.", new AcceptableValueRange<int>(1, 10)));
 		LightLoad = Config.Bind("3 - Balance", "Load Free Share", 0.35f,

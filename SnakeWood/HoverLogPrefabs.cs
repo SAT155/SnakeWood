@@ -538,8 +538,15 @@ internal static class RidingControlsPatch
 
 	private static void Postfix(Player __instance, HeldAttacks __state)
 	{
+		if (__instance.GetDoodadController() is not HoverLog)
+		{
+			return;
+		}
+		// Surfers stand the whole ride.
+		bool surfing = SnakeWoodPlugin.Pose.Value == RiderPose.Surf;
 		if (!__state.Active)
 		{
+			SetStanding(__instance, surfing);
 			return;
 		}
 		__instance.m_attack = __state.Attack;
@@ -553,7 +560,7 @@ internal static class RidingControlsPatch
 		{
 			s_combatUntil = Time.time + CombatStanceLinger;
 		}
-		SetStanding(__instance, SnakeWoodPlugin.Stance.Value == CombatStance.Stand && Time.time < s_combatUntil);
+		SetStanding(__instance, surfing || (SnakeWoodPlugin.Stance.Value == CombatStance.Stand && Time.time < s_combatUntil));
 	}
 
 	private static void SetStanding(Player player, bool standing)
@@ -737,6 +744,13 @@ internal static class FishQualityRequirementPatch
 {
 	private static void Postfix(Player __instance, Piece piece, Player.RequirementMode mode, ref bool __result)
 	{
+		// Locked logs stay out of the build menu until their boss is down.
+		if (__result && piece.GetComponent<HoverLog>() is HoverLog log && HoverLogVariant.Get(log.m_variant) is HoverLogVariant variant
+			&& !variant.Unlocked(__instance))
+		{
+			__result = false;
+			return;
+		}
 		if (!__result || mode != Player.RequirementMode.CanBuild || __instance.NoCostCheat()
 			|| FishQuality.FishRequirement(piece.m_resources) is not Piece.Requirement fish)
 		{

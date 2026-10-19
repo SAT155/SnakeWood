@@ -14,8 +14,11 @@ saved logs become ordinary tree logs. `Vanilla Disguise` turns this off.
 All are under the hammer's **Misc** tab and need a workbench nearby. Each one is that wood's
 raw log, floating on a coloured glow, with a little saddle made from the wood's build piece.
 
-Each log is gated behind a boss: the magic that makes wood float comes from that boss's
-summoning item. Recipes are config entries (`Recipe = Wood:50,Resin:20,TrophyDeer:4,DeerHide:10`), so a
+Each log is gated behind a boss: it only shows up in the build menu once its biome's boss
+has been defeated (Eikthyr for the Hover Log, The Elder for Fine and Core Wood, Bonemass for
+Ancient Bark, The Queen for Yggdrasil, Fader for Ashwood; fish logs follow their fish's biome).
+`Boss Unlocks` turns this off and each log's `Required Boss` is a drop-down. The recipes call
+for boss summoning items too. Recipes are config entries (`Recipe = Wood:50,Resin:20,TrophyDeer:4,DeerHide:10`), so a
 server admin can change them.
 
 | Log | Cost | How it rides |
@@ -164,7 +167,8 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 `BepInEx/config/com.snakesquad.snakewood.cfg`, or Configuration Manager (F1):
 
 - **Steering**: `Camera` (default) or `Keys`.
-- **Rider Pose**: `attach_lox` (straddle, default) or `attach_chair`.
+- **Riding Pose** (drop-down): `Straddle` (default, like the Lox), `SideSaddle`, `Surf` (stand
+  on it like a surfboard) or `LieDown`.
 - **Seat Height**: raise or lower the rider on the log.
 - **Mounted Combat**: on by default. Off makes attacking get you off, like the Lox.
 - **Combat Stance**: `Stand` (default) or `Seated` (experimental).
@@ -176,13 +180,13 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
-  Also **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
+  Also **Boss Unlocks** (on), **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
   **Load Height Penalty**, **Load Handling Penalty**), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
   **Take Out Fuel Key** (R).
 - **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, **Repair Per Item**, **Break When Worn Out** (off) and **Broken Material Return**.
 - **Ram Damages Buildings / Players And Tames**: both off by default.
-- One section per log: **Buildable**, **Recipe**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
+- One section per log: **Buildable**, **Recipe**, **Required Boss**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
   **Boost Multiplier**, **Acceleration**, **Turn Speed**, **Hover Height**, **Hop Height**,
   **Air Hops**, **Fall Gravity**, **Crash Speed**, **Deep Water Speed**, **Max Climb Angle**,
   **Load Capacity**, **Durability**, **Repair Item**, **Noise**, **Ram Damage**, and
