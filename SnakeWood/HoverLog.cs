@@ -6,7 +6,7 @@ namespace SnakeWood;
 // A rideable hover log. Control follows the Lox saddle (Sadle): the rider asks the ZDO owner for
 // control, the owner records them as the user and hands them ownership, and from then on the
 // rider's own game runs the physics. Everyone else just sees the transform ZSyncTransform syncs.
-public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadController
+public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadController, IRemoved
 {
 	public string m_variant = "";
 	public Transform m_attachPoint = null!;
@@ -62,6 +62,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private static readonly RaycastHit[] s_hits = new RaycastHit[16];
 	private static int s_groundMask;
+	private static int s_terrainMask;
 
 	private ZNetView m_nview = null!;
 	private Rigidbody m_body = null!;
@@ -127,6 +128,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_nview.Register<long>("SnakeWood_ReleaseControl", RPC_ReleaseControl);
 		m_nview.Register<bool>("SnakeWood_RequestResponse", RPC_RequestResponse);
 		m_nview.Register<int>("SnakeWood_AddFuel", RPC_AddFuel);
+		m_nview.Register<float>("SnakeWood_Repair", RPC_Repair);
 	}
 
 	public HoverLogVariant Variant => m_v;
@@ -170,8 +172,183 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	{
 		if (m_nview.IsOwner())
 		{
-			m_nview.GetZDO().Set(s_fuelKey, Mathf.Min(SnakeWoodPlugin.FuelCapacity.Value, GetFuel() + amount));
+			m_nview.GetZDO().Set(s_fuelKey, Mathf.Clamp(GetFuel() + amount, 0f, SnakeWoodPlugin.FuelCapacity.Value));
 		}
+	}
+
+	// Takes the whole resin left in the log back out: into the player's inventory if there's room,
+	// otherwise onto the ground at their feet.
+	private void TakeFuelOut(Player player)
+	{
+		int amount = Mathf.FloorToInt(GetFuel());
+		ItemDrop.ItemData? fuel = FuelItemData();
+		if (amount <= 0 || fuel == null)
+		{
+			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"There's no whole {FuelName()} left in it"));
+			return;
+		}
+		m_nview.InvokeRPC("SnakeWood_AddFuel", -amount);
+		ItemDrop.ItemData item = fuel.Clone();
+		item.m_stack = amount;
+		if (!player.GetInventory().AddItem(item))
+		{
+			ItemDrop.DropItem(fuel, amount, player.transform.position + player.transform.forward * 0.5f + Vector3.up * 0.5f, Quaternion.identity);
+		}
+		player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"Took out {amount} {FuelName()}"));
+	}
+
+	// Deconstructing a log gives back the fuel still in it.
+	public void OnRemoved()
+	{
+		if (m_nview != null && m_nview.IsValid())
+		{
+			DropFuel();
+		}
+	}
+
+	private void DropFuel()
+	{
+		int amount = Mathf.FloorToInt(GetFuel());
+		ItemDrop.ItemData? fuel = FuelItemData();
+		if (amount > 0 && fuel != null)
+		{
+			m_nview.GetZDO().Set(s_fuelKey, 0f);
+			ItemDrop.DropItem(fuel, amount, transform.position + Vector3.up * 0.5f, Quaternion.identity);
+		}
+	}
+
+	// ---- Wear -----------------------------------------------------------------------------------
+
+	// Stored as wear taken, so a new log starts in perfect condition.
+	private static readonly int s_wearKey = "SnakeWood_wear".GetStableHashCode();
+
+	private static bool WearEnabled => SnakeWoodPlugin.WearEnabled.Value;
+
+	private float GetWear() => m_nview.IsValid() ? m_nview.GetZDO().GetFloat(s_wearKey, 0f) : 0f;
+
+	private bool WornOut() => WearEnabled && GetWear() >= m_v.DurabilityCfg.Value;
+
+	private float Condition() => Mathf.Clamp01(1f - GetWear() / Mathf.Max(1f, m_v.DurabilityCfg.Value));
+
+	private static ItemDrop.ItemData? RepairItemData() =>
+		ObjectDB.instance?.GetItemPrefab(SnakeWoodPlugin.RepairItem.Value)?.GetComponent<ItemDrop>()?.m_itemData;
+
+	private static string RepairName() => RepairItemData()?.m_shared.m_name ?? SnakeWoodPlugin.RepairItem.Value;
+
+	// Owner only (whoever is riding owns the log).
+	private void AddWear(float amount)
+	{
+		if (!WearEnabled || amount <= 0f || !m_nview.IsValid() || !m_nview.IsOwner())
+		{
+			return;
+		}
+		bool wasWorn = WornOut();
+		float wear = Mathf.Min(m_v.DurabilityCfg.Value, GetWear() + amount);
+		m_nview.GetZDO().Set(s_wearKey, wear);
+		if (wasWorn || !WornOut())
+		{
+			return;
+		}
+		if (SnakeWoodPlugin.BreakWhenWornOut.Value)
+		{
+			Break();
+		}
+		else if (IsLocallyDriven())
+		{
+			Player.m_localPlayer.Message(MessageHud.MessageType.Center,
+				Localization.instance.Localize($"The log is worn out! Repair it with {RepairName()}"));
+		}
+	}
+
+	// Uses repair items from the player's inventory to fix as much wear as they can.
+	private bool RepairFrom(Player player)
+	{
+		string name = RepairName();
+		int needed = Mathf.CeilToInt(GetWear() / SnakeWoodPlugin.RepairPerItem.Value);
+		int amount = Mathf.Min(needed, player.GetInventory().CountItems(name));
+		if (amount <= 0)
+		{
+			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize("You have no " + name + " to repair it"));
+			return false;
+		}
+		player.GetInventory().RemoveItem(name, amount);
+		m_nview.InvokeRPC("SnakeWood_Repair", amount * SnakeWoodPlugin.RepairPerItem.Value);
+		player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"Repaired with {amount} {name}"));
+		return true;
+	}
+
+	private void RPC_Repair(long sender, float amount)
+	{
+		if (m_nview.IsOwner())
+		{
+			m_nview.GetZDO().Set(s_wearKey, Mathf.Max(0f, GetWear() - amount));
+		}
+	}
+
+	// Worn out with Break When Worn Out on: the log falls apart, dropping its fuel and a share of
+	// what it was built from.
+	private void Break()
+	{
+		ThrowRider("The log breaks apart!");
+		DropFuel();
+		float share = SnakeWoodPlugin.BrokenMaterialReturn.Value;
+		Piece piece = GetComponent<Piece>();
+		if (piece != null && share > 0f)
+		{
+			foreach (Piece.Requirement requirement in piece.m_resources)
+			{
+				int amount = Mathf.FloorToInt(requirement.m_amount * share);
+				if (requirement.m_resItem != null && amount > 0)
+				{
+					ItemDrop.DropItem(requirement.m_resItem.m_itemData, amount, transform.position + Vector3.up * 0.5f, Quaternion.identity);
+				}
+			}
+		}
+		ZNetScene.instance.Destroy(gameObject);
+	}
+
+	// ---- Load (carry weight) and cargo ----------------------------------------------------------
+
+	// 0 while carrying no more than the free share of Load Capacity, rising to 1 when full; above
+	// 1 the log is overloaded and won't lift off.
+	private float m_load;
+	private float m_loadTimer;
+
+	private float LoadOf(Player player)
+	{
+		float capacity = m_v.LoadCapacityCfg.Value;
+		float weight = player.GetInventory().GetTotalWeight();
+		if (weight > capacity)
+		{
+			return 1f + (weight - capacity) / capacity;
+		}
+		return Mathf.InverseLerp(capacity * SnakeWoodPlugin.LightLoad.Value, capacity, weight);
+	}
+
+	private static bool CarriesMetal(Player player) =>
+		SnakeWoodPlugin.NoMetal.Value && !player.GetInventory().IsTeleportable(false);
+
+	// Checked twice a second while riding. False when the rider just got thrown off for cargo.
+	private bool UpdateLoad(float dt)
+	{
+		Player player = Player.m_localPlayer;
+		if (player == null || (m_loadTimer -= dt) > 0f)
+		{
+			return true;
+		}
+		m_loadTimer = 0.5f;
+		if (CarriesMetal(player))
+		{
+			ThrowRider("The log won't carry ore or metal");
+			return false;
+		}
+		bool wasOverloaded = m_load > 1f;
+		m_load = LoadOf(player);
+		if (m_load > 1f && !wasOverloaded)
+		{
+			player.Message(MessageHud.MessageType.Center, "You're carrying too much! The log can barely stay up");
+		}
+		return true;
 	}
 
 	// Burns fuel while ridden; false once the tank is dry.
@@ -247,10 +424,27 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return "";
 		}
-		string fuel = FuelEnabled
-			? $"\n{FuelName()}: {Mathf.CeilToInt(GetFuel())}/{SnakeWoodPlugin.FuelCapacity.Value}" +
-			  $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Add {FuelName()}"
-			: "";
+		string fuel = "";
+		if (WearEnabled)
+		{
+			fuel += $"\nCondition: {Condition() * 100f:0}%" + (WornOut() ? " <color=red>(worn out)</color>" : "");
+		}
+		if (FuelEnabled)
+		{
+			fuel += $"\n{FuelName()}: {Mathf.CeilToInt(GetFuel())}/{SnakeWoodPlugin.FuelCapacity.Value}";
+		}
+		if (WearEnabled && GetWear() > 0f)
+		{
+			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Repair ({RepairName()})";
+		}
+		else if (FuelEnabled)
+		{
+			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Add {FuelName()}";
+		}
+		if (FuelEnabled && GetFuel() >= 1f)
+		{
+			fuel += $"\n[<color=yellow><b>{SnakeWoodPlugin.TakeFuelKey.Value}</b></color>] Take out {FuelName()}";
+		}
 		if (IsLocalUser())
 		{
 			return Localization.instance.Localize(m_v.Name + fuel + "\n[<color=yellow><b>$KEY_Use</b></color>] Get off");
@@ -266,6 +460,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	{
 		if (hold || !m_nview.IsValid() || character is not Player player)
 		{
+			return false;
+		}
+		if (alt && WearEnabled && GetWear() > 0f)
+		{
+			RepairFrom(player);
 			return false;
 		}
 		if (alt && FuelEnabled)
@@ -286,6 +485,21 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (FuelEnabled && GetFuel() <= 0f)
 		{
 			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It needs {FuelName()} to fly (Shift+E to add)"));
+			return false;
+		}
+		if (WornOut())
+		{
+			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It's too battered to fly. Repair it with {RepairName()} (Shift+E)"));
+			return false;
+		}
+		if (CarriesMetal(player))
+		{
+			player.Message(MessageHud.MessageType.Center, "It won't carry ore or metal");
+			return false;
+		}
+		if (LoadOf(player) > 1f)
+		{
+			player.Message(MessageHud.MessageType.Center, $"You're carrying too much for this log (it lifts {m_v.LoadCapacityCfg.Value:0})");
 			return false;
 		}
 		m_nview.InvokeRPC("SnakeWood_RequestControl", player.GetZDOID().UserID);
@@ -365,6 +579,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		ResetControls();
 		RidingControlsPatch.ResetStance();
 		m_yaw = FrameYaw();
+		m_load = LoadOf(player);
+		m_loadTimer = 0.5f;
 		player.StartDoodadControl(this);
 		player.AttachStart(m_attachPoint, gameObject, hideWeapons: false, isBed: false, onShip: false,
 			SnakeWoodPlugin.AttachAnimation.Value, m_detachOffset);
@@ -391,6 +607,19 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			SetDisguiseOffset(HoverLogDisguise.StoredOffset(m_nview.GetZDO()));
 		}
 		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
+		CheckTakeFuelKey();
+	}
+
+	private void CheckTakeFuelKey()
+	{
+		Player player = Player.m_localPlayer;
+		if (player == null || !FuelEnabled || !m_nview.IsValid() || !SnakeWoodPlugin.TakeFuelKey.Value.IsDown()
+			|| !player.TakeInput() || player.GetHoverObject() is not GameObject hovered
+			|| hovered.GetComponentInParent<HoverLog>() != this || !InUseDistance(player))
+		{
+			return;
+		}
+		TakeFuelOut(player);
 	}
 
 	public void OnUseStop(Player player)
@@ -553,8 +782,23 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			driving = false;
 		}
-		// Out of fuel the log still carries you, but only just: low, slow, no boost or hops.
-		bool sputtering = driving && !BurnFuel(dt);
+		if (driving && !UpdateLoad(dt))
+		{
+			driving = false;
+		}
+		float load = driving ? Mathf.Min(1f, m_load) : 0f;
+		if (driving)
+		{
+			AddWear(SnakeWoodPlugin.WearPerMinute.Value / 60f * dt);
+			if (!m_nview.IsValid())
+			{
+				return; // Broke apart.
+			}
+		}
+		// Out of fuel, worn out or overloaded, the log still carries you, but only just: low, slow,
+		// no boost or hops.
+		bool outOfFuel = driving && !BurnFuel(dt);
+		bool sputtering = driving && (outOfFuel || WornOut() || m_load > 1f);
 		if (sputtering)
 		{
 			m_boost = false;
@@ -571,7 +815,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Vertical. An empty log rests on water like a real one; over deep water a ridden log sinks
 		// to skim the surface. Otherwise a damped spring holds the hover height. Well above that
 		// (after a hop or off a cliff) it's in the air and falls under its own gravity instead.
-		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : sputtering ? 0.3f : m_v.HoverHeightCfg.Value;
+		float heightFactor = 1f - SnakeWoodPlugin.LoadHeightPenalty.Value * load;
+		float handling = 1f - SnakeWoodPlugin.LoadHandlingPenalty.Value * load;
+		float climb = m_v.MaxClimbCfg.Value;
+		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : sputtering ? 0.3f : Mathf.Max(0.3f, m_v.HoverHeightCfg.Value * heightFactor);
 
 		// Nose pitch follows where the rider looks (up or down). Nose up rides higher the faster you
 		// go, to clear rising ground and bumps; nose down sits lower and dives faster off ledges.
@@ -608,13 +855,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (m_hopQueued)
 		{
 			m_hopQueued = false;
-			TryHop(ref vel, inAir, airGravity);
+			TryHop(ref vel, inAir, airGravity, heightFactor);
 		}
 
 		// Steering.
 		float throttle = Mathf.Clamp(m_moveInput.z, -1f, 1f);
 		float side = Mathf.Clamp(m_moveInput.x, -1f, 1f);
-		float turnSpeed = m_v.TurnSpeedCfg.Value;
+		float turnSpeed = m_v.TurnSpeedCfg.Value * handling;
 		float turnInput;
 		float strafe = 0f;
 		if (SnakeWoodPlugin.Steering.Value == SteeringMode.Keys || !driving)
@@ -637,7 +884,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Quaternion yawRot = Quaternion.Euler(0f, m_yaw, 0f);
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
-		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f);
+		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f)
+			* (1f - SnakeWoodPlugin.LoadSpeedPenalty.Value * load);
 		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
 		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
 		float targetForward = throttle >= 0f ? throttle * topSpeed : throttle * baseSpeed * 0.4f;
@@ -648,13 +896,18 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			targetForward = 0f;
 			targetSide = 0f;
 		}
-		float accel = m_v.AccelerationCfg.Value;
+		float accel = m_v.AccelerationCfg.Value * handling;
 		float brake = accel * (braking ? 3f : 1.5f) * (deepWater ? 2f : 1f);
 		float forwardSpeed = Vector3.Dot(vel, forward);
 		float sideSpeed = Vector3.Dot(vel, right);
 		forwardSpeed = Mathf.MoveTowards(forwardSpeed, targetForward,
 			(Mathf.Abs(targetForward) > Mathf.Abs(forwardSpeed) && Mathf.Sign(targetForward) == Mathf.Sign(forwardSpeed) ? accel : brake) * dt);
 		sideSpeed = Mathf.MoveTowards(sideSpeed, targetSide, (targetSide != 0f ? accel : m_v.Grip) * dt);
+		if (!inAir && TooSteepAhead(pos, surfaceY, forward * Mathf.Sign(forwardSpeed), Mathf.Abs(forwardSpeed), climb))
+		{
+			// Too steep to climb: stall, with a little slide back down.
+			forwardSpeed = -Mathf.Sign(forwardSpeed) * 0.5f;
+		}
 		Vector3 horizontal = forward * forwardSpeed + right * sideSpeed;
 		m_body.linearVelocity = new Vector3(horizontal.x, vel.y, horizontal.z);
 		m_driveVelocity = m_body.linearVelocity;
@@ -662,8 +915,15 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Rotation: heading, a lean into turns, and a partial tilt to match the ground.
 		float targetRoll = -turnInput * Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value)) * 18f;
 		m_roll = Mathf.Lerp(m_roll, targetRoll, 4f * dt);
-		m_pitch = Mathf.Lerp(m_pitch, pitchInput * SnakeWoodPlugin.MaxPitch.Value, 4f * dt);
-		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, inAir ? 0f : 0.6f);
+		// The nose never tips further than the log can climb, from look pitch or from the ground.
+		m_pitch = Mathf.Lerp(m_pitch, pitchInput * Mathf.Min(SnakeWoodPlugin.MaxPitch.Value, climb), 4f * dt);
+		float tilt = inAir ? 0f : 0.6f;
+		float groundAngle = Vector3.Angle(Vector3.up, surfaceNormal);
+		if (groundAngle * tilt > climb)
+		{
+			tilt = climb / groundAngle;
+		}
+		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, tilt);
 		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
 		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
@@ -671,14 +931,58 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (driving)
 		{
 			UpdatePoisonCloud(dt);
+			MakeNoise(Mathf.Abs(forwardSpeed));
 		}
+	}
+
+	// Creatures hear a log coming: a little idling, a lot at full tilt.
+	private void MakeNoise(float speed)
+	{
+		Player player = Player.m_localPlayer;
+		float scale = m_v.NoiseCfg.Value;
+		if (player == null || scale <= 0f)
+		{
+			return;
+		}
+		float t = Mathf.Clamp01(speed / Mathf.Max(1f, m_v.MaxSpeedCfg.Value));
+		float range = Mathf.Lerp(SnakeWoodPlugin.NoiseAtRest.Value, SnakeWoodPlugin.NoiseAtSpeed.Value, t) * scale;
+		if (range > 0f)
+		{
+			player.AddNoise(range);
+		}
+	}
+
+	// Whether the ground just ahead (in the direction of travel) rises more steeply than the log
+	// can climb. Only terrain counts: trees, rocks and walls are for crashing into (or ramming), and
+	// water ahead is flat.
+	private bool TooSteepAhead(Vector3 pos, float surfaceY, Vector3 direction, float speed, float climb)
+	{
+		if (speed < 0.2f || float.IsNegativeInfinity(surfaceY))
+		{
+			return false;
+		}
+		float distance = 1.2f + 0.5f * m_v.Length + speed * 0.1f;
+		Vector3 ahead = pos + direction * distance;
+		ahead.y = surfaceY + distance * 4f + 1f;
+		if (s_terrainMask == 0)
+		{
+			s_terrainMask = LayerMask.GetMask("terrain");
+		}
+		float height = Physics.Raycast(ahead, Vector3.down, out RaycastHit hit, distance * 8f + 2f, s_terrainMask, QueryTriggerInteraction.Ignore)
+			? hit.point.y
+			: float.NegativeInfinity;
+		if (float.IsNegativeInfinity(height) || (ZoneSystem.instance != null && ZoneSystem.instance.m_waterLevel >= height))
+		{
+			return false;
+		}
+		return Mathf.Atan2(height - surfaceY, distance) * Mathf.Rad2Deg > climb;
 	}
 
 	// A hop launches the log to Hop Height above where it is, under the same gravity it falls with,
 	// so the hover spring can't drag it straight back down. Air hops work the same way in mid-air.
-	private void TryHop(ref Vector3 vel, bool inAir, float airGravity)
+	private void TryHop(ref Vector3 vel, bool inAir, float airGravity, float heightFactor)
 	{
-		float height = m_v.HopHeightCfg.Value;
+		float height = m_v.HopHeightCfg.Value * heightFactor;
 		if (height <= 0f || (inAir && m_airHopsUsed >= m_v.AirHopsCfg.Value))
 		{
 			return;
@@ -857,21 +1161,27 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			return;
 		}
 		Ram(collision);
-		CheckCrash(collision);
+		if (m_nview.IsValid())
+		{
+			CheckCrash(collision);
+		}
 	}
 
 	// Slamming into something solid (not a creature) hard enough throws the rider off. Only the
 	// sideways part of the impact counts, so landings don't.
 	private void CheckCrash(Collision collision)
 	{
-		float crashSpeed = m_v.CrashSpeedCfg.Value;
-		if (crashSpeed <= 0f || collision.collider.GetComponentInParent<Character>() != null)
+		if (collision.collider.GetComponentInParent<Character>() != null)
 		{
 			return;
 		}
 		Vector3 impulse = collision.impulse;
 		impulse.y = 0f;
-		if (impulse.magnitude / m_body.mass >= crashSpeed)
+		float hit = impulse.magnitude / m_body.mass;
+		// Bumps wear a little; real crashes a lot.
+		AddWear(Mathf.Max(0f, hit - 3f) * 3f * SnakeWoodPlugin.CrashWear.Value);
+		float crashSpeed = m_v.CrashSpeedCfg.Value;
+		if (crashSpeed > 0f && hit >= crashSpeed)
 		{
 			ThrowRider("You crashed!");
 		}
@@ -933,6 +1243,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		hit.m_dir = dir.sqrMagnitude > 0.01f ? dir.normalized : m_frame.forward;
 		hit.SetAttacker(rider);
 		destructible.Damage(hit);
+		AddWear(amount * 0.05f * SnakeWoodPlugin.RamWear.Value);
 	}
 
 	private void OnDestroy()

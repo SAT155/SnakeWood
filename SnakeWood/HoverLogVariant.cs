@@ -24,8 +24,9 @@ public class HoverLogVariant
 			WoodItem = "Wood", Recipe = "Wood:20,Resin:10,TrophyDeer:2",
 			TemplateHints = new[] { "wood_pole2", "wood_pole", "wood_beam" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
-			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 11f, Boost = 1.5f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
+			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 7f, Boost = 1.3f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
 			HoverHeight = 0.9f, HopHeight = 3f, FallGravity = 1f, CrashSpeed = 7f, DeepWaterSpeed = 0.35f,
+			MaxClimb = 30f, LoadCapacity = 300f, Durability = 100f, Noise = 1f,
 			Fx = TrailFx.Motes, Glow = new Color(1f, 0.8f, 0.45f),
 		},
 		new HoverLogVariant("FineWood", "Fine Hover Log", "Light, quick and twitchy. Turns on a coin, but a hard knock throws you off.")
@@ -33,8 +34,9 @@ public class HoverLogVariant
 			WoodItem = "FineWood", Recipe = "FineWood:20,Resin:10,AncientSeed:3",
 			TemplateHints = new[] { "darkwood_pole", "darkwood_pole4", "darkwood_beam" },
 			Length = 2.3f, Thickness = 0.8f, Mass = 35f,
-			AimPenalty = 6f, RideStamina = 3.5f, MaxSpeed = 15f, Boost = 1.6f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
+			AimPenalty = 6f, RideStamina = 3.5f, MaxSpeed = 9f, Boost = 1.45f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
 			HoverHeight = 0.8f, HopHeight = 3.5f, FallGravity = 1f, CrashSpeed = 6f, DeepWaterSpeed = 0.35f,
+			MaxClimb = 35f, LoadCapacity = 180f, Durability = 60f, Noise = 0.8f,
 			Fx = TrailFx.Motes, Glow = new Color(0.75f, 0.9f, 1f),
 		},
 		new HoverLogVariant("RoundLog", "Core Wood Battering Log", "Bulky and slow to get going, but nothing knocks you off it. Rams creatures and fells trees in its way.")
@@ -42,8 +44,9 @@ public class HoverLogVariant
 			WoodItem = "RoundLog", Recipe = "RoundLog:20,Resin:10,AncientSeed:3",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log", "wood_log_45", "wood_log_26" },
 			Length = 3.6f, Thickness = 1.5f, Mass = 250f,
-			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 8f, Boost = 1.35f, Acceleration = 4.5f, TurnSpeed = 65f, Grip = 5f,
+			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 5.5f, Boost = 1.3f, Acceleration = 4.5f, TurnSpeed = 65f, Grip = 5f,
 			HoverHeight = 0.7f, HopHeight = 2f, FallGravity = 1.3f, CrashSpeed = 0f, DeepWaterSpeed = 0.25f,
+			MaxClimb = 22f, LoadCapacity = 700f, Durability = 300f, Noise = 1.6f,
 			Fx = TrailFx.Dust, Glow = new Color(1f, 0.6f, 0.3f),
 			RamDamage = 60f, RamChop = 1f, RamPickaxe = 0.5f, RamPush = 60f, RamToolTier = 2,
 		},
@@ -53,8 +56,9 @@ public class HoverLogVariant
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log" },
 			Tint = new Color(0.55f, 0.6f, 0.45f),
 			Length = 2.8f, Thickness = 1.15f, Mass = 90f,
-			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 10f, Boost = 1.4f, Acceleration = 8f, TurnSpeed = 105f, Grip = 6f,
+			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 7f, Boost = 1.35f, Acceleration = 8f, TurnSpeed = 105f, Grip = 6f,
 			HoverHeight = 1.7f, HopHeight = 3f, FallGravity = 0.8f, CrashSpeed = 8f, DeepWaterSpeed = 0.6f,
+			MaxClimb = 30f, LoadCapacity = 500f, Durability = 150f, Noise = 0.9f,
 			Fx = TrailFx.Poison, Glow = new Color(0.5f, 1f, 0.35f), PoisonCloud = 8f,
 			RamDamage = 10f, RamPoison = 3f, RamPush = 20f,
 		},
@@ -64,18 +68,20 @@ public class HoverLogVariant
 			TemplateHints = new[] { "yggdrasil_wood_beam", "Yggdrasil_wood_beam", "yggdrasil_wood_pole", "Yggdrasil_wood_pole" },
 			Tint = new Color(0.8f, 0.9f, 1.15f),
 			Length = 2.8f, Thickness = 1f, Mass = 50f,
-			AimPenalty = 3f, RideStamina = 1.2f, MaxSpeed = 12f, Boost = 1.5f, Acceleration = 10f, TurnSpeed = 130f, Grip = 7f,
+			AimPenalty = 3f, RideStamina = 1.2f, MaxSpeed = 9f, Boost = 1.45f, Acceleration = 10f, TurnSpeed = 130f, Grip = 7f,
 			HoverHeight = 2.4f, HopHeight = 5f, AirHops = 2, FallGravity = 0.3f, CrashSpeed = 7f, DeepWaterSpeed = 0.45f,
+			MaxClimb = 40f, LoadCapacity = 200f, Durability = 120f, Noise = 0.5f,
 			Fx = TrailFx.Sparkles, Glow = new Color(0.45f, 0.75f, 1f),
 		},
-		new HoverLogVariant("Blackwood", "Ashwood Hover Log", "The fastest log there is, and it runs hot: it trails embers and anything it rams catches fire.")
+		new HoverLogVariant("Blackwood", "Ashwood Hover Log", "The fastest log there is (just), and it runs hot: it trails embers and anything it rams catches fire.")
 		{
 			WoodItem = "Blackwood", Recipe = "Blackwood:20,Resin:10,BellFragment:1",
 			TemplateHints = new[] { "ashwood_pole", "ashwood_beam", "blackwood_pole", "blackwood_beam" },
 			Tint = new Color(0.55f, 0.45f, 0.42f),
 			Length = 2.7f, Thickness = 1f, Mass = 70f,
-			AimPenalty = 6f, RideStamina = 2f, MaxSpeed = 18f, Boost = 1.6f, Acceleration = 13f, TurnSpeed = 125f, Grip = 9f,
+			AimPenalty = 6f, RideStamina = 2f, MaxSpeed = 9.5f, Boost = 1.45f, Acceleration = 13f, TurnSpeed = 125f, Grip = 9f,
 			HoverHeight = 1f, HopHeight = 3.5f, FallGravity = 1f, CrashSpeed = 9f, DeepWaterSpeed = 0.35f,
+			MaxClimb = 35f, LoadCapacity = 250f, Durability = 150f, Noise = 1.2f,
 			Fx = TrailFx.Embers, Glow = new Color(1f, 0.45f, 0.15f),
 			RamDamage = 15f, RamFire = 25f, RamPush = 30f,
 		},
@@ -84,8 +90,9 @@ public class HoverLogVariant
 			WoodItem = "Fish2", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
-			AimPenalty = 5f, RideStamina = 0.7f, MaxSpeed = 6f, Boost = 1.3f, Acceleration = 8f, TurnSpeed = 110f, Grip = 6f,
+			AimPenalty = 5f, RideStamina = 0.7f, MaxSpeed = 5f, Boost = 1.3f, Acceleration = 8f, TurnSpeed = 110f, Grip = 6f,
 			HoverHeight = 0.6f, HopHeight = 2.5f, FallGravity = 1f, CrashSpeed = 6f, DeepWaterSpeed = 2f,
+			MaxClimb = 20f, LoadCapacity = 250f, Durability = 80f, Noise = 0.7f,
 			Fx = TrailFx.Motes, Glow = new Color(0.35f, 0.8f, 1f),
 		},
 	};
@@ -120,6 +127,7 @@ public class HoverLogVariant
 	public Color Glow = Color.white;
 
 	// Defaults for the handling config entries below.
+	public float MaxClimb, LoadCapacity, Durability, Noise;
 	public float AimPenalty, RideStamina, MaxSpeed, Boost, Acceleration, TurnSpeed, Grip, HoverHeight, HopHeight, FallGravity, CrashSpeed, DeepWaterSpeed;
 	public int AirHops;
 	public float RamDamage, RamChop, RamPickaxe, RamFire, RamPoison, RamPush, PoisonCloud;
@@ -139,6 +147,10 @@ public class HoverLogVariant
 	public ConfigEntry<float> FallGravityCfg = null!;
 	public ConfigEntry<float> CrashSpeedCfg = null!;
 	public ConfigEntry<float> DeepWaterSpeedCfg = null!;
+	public ConfigEntry<float> MaxClimbCfg = null!;
+	public ConfigEntry<float> LoadCapacityCfg = null!;
+	public ConfigEntry<float> DurabilityCfg = null!;
+	public ConfigEntry<float> NoiseCfg = null!;
 	public ConfigEntry<float> RamDamageCfg = null!;
 	public ConfigEntry<float> PoisonCloudCfg = null!;
 
@@ -156,6 +168,8 @@ public class HoverLogVariant
 		string text = Description + "\n";
 		text += Line("Speed", $"{MaxSpeedCfg.Value:0.#} m/s, boost x{BoostCfg.Value:0.##}");
 		text += Line("Turning", $"{TurnSpeedCfg.Value:0}°/s");
+		text += Line("Climbs", $"slopes up to {MaxClimbCfg.Value:0}°");
+		text += Line("Carries", $"up to {LoadCapacityCfg.Value:0} weight, slower and lower as it fills");
 		text += Line("Hover", $"{HoverHeightCfg.Value:0.#} m");
 		string airHops = AirHopsCfg.Value > 0 ? $", +{AirHopsCfg.Value} in mid-air" : "";
 		text += Line("Hop", HopHeightCfg.Value > 0f ? $"{HopHeightCfg.Value:0.#} m{airHops}" : "none");
@@ -167,6 +181,11 @@ public class HoverLogVariant
 		text += Line("Crashes", CrashSpeedCfg.Value > 0f ? $"thrown off above {CrashSpeedCfg.Value:0.#} m/s" : "never thrown off");
 		text += Line("Aim", $"+{AimPenaltyCfg.Value:0.#}° spread, more at speed");
 		text += Line("Deep water", $"{DeepWaterSpeedCfg.Value * 100f:0}% speed");
+		text += Line("Noise", NoiseCfg.Value < 0.75f ? "quiet" : NoiseCfg.Value > 1.25f ? "loud" : "normal");
+		if (SnakeWoodPlugin.WearEnabled.Value)
+		{
+			text += Line("Durability", $"{DurabilityCfg.Value:0}");
+		}
 		if (RamDamageCfg.Value > 0f)
 		{
 			List<string> extras = new();
@@ -195,7 +214,7 @@ public class HoverLogVariant
 		RideStaminaCfg = config.Bind(section, "Riding Stamina Per Second", RideStamina,
 			new ConfigDescription("Stamina it takes to keep your balance, drained the whole time you ride (and stamina doesn't regenerate meanwhile). When it runs out you lose your grip and fall off. 0 makes riding free.", new AcceptableValueRange<float>(0f, 20f)));
 		MaxSpeedCfg = config.Bind(section, "Top Speed", MaxSpeed,
-			new ConfigDescription("Top speed in metres per second without boost. A running player does about 7.", new AcceptableValueRange<float>(1f, 60f)));
+			new ConfigDescription("Top speed in metres per second without boost. A running player does about 7, a ridden Lox a little more. Heavy loads lower it (see Load Capacity).", new AcceptableValueRange<float>(1f, 60f)));
 		BoostCfg = config.Bind(section, "Boost Multiplier", Boost,
 			new ConfigDescription("Top speed multiplier while holding Run (Shift).", new AcceptableValueRange<float>(1f, 4f)));
 		AccelerationCfg = config.Bind(section, "Acceleration", Acceleration,
@@ -214,6 +233,19 @@ public class HoverLogVariant
 			new ConfigDescription("Hitting a tree, rock or wall this hard (speed lost in the impact, metres per second) throws you off. 0 means it never throws you.", new AcceptableValueRange<float>(0f, 50f)));
 		DeepWaterSpeedCfg = config.Bind(section, "Deep Water Speed", DeepWaterSpeed,
 			new ConfigDescription("Over deep water the log sinks to skim the surface and its top speed is multiplied by this. 1 makes deep water no different from land; above 1 it is faster at sea (the Hover Pike).", new AcceptableValueRange<float>(0.05f, 3f)));
+		MaxClimbCfg = config.Bind(section, "Max Climb Angle", MaxClimb,
+			new ConfigDescription("Steepest slope, in degrees, the log can drive up. Steeper ground stops it (hop over it or go round), and the nose never tips further than this.", new AcceptableValueRange<float>(5f, 80f)));
+		LoadCapacityCfg = config.Bind(section, "Load Capacity", LoadCapacity,
+			new ConfigDescription("How much inventory weight (your carry weight, gear included) it can lift. The fuller it is, the lower its top speed, hover height and handling; over this it won't lift off (see the Load settings under 3 - Balance).", new AcceptableValueRange<float>(10f, 5000f)));
+		DurabilityCfg = config.Bind(section, "Durability", Durability,
+			new ConfigDescription("How much wear (crashes, rams, riding) it takes before it's too battered to fly. See 5 - Wear.", new AcceptableValueRange<float>(1f, 5000f)));
+		NoiseCfg = config.Bind(section, "Noise", Noise,
+			new ConfigDescription("Multiplies how far away creatures hear you riding it (see Noise settings under 3 - Balance).", new AcceptableValueRange<float>(0f, 5f)));
+		if (SnakeWoodPlugin.ResetSpeeds)
+		{
+			MaxSpeedCfg.Value = MaxSpeed;
+			BoostCfg.Value = Boost;
+		}
 		RamDamageCfg = config.Bind(section, "Ram Damage", RamDamage,
 			new ConfigDescription("Damage dealt at full speed to what the log runs into. Scales down at lower speeds. 0 turns ramming off.", new AcceptableValueRange<float>(0f, 500f)));
 		if (Fx == TrailFx.Poison)

@@ -25,6 +25,11 @@ details, controls and config are in
   `MoveRotation` on a rotation-frozen body.
 - **Jump hops (`JumpHopsPatch`).** Vanilla's `Player.SetControls` treats Jump as "get off" for
   any doodad. A prefix turns it into a hop while the doodad is a hover log.
+- **Balance.** The rider's game reads their inventory weight (`Inventory.GetTotalWeight`)
+  twice a second and scales top speed, hover/hop height and handling by it, probes the terrain
+  ahead for slopes steeper than the log's climb angle, and calls `Character.AddNoise` each physics
+  step. Fuel and wear live in the log's ZDO (`SnakeWood_fuel`, `SnakeWood_wear`); changes go
+  through RPCs to the owner.
 - **Ramming.** `OnCollisionEnter` on the rider's game sends a `HitData` (blunt, plus
   chop/pickaxe/fire/poison per wood) to the `IDestructible` it hit, scaled by impact speed,
   with a short cooldown per target.

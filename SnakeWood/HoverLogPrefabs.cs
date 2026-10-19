@@ -479,7 +479,18 @@ internal static class ObjectDBAwakePatch
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
 internal static class ZNetSceneAwakePatch
 {
-	private static void Postfix() => HoverLogPrefabs.RegisterWithZNetScene();
+	private static void Postfix(ZNetScene __instance)
+	{
+		HoverLogPrefabs.RegisterWithZNetScene();
+		// For tuning log speeds against the game's own creatures.
+		foreach (string name in new[] { "Hare", "Lox", "Deer", "Wolf" })
+		{
+			if (__instance.GetPrefab(name)?.GetComponent<Character>() is Character character)
+			{
+				SnakeWoodPlugin.Log.LogInfo($"{name}: walk {character.m_walkSpeed:0.#}, run {character.m_runSpeed:0.#} m/s");
+			}
+		}
+	}
 }
 
 // Controls while on a log. Vanilla's Player.SetControls drops you off any mount on Jump or attack.

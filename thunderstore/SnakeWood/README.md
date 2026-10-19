@@ -21,12 +21,28 @@ server admin can change them.
 | Log | Cost | How it rides |
 | --- | --- | --- |
 | Hover Log | 20 Wood, 10 Resin, 2 Deer Trophies | Balanced and forgiving. |
-| Fine Hover Log | 20 Fine Wood, 10 Resin, 3 Ancient Seeds | Light, quick and twitchy. |
-| Core Wood Battering Log | 20 Core Wood, 10 Resin, 3 Ancient Seeds | Heavy and slow, but **nothing knocks you off it**. Rams creatures and fells trees in its way. |
-| Ancient Bark Hover Log | 20 Ancient Bark, 10 Resin, 3 Withered Bones | Floats high over swamp roots, handles water best, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
-| Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | Floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. |
+| Fine Hover Log | 20 Fine Wood, 10 Resin, 3 Ancient Seeds | Light, quick and twitchy: a scout. Fast enough to run down a hare, but carries little. |
+| Core Wood Battering Log | 20 Core Wood, 10 Resin, 3 Ancient Seeds | Heavy and slow, but **nothing knocks you off it** and it hauls the heaviest loads. Rams creatures and fells trees in its way. |
+| Ancient Bark Hover Log | 20 Ancient Bark, 10 Resin, 3 Withered Bones | Floats high over swamp roots (and leeches), handles water best, carries a lot, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
+| Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | The Mistlands scout: quiet, climbs steepest, floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. Fast enough to catch a hare. |
 | Hover Pike | 1 Pike, 10 Resin, 5 Serpent Scales | A giant enchanted pike for the open sea: faster than a longship over deep water (twice its land speed), but slow and floppy on land. Gentle stamina drain, but long crossings still wear you down. |
-| Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest. Trails embers, and its ram sets things on fire. |
+| Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest, just. Trails embers, and its ram sets things on fire. |
+
+Logs are scouting and utility rides, not a faster way to haul everything: the quickest are only
+a little faster than a ridden Lox, and only with light packs.
+
+| Log | Top speed (boost) | Climbs | Carries | Durability | Noise |
+| --- | --- | --- | --- | --- | --- |
+| Hover Log | 7 (9.1) m/s | 30° | 300 | 100 | normal |
+| Fine Hover Log | 9 (13) m/s | 35° | 180 | 60 | a little quieter |
+| Core Wood Battering Log | 5.5 (7.2) m/s | 22° | 700 | 300 | loud |
+| Ancient Bark Hover Log | 7 (9.5) m/s | 30° | 500 | 150 | normal |
+| Yggdrasil Hover Log | 9 (13) m/s | 40° | 200 | 120 | quiet |
+| Hover Pike | 5 (6.5) m/s, 10 (13) at sea | 20° | 250 | 80 | a little quieter |
+| Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 250 | 150 | a little louder |
+
+Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new defaults once
+(other settings you changed are kept).
 
 ## Passengers
 
@@ -39,6 +55,8 @@ Every log burns **resin**. A new log starts empty.
 
 - **Shift+E** on a log tops it up from your inventory (up to 20). Using resin on it from the
   hotbar adds one at a time.
+- **R** while looking at a log takes the whole resin back out (`Take Out Fuel Key`).
+  Deconstructing a log gives back its resin too.
 - Riding burns about 1 resin a minute. A parked log burns nothing.
 - An empty log won't lift off. If one runs dry mid-ride it sputters along low and slow, with no
   boost or hops, until you refuel.
@@ -64,7 +82,7 @@ each log has its own flat **Aim Penalty** (steady Core Wood least, twitchy Fine 
 most), and moving adds more on top.
 
 Hover over a log in the build menu to see its stats: speed, turning, hover, hop, balance cost,
-crash limit, aim, deep-water speed and any ram or cloud.
+crash limit, aim, deep-water speed, climb angle, load capacity, noise, durability and any ram or cloud.
 
 ## Staying on
 
@@ -77,6 +95,31 @@ crash limit, aim, deep-water speed and any ram or cloud.
   some of your speed. The Core Wood log never throws you.
 - **Going under water throws you.** If a dive takes you below the surface you lose your grip,
   and the log bobs back up.
+
+## Weight, slopes and noise
+
+- **Carry weight.** Each log lifts up to its **Load Capacity** (your whole inventory weight,
+  gear included). Up to about a third of that makes no difference. Above it, the fuller the log,
+  the lower its top speed (up to 45% slower), hover and hop height (up to half), and the
+  sluggier its acceleration and turning. Over capacity it won't take off, and if you pick up too
+  much mid-ride it sputters along low and slow. Core Wood and Ancient Bark carry the most.
+- **Slopes.** Each log has a **Max Climb Angle**. Ground steeper than that stops it (hop over it
+  or go round), and the log's nose never tips further than that either, from the ground or from
+  looking up and down.
+- **Noise.** Riding is loud: creatures hear a log idling from about 8 m and one at full speed from
+  about 35 m (a running player is about 30). The Yggdrasil log is quietest, Core Wood loudest.
+- **No ore or metal** (off by default). Turn on `No Ore Or Metal` and logs refuse anything you
+  couldn't take through a portal.
+
+## Wear
+
+Logs wear out from crashes (harder hits wear more, even on Core Wood, which never throws you),
+from ramming, and slowly from riding (1 a minute). Hover over a log to see its condition.
+
+- A worn-out log won't take off, and one that wears out mid-ride sputters along low and slow.
+- **Shift+E** with resin repairs it (10 per resin) before it adds any fuel.
+- Logs never break or lose materials by default. `Break When Worn Out` makes a worn-out log fall
+  apart instead, dropping its fuel and `Broken Material Return` (half) of its materials.
 
 ## Water
 
@@ -112,11 +155,17 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
-- **Fuel**: **Fuel Item** (Resin), **Fuel Capacity** and **Fuel Per Minute** (0 turns fuel off).
+  Also **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
+  **Load Height Penalty**, **Load Handling Penalty**), and **Noise At Rest** / **Noise At Top Speed**.
+- **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
+  **Take Out Fuel Key** (R).
+- **Wear**: **Wear** (on), **Wear Per Minute**, **Crash Wear**, **Ram Wear**, **Repair Item**
+  (Resin), **Repair Per Item**, **Break When Worn Out** (off) and **Broken Material Return**.
 - **Ram Damages Buildings / Players And Tames**: both off by default.
 - One section per log: **Buildable**, **Recipe**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
   **Boost Multiplier**, **Acceleration**, **Turn Speed**, **Hover Height**, **Hop Height**,
-  **Air Hops**, **Fall Gravity**, **Crash Speed**, **Deep Water Speed**, **Ram Damage**, and
+  **Air Hops**, **Fall Gravity**, **Crash Speed**, **Deep Water Speed**, **Max Climb Angle**,
+  **Load Capacity**, **Durability**, **Noise**, **Ram Damage**, and
   **Poison Cloud Damage** for Ancient Bark.
 
 The handling settings are read from the **rider's** config while riding, so each player rides
@@ -124,4 +173,5 @@ with their own numbers. Settings aren't synced from the server.
 
 ## Removing a log
 
-Hammer it like any build piece (with a workbench nearby) to get the materials back.
+Hammer it like any build piece (with a workbench nearby) to get the materials and any resin
+in it back.

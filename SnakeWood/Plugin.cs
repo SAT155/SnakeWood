@@ -32,7 +32,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.2.0";
+	internal const string PluginVersion = "1.3.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -59,7 +59,28 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> FuelPerMinute = null!;
 	internal static ConfigEntry<float> EitrPerSecond = null!;
 	internal static ConfigEntry<float> EitrStaminaFactor = null!;
+	internal static ConfigEntry<KeyboardShortcut> TakeFuelKey = null!;
+	internal static ConfigEntry<bool> NoMetal = null!;
+	internal static ConfigEntry<float> LightLoad = null!;
+	internal static ConfigEntry<float> LoadSpeedPenalty = null!;
+	internal static ConfigEntry<float> LoadHeightPenalty = null!;
+	internal static ConfigEntry<float> LoadHandlingPenalty = null!;
+	internal static ConfigEntry<float> NoiseAtRest = null!;
+	internal static ConfigEntry<float> NoiseAtSpeed = null!;
+	internal static ConfigEntry<bool> WearEnabled = null!;
+	internal static ConfigEntry<float> WearPerMinute = null!;
+	internal static ConfigEntry<float> CrashWear = null!;
+	internal static ConfigEntry<float> RamWear = null!;
+	internal static ConfigEntry<string> RepairItem = null!;
+	internal static ConfigEntry<float> RepairPerItem = null!;
+	internal static ConfigEntry<bool> BreakWhenWornOut = null!;
+	internal static ConfigEntry<float> BrokenMaterialReturn = null!;
 	internal static ConfigEntry<bool> RamBuildings = null!;
+
+	// True while binding the per-log entries if this config was written before the speed rebalance,
+	// so those logs' Top Speed and Boost are reset to the new defaults once.
+	internal static bool ResetSpeeds;
+	private const int CurrentBalanceVersion = 2;
 	internal static ConfigEntry<bool> RamFriendlies = null!;
 
 	private void Awake()
@@ -112,14 +133,55 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("If you have eitr, riding draws this much per second to help hold the log steady, and your stamina drain drops (see Stamina Drain With Eitr). 0 turns this off.", new AcceptableValueRange<float>(0f, 10f)));
 		EitrStaminaFactor = Config.Bind("3 - Balance", "Stamina Drain With Eitr", 0.25f,
 			new ConfigDescription("While eitr is helping, riding stamina drain is multiplied by this.", new AcceptableValueRange<float>(0f, 1f)));
+		TakeFuelKey = Config.Bind("4 - Fuel", "Take Out Fuel Key", new KeyboardShortcut(KeyCode.R),
+			"Press while looking at a log to take the fuel out of it (into your inventory, or onto the ground if there's no room).");
+		NoMetal = Config.Bind("3 - Balance", "No Ore Or Metal", false,
+			"Logs refuse to carry anything you couldn't take through a portal (ore, metal bars, eggs...): you can't get on carrying it, and picking it up mid-ride throws you off.");
+		LightLoad = Config.Bind("3 - Balance", "Load Free Share", 0.35f,
+			new ConfigDescription("Share of a log's Load Capacity you can carry with no effect. Above it, top speed, hover height and handling drop off until the log is full; over capacity it won't lift off.", new AcceptableValueRange<float>(0f, 1f)));
+		LoadSpeedPenalty = Config.Bind("3 - Balance", "Load Speed Penalty", 0.45f,
+			new ConfigDescription("How much top speed a full log loses (0.45 = 45% slower). 0 turns this off.", new AcceptableValueRange<float>(0f, 0.95f)));
+		LoadHeightPenalty = Config.Bind("3 - Balance", "Load Height Penalty", 0.5f,
+			new ConfigDescription("How much hover and hop height a full log loses. 0 turns this off.", new AcceptableValueRange<float>(0f, 0.95f)));
+		LoadHandlingPenalty = Config.Bind("3 - Balance", "Load Handling Penalty", 0.4f,
+			new ConfigDescription("How much acceleration and turning a full log loses. 0 turns this off.", new AcceptableValueRange<float>(0f, 0.95f)));
+		NoiseAtRest = Config.Bind("3 - Balance", "Noise At Rest", 8f,
+			new ConfigDescription("How far away, in metres, creatures can hear a log idling, before each log's own Noise multiplier. 0 makes logs silent.", new AcceptableValueRange<float>(0f, 100f)));
+		NoiseAtSpeed = Config.Bind("3 - Balance", "Noise At Top Speed", 35f,
+			new ConfigDescription("How far away creatures can hear a log at top speed, before each log's own Noise multiplier. A running player is heard from about 30 m.", new AcceptableValueRange<float>(0f, 200f)));
+		WearEnabled = Config.Bind("5 - Wear", "Wear", true,
+			"Logs wear out from crashes, rams and riding. A worn-out log won't fly until it's repaired with resin (Shift+E). Off: logs never wear.");
+		WearPerMinute = Config.Bind("5 - Wear", "Wear Per Minute", 1f,
+			new ConfigDescription("Wear from each minute of riding.", new AcceptableValueRange<float>(0f, 50f)));
+		CrashWear = Config.Bind("5 - Wear", "Crash Wear", 1f,
+			new ConfigDescription("Multiplies the wear from hitting trees, rocks and walls (harder hits wear more).", new AcceptableValueRange<float>(0f, 10f)));
+		RamWear = Config.Bind("5 - Wear", "Ram Wear", 1f,
+			new ConfigDescription("Multiplies the wear from ramming things (a twentieth of the ram's damage).", new AcceptableValueRange<float>(0f, 10f)));
+		RepairItem = Config.Bind("5 - Wear", "Repair Item", "Resin",
+			"The item that repairs logs (the game's item name). Shift+E on a worn log repairs it before adding fuel.");
+		RepairPerItem = Config.Bind("5 - Wear", "Repair Per Item", 10f,
+			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
+		BreakWhenWornOut = Config.Bind("5 - Wear", "Break When Worn Out", false,
+			"On: a log that wears out breaks apart (dropping its fuel and some of its materials, see below) instead of waiting for repair.");
+		BrokenMaterialReturn = Config.Bind("5 - Wear", "Broken Material Return", 0.5f,
+			new ConfigDescription("Share of a log's building materials dropped when it breaks (only with Break When Worn Out).", new AcceptableValueRange<float>(0f, 1f)));
 		RamBuildings = Config.Bind("2 - Ramming", "Ram Damages Buildings", false,
 			"Ramming logs (Core Wood, Ashwood, Ancient Bark) also damage build pieces they hit. Off by default so a bad landing can't knock a hole in your base.");
 		RamFriendlies = Config.Bind("2 - Ramming", "Ram Damages Players And Tames", false,
 			"Ramming logs also damage other players and tamed creatures they hit.");
 
+		ConfigEntry<int> balanceVersion = Config.Bind("Internal", "Balance Version", 0,
+			"Used by the mod to update old settings after a rebalance. Leave it alone.");
+		ResetSpeeds = balanceVersion.Value < CurrentBalanceVersion;
 		foreach (HoverLogVariant variant in HoverLogVariant.All)
 		{
 			variant.BindConfig(Config);
+		}
+		if (ResetSpeeds)
+		{
+			ResetSpeeds = false;
+			balanceVersion.Value = CurrentBalanceVersion;
+			Log.LogInfo("Log top speeds and boosts reset to this version's defaults.");
 		}
 
 		Config.Bind("1 - Riding", "Reload Config From Disk", false,
