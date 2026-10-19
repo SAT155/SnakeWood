@@ -21,7 +21,7 @@ public class HoverLogVariant
 	{
 		new HoverLogVariant("Wood", "Hover Log", "A plain log that floats a little above the ground. Steady and forgiving, but crash into a tree or rock and you're off.")
 		{
-			WoodItem = "Wood", Recipe = "Wood:20,Resin:10,TrophyDeer:2",
+			WoodItem = "Wood", Recipe = "Wood:50,Resin:20,TrophyDeer:4,DeerHide:10",
 			TemplateHints = new[] { "wood_pole2", "wood_pole", "wood_beam" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
 			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 7f, Boost = 1.3f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
@@ -31,7 +31,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("FineWood", "Fine Hover Log", "Light, quick and twitchy. Turns on a coin, but a hard knock throws you off.")
 		{
-			WoodItem = "FineWood", Recipe = "FineWood:20,Resin:10,AncientSeed:3",
+			WoodItem = "FineWood", Recipe = "FineWood:50,Resin:30,AncientSeed:5,TrollHide:3",
 			TemplateHints = new[] { "darkwood_pole", "darkwood_pole4", "darkwood_beam" },
 			Length = 2.3f, Thickness = 0.8f, Mass = 35f,
 			AimPenalty = 6f, RideStamina = 3.5f, MaxSpeed = 9f, Boost = 1.45f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
@@ -41,7 +41,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("RoundLog", "Core Wood Battering Log", "Bulky and slow to get going, but nothing knocks you off it. Rams creatures and fells trees in its way.")
 		{
-			WoodItem = "RoundLog", Recipe = "RoundLog:20,Resin:10,AncientSeed:3",
+			WoodItem = "RoundLog", Recipe = "RoundLog:60,Resin:30,AncientSeed:5,TrollHide:5",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log", "wood_log_45", "wood_log_26" },
 			Length = 3.6f, Thickness = 1.5f, Mass = 250f,
 			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 5.5f, Boost = 1.3f, Acceleration = 4.5f, TurnSpeed = 65f, Grip = 5f,
@@ -52,7 +52,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("ElderBark", "Ancient Bark Hover Log", "Rides high enough to clear swamp roots and shallow water. It trails a poison cloud that sickens creatures caught in it, and its bark poisons whatever it rams.")
 		{
-			WoodItem = "ElderBark", Recipe = "ElderBark:20,Resin:10,WitheredBone:3",
+			WoodItem = "ElderBark", Recipe = "ElderBark:60,Resin:30,WitheredBone:6,Guck:10",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log" },
 			Tint = new Color(0.55f, 0.6f, 0.45f),
 			Length = 2.8f, Thickness = 1.15f, Mass = 90f,
@@ -64,7 +64,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("YggdrasilWood", "Yggdrasil Hover Log", "Floats and hops highest, can hop again in mid-air, and glides gently down from cliffs, trailing sparks of light.")
 		{
-			WoodItem = "YggdrasilWood", Recipe = "YggdrasilWood:20,Resin:10,DvergrKeyFragment:2",
+			WoodItem = "YggdrasilWood", Recipe = "YggdrasilWood:50,Resin:30,DvergrKeyFragment:4,Sap:10",
 			TemplateHints = new[] { "yggdrasil_wood_beam", "Yggdrasil_wood_beam", "yggdrasil_wood_pole", "Yggdrasil_wood_pole" },
 			Tint = new Color(0.8f, 0.9f, 1.15f),
 			Length = 2.8f, Thickness = 1f, Mass = 50f,
@@ -75,7 +75,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Blackwood", "Ashwood Hover Log", "The fastest log there is (just), and it runs hot: it trails embers and anything it rams catches fire.")
 		{
-			WoodItem = "Blackwood", Recipe = "Blackwood:20,Resin:10,BellFragment:1",
+			WoodItem = "Blackwood", Recipe = "Blackwood:60,Resin:30,BellFragment:3",
 			TemplateHints = new[] { "ashwood_pole", "ashwood_beam", "blackwood_pole", "blackwood_beam" },
 			Tint = new Color(0.55f, 0.45f, 0.42f),
 			Length = 2.7f, Thickness = 1f, Mass = 70f,
@@ -371,6 +371,10 @@ public class HoverLogVariant
 			"What repairs it (the game's item name): Shift+E on a worn log uses these before adding fuel. Each fixes Repair Per Item wear (see 5 - Wear).");
 		NoiseCfg = config.Bind(section, "Noise", Noise,
 			new ConfigDescription("Multiplies how far away creatures hear you riding it (see Noise settings under 3 - Balance).", new AcceptableValueRange<float>(0f, 5f)));
+		if (SnakeWoodPlugin.ResetRecipes && !IsFish)
+		{
+			RecipeCfg.Value = Recipe;
+		}
 		if (SnakeWoodPlugin.ResetSpeeds)
 		{
 			MaxSpeedCfg.Value = MaxSpeed;

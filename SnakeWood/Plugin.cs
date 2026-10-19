@@ -32,7 +32,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.4.0";
+	internal const string PluginVersion = "1.5.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -79,7 +79,9 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	// True while binding the per-log entries if this config was written before the speed rebalance,
 	// so those logs' Top Speed and Boost are reset to the new defaults once.
 	internal static bool ResetSpeeds;
-	private const int CurrentBalanceVersion = 2;
+	// Same for the wood logs' recipes, raised in balance version 3.
+	internal static bool ResetRecipes;
+	private const int CurrentBalanceVersion = 3;
 	internal static ConfigEntry<bool> RamFriendlies = null!;
 
 	private void Awake()
@@ -169,16 +171,17 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 
 		ConfigEntry<int> balanceVersion = Config.Bind("Internal", "Balance Version", 0,
 			"Used by the mod to update old settings after a rebalance. Leave it alone.");
-		ResetSpeeds = balanceVersion.Value < CurrentBalanceVersion;
+		ResetSpeeds = balanceVersion.Value < 2;
+		ResetRecipes = balanceVersion.Value < 3;
 		foreach (HoverLogVariant variant in HoverLogVariant.All)
 		{
 			variant.BindConfig(Config);
 		}
-		if (ResetSpeeds)
+		if (balanceVersion.Value < CurrentBalanceVersion)
 		{
-			ResetSpeeds = false;
+			ResetSpeeds = ResetRecipes = false;
 			balanceVersion.Value = CurrentBalanceVersion;
-			Log.LogInfo("Log top speeds and boosts reset to this version's defaults.");
+			Log.LogInfo("Settings changed by a rebalance (log speeds, wood log recipes) reset to this version's defaults.");
 		}
 
 		Config.Bind("1 - Riding", "Reload Config From Disk", false,

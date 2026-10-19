@@ -15,17 +15,17 @@ All are under the hammer's **Misc** tab and need a workbench nearby. Each one is
 raw log, floating on a coloured glow, with a little saddle made from the wood's build piece.
 
 Each log is gated behind a boss: the magic that makes wood float comes from that boss's
-summoning item. Recipes are config entries (`Recipe = Wood:20,Resin:10,TrophyDeer:2`), so a
+summoning item. Recipes are config entries (`Recipe = Wood:50,Resin:20,TrophyDeer:4,DeerHide:10`), so a
 server admin can change them.
 
 | Log | Cost | How it rides |
 | --- | --- | --- |
-| Hover Log | 20 Wood, 10 Resin, 2 Deer Trophies | Balanced and forgiving. |
-| Fine Hover Log | 20 Fine Wood, 10 Resin, 3 Ancient Seeds | Light, quick and twitchy: a scout. Fast enough to run down a hare, but carries little. |
-| Core Wood Battering Log | 20 Core Wood, 10 Resin, 3 Ancient Seeds | Heavy and slow, but **nothing knocks you off it** and it hauls the heaviest loads. Rams creatures and fells trees in its way. |
-| Ancient Bark Hover Log | 20 Ancient Bark, 10 Resin, 3 Withered Bones | Floats high over swamp roots (and leeches), handles water best, carries a lot, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
-| Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | The Mistlands scout: quiet, climbs steepest, floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. Fast enough to catch a hare. |
-| Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest, just. Trails embers, and its ram sets things on fire. |
+| Hover Log | 50 Wood, 20 Resin, 4 Deer Trophies, 10 Deer Hides | Balanced and forgiving. |
+| Fine Hover Log | 50 Fine Wood, 30 Resin, 5 Ancient Seeds, 3 Troll Hides | Light, quick and twitchy: a scout. Fast enough to run down a hare, but carries little. |
+| Core Wood Battering Log | 60 Core Wood, 30 Resin, 5 Ancient Seeds, 5 Troll Hides | Heavy and slow, but **nothing knocks you off it** and it hauls the heaviest loads. Rams creatures and fells trees in its way. |
+| Ancient Bark Hover Log | 60 Ancient Bark, 30 Resin, 6 Withered Bones, 10 Guck | Floats high over swamp roots (and leeches), handles water best, carries a lot, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
+| Yggdrasil Hover Log | 50 Yggdrasil Wood, 30 Resin, 4 Dvergr Key Fragments, 10 Sap | The Mistlands scout: quiet, climbs steepest, floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. Fast enough to catch a hare. |
+| Ashwood Hover Log | 60 Ashwood, 30 Resin, 3 Bell Fragments | The fastest, just. Trails embers, and its ram sets things on fire. |
 
 ### Fish logs
 
@@ -60,8 +60,9 @@ a little faster than a ridden Lox, and only with light packs.
 | Yggdrasil Hover Log | 9 (13) m/s | 40° | 200 | 120 | quiet |
 | Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 250 | 150 | a little louder |
 
-Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new defaults once
-(other settings you changed are kept).
+Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new defaults once,
+and updating from 1.4 or earlier resets the wood logs' Recipes (other settings you changed are
+kept).
 
 ## Passengers
 
