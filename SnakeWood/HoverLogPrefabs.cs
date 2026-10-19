@@ -47,6 +47,7 @@ public static class HoverLogPrefabs
 			}
 			// Requirements point at this ObjectDB's items, which are recreated with each scene.
 			prefab.GetComponent<Piece>().m_resources = Requirements(variant, db);
+			prefab.GetComponent<Piece>().m_craftingStation = StationFor(variant, hammer) ?? workbench;
 			if (variant.Enabled.Value && !hammer.m_pieces.Contains(prefab))
 			{
 				hammer.m_pieces.Add(prefab);
@@ -66,6 +67,11 @@ public static class HoverLogPrefabs
 				if (ObjectDB.instance != null)
 				{
 					piece.m_resources = Requirements(variant, ObjectDB.instance);
+					if (ObjectDB.instance.GetItemPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces is PieceTable hammer
+						&& StationFor(variant, hammer) is CraftingStation station)
+					{
+						piece.m_craftingStation = station;
+					}
 				}
 			}
 		}
@@ -400,6 +406,20 @@ public static class HoverLogPrefabs
 			}
 			renderer.sharedMaterials = materials;
 		}
+	}
+
+	// The variant's Crafting Station, found among the hammer's pieces.
+	private static CraftingStation? StationFor(HoverLogVariant variant, PieceTable hammer)
+	{
+		string name = SnakeWoodPlugin.StationPrefab(variant.StationCfg.Value);
+		CraftingStation? station = hammer.m_pieces
+			.Select(p => p ? p.GetComponent<CraftingStation>() : null)
+			.FirstOrDefault(s => s != null && s.gameObject.name == name);
+		if (station == null)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant.Name}: no crafting station {name} in this game version; using the workbench.");
+		}
+		return station;
 	}
 
 	// Parses the variant's Recipe config ("Item:Amount,Item:Amount") into build requirements.
@@ -744,13 +764,6 @@ internal static class FishQualityRequirementPatch
 {
 	private static void Postfix(Player __instance, Piece piece, Player.RequirementMode mode, ref bool __result)
 	{
-		// Locked logs stay out of the build menu until their boss is down.
-		if (__result && piece.GetComponent<HoverLog>() is HoverLog log && HoverLogVariant.Get(log.m_variant) is HoverLogVariant variant
-			&& !variant.Unlocked(__instance))
-		{
-			__result = false;
-			return;
-		}
 		if (!__result || mode != Player.RequirementMode.CanBuild || __instance.NoCostCheat()
 			|| FishQuality.FishRequirement(piece.m_resources) is not Piece.Requirement fish)
 		{

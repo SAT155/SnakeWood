@@ -21,7 +21,7 @@ public class HoverLogVariant
 	{
 		new HoverLogVariant("Wood", "Hover Log", "A plain log that floats a little above the ground. Steady and forgiving, but crash into a tree or rock and you're off.")
 		{
-			WoodItem = "Wood", Boss = Boss.Eikthyr, Recipe = "Wood:50,Resin:20,TrophyDeer:4,DeerHide:10",
+			WoodItem = "Wood", Station = Station.Workbench, Recipe = "Wood:50,Resin:20,TrophyDeer:4,DeerHide:10",
 			TemplateHints = new[] { "wood_pole2", "wood_pole", "wood_beam" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
 			AimPenalty = 4f, RideStamina = 1.5f, MaxSpeed = 7f, Boost = 1.3f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
@@ -31,7 +31,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("FineWood", "Fine Hover Log", "Light, quick and twitchy. Turns on a coin, but a hard knock throws you off.")
 		{
-			WoodItem = "FineWood", Boss = Boss.TheElder, Recipe = "FineWood:50,Resin:30,AncientSeed:5,TrollHide:3",
+			WoodItem = "FineWood", Station = Station.Forge, Recipe = "FineWood:50,Resin:30,AncientSeed:5,TrollHide:3",
 			TemplateHints = new[] { "darkwood_pole", "darkwood_pole4", "darkwood_beam" },
 			Length = 2.3f, Thickness = 0.8f, Mass = 35f,
 			AimPenalty = 6f, RideStamina = 3.5f, MaxSpeed = 9f, Boost = 1.45f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
@@ -41,7 +41,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("RoundLog", "Core Wood Battering Log", "Bulky and slow to get going, but nothing knocks you off it. Rams creatures and fells trees in its way.")
 		{
-			WoodItem = "RoundLog", Boss = Boss.TheElder, Recipe = "RoundLog:60,Resin:30,AncientSeed:5,TrollHide:5",
+			WoodItem = "RoundLog", Station = Station.Forge, Recipe = "RoundLog:60,Resin:30,AncientSeed:5,TrollHide:5",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log", "wood_log_45", "wood_log_26" },
 			Length = 3.6f, Thickness = 1.5f, Mass = 250f,
 			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 5.5f, Boost = 1.3f, Acceleration = 4.5f, TurnSpeed = 65f, Grip = 5f,
@@ -52,7 +52,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("ElderBark", "Ancient Bark Hover Log", "Rides high enough to clear swamp roots and shallow water. It trails a poison cloud that sickens creatures caught in it, and its bark poisons whatever it rams.")
 		{
-			WoodItem = "ElderBark", Boss = Boss.Bonemass, Recipe = "ElderBark:60,Resin:30,WitheredBone:6,Guck:10",
+			WoodItem = "ElderBark", Station = Station.Forge, Recipe = "ElderBark:60,Resin:30,WitheredBone:6,Guck:10",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log" },
 			Tint = new Color(0.55f, 0.6f, 0.45f),
 			Length = 2.8f, Thickness = 1.15f, Mass = 90f,
@@ -64,7 +64,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("YggdrasilWood", "Yggdrasil Hover Log", "Floats and hops highest, can hop again in mid-air, and glides gently down from cliffs, trailing sparks of light.")
 		{
-			WoodItem = "YggdrasilWood", Boss = Boss.TheQueen, Recipe = "YggdrasilWood:50,Resin:30,DvergrKeyFragment:4,Sap:10",
+			WoodItem = "YggdrasilWood", Station = Station.GaldrTable, Recipe = "YggdrasilWood:50,Resin:30,DvergrKeyFragment:4,Sap:10",
 			TemplateHints = new[] { "yggdrasil_wood_beam", "Yggdrasil_wood_beam", "yggdrasil_wood_pole", "Yggdrasil_wood_pole" },
 			Tint = new Color(0.8f, 0.9f, 1.15f),
 			Length = 2.8f, Thickness = 1f, Mass = 50f,
@@ -75,7 +75,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Blackwood", "Ashwood Hover Log", "The fastest log there is (just), and it runs hot: it trails embers and anything it rams catches fire.")
 		{
-			WoodItem = "Blackwood", Boss = Boss.Fader, Recipe = "Blackwood:60,Resin:30,BellFragment:3",
+			WoodItem = "Blackwood", Station = Station.BlackForge, Recipe = "Blackwood:60,Resin:30,BellFragment:3",
 			TemplateHints = new[] { "ashwood_pole", "ashwood_beam", "blackwood_pole", "blackwood_beam" },
 			Tint = new Color(0.55f, 0.45f, 0.42f),
 			Length = 2.7f, Thickness = 1f, Mass = 70f,
@@ -89,7 +89,7 @@ public class HoverLogVariant
 		// ride well: most are made for water, and each has a trick of its own.
 		new HoverLogVariant("Fish1", "Hover Perch", "A top-level perch, enchanted. The friendliest fish to learn on: steady, light on stamina, and quick over rivers and the sea.")
 		{
-			WoodItem = "Fish1", Boss = Boss.Eikthyr, RepairItem = "FishRaw", Recipe = "Fish1:1,Resin:10,TrophyDeer:2",
+			WoodItem = "Fish1", Station = Station.Workbench, RepairItem = "FishRaw", Recipe = "Fish1:1,Resin:10,TrophyDeer:2",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.3f, Thickness = 0.95f, Mass = 50f,
 			AimPenalty = 3f, RideStamina = 0.6f, MaxSpeed = 7.5f, Boost = 1.35f, Acceleration = 10f, TurnSpeed = 130f, Grip = 8f,
@@ -99,7 +99,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish2", "Hover Pike", "A top-level pike, made for the open sea: much faster than a longship over deep water, though slower on land. Long crossings still test your stamina.")
 		{
-			WoodItem = "Fish2", Boss = Boss.TheElder, RepairItem = "FishRaw", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
+			WoodItem = "Fish2", Station = Station.Forge, RepairItem = "FishRaw", Recipe = "Fish2:1,Resin:10,SerpentScale:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.6f, Thickness = 1f, Mass = 60f,
 			AimPenalty = 4f, RideStamina = 0.6f, MaxSpeed = 6f, Boost = 1.35f, Acceleration = 9f, TurnSpeed = 120f, Grip = 7f,
@@ -109,7 +109,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish3", "Hover Tuna", "A top-level tuna: the fastest thing on the open sea, and tireless. Out of the water it's a heavy, sluggish lump.")
 		{
-			WoodItem = "Fish3", Boss = Boss.Moder, RepairItem = "FishRaw", Recipe = "Fish3:1,Resin:10,SerpentScale:5",
+			WoodItem = "Fish3", Station = Station.Forge, RepairItem = "FishRaw", Recipe = "Fish3:1,Resin:10,SerpentScale:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.8f, Thickness = 1.2f, Mass = 90f,
 			AimPenalty = 4f, RideStamina = 0.5f, MaxSpeed = 5f, Boost = 1.35f, Acceleration = 9f, TurnSpeed = 100f, Grip = 7f,
@@ -119,7 +119,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish4_cave", "Hover Tetra", "A top-level tetra from the mountain caves. Sure-footed on steep, icy slopes and quick to hop, trailing a glitter of frost.")
 		{
-			WoodItem = "Fish4_cave", Boss = Boss.Moder, RepairItem = "FishRaw", Recipe = "Fish4_cave:1,Resin:10,FreezeGland:5",
+			WoodItem = "Fish4_cave", Station = Station.Forge, RepairItem = "FishRaw", Recipe = "Fish4_cave:1,Resin:10,FreezeGland:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.1f, Thickness = 0.85f, Mass = 40f,
 			AimPenalty = 3f, RideStamina = 0.9f, MaxSpeed = 8f, Boost = 1.4f, Acceleration = 12f, TurnSpeed = 150f, Grip = 10f,
@@ -129,7 +129,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish5", "Hover Trollfish", "A top-level trollfish from the swamp: tough, heavy-shouldered and hard to knock off. Rides high over roots and leeches and bowls creatures over.")
 		{
-			WoodItem = "Fish5", Boss = Boss.Bonemass, RepairItem = "FishRaw", Recipe = "Fish5:1,Resin:10,WitheredBone:3",
+			WoodItem = "Fish5", Station = Station.Forge, RepairItem = "FishRaw", Recipe = "Fish5:1,Resin:10,WitheredBone:3",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.8f, Thickness = 1.3f, Mass = 150f,
 			AimPenalty = 3f, RideStamina = 0.8f, MaxSpeed = 6.5f, Boost = 1.3f, Acceleration = 7f, TurnSpeed = 95f, Grip = 7f,
@@ -140,7 +140,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish6", "Hover Herring", "A top-level giant herring: quiet, agile and quick both on the sea and along misty shores. A scout's fish.")
 		{
-			WoodItem = "Fish6", Boss = Boss.TheQueen, RepairItem = "FishRaw", Recipe = "Fish6:1,Resin:10,DvergrKeyFragment:1",
+			WoodItem = "Fish6", Station = Station.GaldrTable, RepairItem = "FishRaw", Recipe = "Fish6:1,Resin:10,DvergrKeyFragment:1",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.5f, Thickness = 0.9f, Mass = 45f,
 			AimPenalty = 4f, RideStamina = 0.9f, MaxSpeed = 8.5f, Boost = 1.45f, Acceleration = 14f, TurnSpeed = 170f, Grip = 11f,
@@ -150,7 +150,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish7", "Hover Grouper", "A top-level grouper: a broad, sturdy sea cruiser that hauls heavy loads across the water and shoves aside whatever it hits.")
 		{
-			WoodItem = "Fish7", Boss = Boss.Yagluth, RepairItem = "FishRaw", Recipe = "Fish7:1,Resin:10,GoblinTotem:2",
+			WoodItem = "Fish7", Station = Station.ArtisanTable, RepairItem = "FishRaw", Recipe = "Fish7:1,Resin:10,GoblinTotem:2",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.9f, Thickness = 1.35f, Mass = 130f,
 			AimPenalty = 3f, RideStamina = 0.7f, MaxSpeed = 6f, Boost = 1.3f, Acceleration = 7f, TurnSpeed = 95f, Grip = 7f,
@@ -161,7 +161,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish8", "Hover Coral Cod", "A top-level coral cod: smooth and steady, the best fish to shoot from, and swift at sea.")
 		{
-			WoodItem = "Fish8", Boss = Boss.Yagluth, RepairItem = "FishRaw", Recipe = "Fish8:1,Resin:10,GoblinTotem:2",
+			WoodItem = "Fish8", Station = Station.ArtisanTable, RepairItem = "FishRaw", Recipe = "Fish8:1,Resin:10,GoblinTotem:2",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.5f, Thickness = 1.05f, Mass = 70f,
 			AimPenalty = 1f, RideStamina = 0.7f, MaxSpeed = 7f, Boost = 1.35f, Acceleration = 10f, TurnSpeed = 125f, Grip = 9f,
@@ -171,7 +171,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish9", "Hover Anglerfish", "A top-level anglerfish whose lure lights the way: a bright lamp for night rides and dark mist, and quiet with it.")
 		{
-			WoodItem = "Fish9", Boss = Boss.TheQueen, RepairItem = "FishRaw", Recipe = "Fish9:1,Resin:10,DvergrKeyFragment:1",
+			WoodItem = "Fish9", Station = Station.GaldrTable, RepairItem = "FishRaw", Recipe = "Fish9:1,Resin:10,DvergrKeyFragment:1",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.4f, Thickness = 1.15f, Mass = 70f,
 			AimPenalty = 3f, RideStamina = 0.8f, MaxSpeed = 7.5f, Boost = 1.4f, Acceleration = 10f, TurnSpeed = 130f, Grip = 8f,
@@ -181,7 +181,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish10", "Hover Salmon", "A top-level northern salmon: born to leap. Hops high, leaps again in mid-air, and runs fast through icy northern seas.")
 		{
-			WoodItem = "Fish10", Boss = Boss.Fader, RepairItem = "FishRaw", Recipe = "Fish10:1,Resin:10,BellFragment:1",
+			WoodItem = "Fish10", Station = Station.BlackForge, RepairItem = "FishRaw", Recipe = "Fish10:1,Resin:10,BellFragment:1",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.5f, Thickness = 0.95f, Mass = 55f,
 			AimPenalty = 4f, RideStamina = 0.9f, MaxSpeed = 8.5f, Boost = 1.45f, Acceleration = 12f, TurnSpeed = 140f, Grip = 9f,
@@ -191,7 +191,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish11", "Hover Magmafish", "A top-level magmafish, still smouldering: trails embers, sets what it rams on fire, and runs fast across the Ashlands.")
 		{
-			WoodItem = "Fish11", Boss = Boss.Fader, RepairItem = "FishRaw", Recipe = "Fish11:1,Resin:10,BellFragment:1",
+			WoodItem = "Fish11", Station = Station.BlackForge, RepairItem = "FishRaw", Recipe = "Fish11:1,Resin:10,BellFragment:1",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2.5f, Thickness = 1f, Mass = 70f,
 			AimPenalty = 4f, RideStamina = 1f, MaxSpeed = 9f, Boost = 1.45f, Acceleration = 12f, TurnSpeed = 130f, Grip = 9f,
@@ -202,7 +202,7 @@ public class HoverLogVariant
 		},
 		new HoverLogVariant("Fish12", "Hover Pufferfish", "A top-level pufferfish, puffed up and prickly: anything it rams is poisoned, and it trails a toxic cloud.")
 		{
-			WoodItem = "Fish12", Boss = Boss.Moder, RepairItem = "FishRaw", Recipe = "Fish12:1,Resin:10,SerpentScale:5",
+			WoodItem = "Fish12", Station = Station.Forge, RepairItem = "FishRaw", Recipe = "Fish12:1,Resin:10,SerpentScale:5",
 			TemplateHints = new[] { "wood_pole2", "wood_pole" },
 			Length = 2f, Thickness = 1.4f, Mass = 60f,
 			AimPenalty = 4f, RideStamina = 0.8f, MaxSpeed = 7f, Boost = 1.35f, Acceleration = 9f, TurnSpeed = 120f, Grip = 8f,
@@ -249,15 +249,9 @@ public class HoverLogVariant
 	// Fish logs need a high-quality fish (see Fish Quality Required).
 	public bool IsFish => WoodItem.StartsWith("Fish");
 
-	// The boss that unlocks it (Required Boss): the one for the biome its materials come from.
-	public Boss Boss;
-
-	public bool Unlocked(Player player)
-	{
-		string key = SnakeWoodPlugin.BossKey(RequiredBossCfg.Value);
-		return !SnakeWoodPlugin.BossGate.Value || key.Length == 0 || player.NoCostCheat()
-			|| (ZoneSystem.instance != null && ZoneSystem.instance.GetGlobalKey(key)) || player.HaveUniqueKey(key);
-	}
+	// The crafting station it's built at (Crafting Station), climbing with the biome its
+	// materials come from.
+	public Station Station;
 
 	// Defaults for the handling config entries below.
 	public float MaxClimb, LoadCapacity, Durability, Noise;
@@ -268,7 +262,7 @@ public class HoverLogVariant
 
 	public ConfigEntry<bool> Enabled = null!;
 	public ConfigEntry<string> RecipeCfg = null!;
-	public ConfigEntry<Boss> RequiredBossCfg = null!;
+	public ConfigEntry<Station> StationCfg = null!;
 	public ConfigEntry<float> AimPenaltyCfg = null!;
 	public ConfigEntry<float> RideStaminaCfg = null!;
 	public ConfigEntry<float> MaxSpeedCfg = null!;
@@ -301,15 +295,13 @@ public class HoverLogVariant
 	{
 		string Line(string label, string value) => $"\n<color=orange>{label}</color> {value}";
 		string text = Description + "\n";
-		if (SnakeWoodPlugin.BossGate.Value && RequiredBossCfg.Value != Boss.None)
+		text += Line("Built at", StationCfg.Value switch
 		{
-			text += Line("Unlocked by", "defeating " + RequiredBossCfg.Value switch
-			{
-				Boss.TheElder => "The Elder",
-				Boss.TheQueen => "The Queen",
-				Boss boss => boss.ToString(),
-			});
-		}
+			Station.ArtisanTable => "an Artisan Table",
+			Station.GaldrTable => "a Galdr Table",
+			Station.BlackForge => "a Black Forge",
+			Station station => "a " + station,
+		});
 		if (IsFish && SnakeWoodPlugin.FishQuality.Value > 1)
 		{
 			text += Line("Needs", $"a level {SnakeWoodPlugin.FishQuality.Value} fish or better");
@@ -357,8 +349,8 @@ public class HoverLogVariant
 			"Shows this log in the hammer's build menu. Logs already built stay rideable either way. Takes effect after a restart.");
 		RecipeCfg = config.Bind(section, "Recipe", Recipe,
 			"What it costs to build, as Item:Amount pairs separated by commas, using the game's item names (for example Wood, Resin, TrophyDeer, AncientSeed, WitheredBone, DvergrKeyFragment, BellFragment). Unknown items are skipped with a warning in the log.");
-		RequiredBossCfg = config.Bind(section, "Required Boss", Boss,
-			"The boss that has to be defeated (anywhere in the world) before this log shows up in the build menu. None: always available. See Boss Unlocks under 3 - Balance.");
+		StationCfg = config.Bind(section, "Crafting Station", Station,
+			"The crafting station it has to be built near.");
 		AimPenaltyCfg = config.Bind(section, "Aim Penalty", AimPenalty,
 			new ConfigDescription("Extra spread, in degrees, on arrows and other projectiles fired from this log, even standing still. Speed adds more on top (see Aim Penalty Per Speed).", new AcceptableValueRange<float>(0f, 45f)));
 		RideStaminaCfg = config.Bind(section, "Riding Stamina Per Second", RideStamina,
