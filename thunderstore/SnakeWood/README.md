@@ -47,10 +47,11 @@ Every log burns **resin**. A new log starts empty.
 | **Shift** | Boost (costs stamina). |
 | **Space** | Hop (costs stamina). The Yggdrasil log can hop again in mid-air. |
 | **Crouch (Ctrl)** | Brake hard. |
+| **Look up / down** | Tip the nose. Nose up rides higher at speed to clear rising ground; nose down sits lower and dives faster. |
 | **Attack, bow, block** | Fight from the log (Mounted Combat). |
 
 When you attack, draw a bow or block, your rider stands up on the log for the move and sits
-back down a moment after. Dodging gets you off, as on the Lox. Arrows and other projectiles fired from a log spread more:
+back down a moment after (`Combat Stance = Seated` tries staying seated instead; experimental). Dodging gets you off, as on the Lox. Arrows and other projectiles fired from a log spread more:
 each log has its own flat **Aim Penalty** (steady Core Wood least, twitchy Fine Wood and Ashwood
 most), and moving adds more on top.
 
@@ -94,6 +95,8 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Rider Pose**: `attach_lox` (straddle, default) or `attach_chair`.
 - **Seat Height**: raise or lower the rider on the log.
 - **Mounted Combat**: on by default. Off makes attacking get you off, like the Lox.
+- **Combat Stance**: `Stand` (default) or `Seated` (experimental).
+- **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down.
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.
 - **Hover Glow**: the coloured light under each log.

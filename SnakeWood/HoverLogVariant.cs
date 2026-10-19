@@ -33,7 +33,7 @@ public class HoverLogVariant
 			WoodItem = "FineWood", Recipe = "FineWood:20,Resin:10,AncientSeed:3",
 			TemplateHints = new[] { "darkwood_pole", "darkwood_pole4", "darkwood_beam" },
 			Length = 2.3f, Thickness = 0.8f, Mass = 35f,
-			AimPenalty = 6f, RideStamina = 2f, MaxSpeed = 15f, Boost = 1.6f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
+			AimPenalty = 6f, RideStamina = 3.5f, MaxSpeed = 15f, Boost = 1.6f, Acceleration = 16f, TurnSpeed = 170f, Grip = 12f,
 			HoverHeight = 0.8f, HopHeight = 3.5f, FallGravity = 1f, CrashSpeed = 6f, DeepWaterSpeed = 0.35f,
 			Fx = TrailFx.Motes, Glow = new Color(0.75f, 0.9f, 1f),
 		},

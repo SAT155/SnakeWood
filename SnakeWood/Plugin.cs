@@ -14,6 +14,12 @@ public enum SteeringMode
 	Keys,
 }
 
+public enum CombatStance
+{
+	Stand,
+	Seated,
+}
+
 public enum ModelStyle
 {
 	Mixed,
@@ -35,6 +41,9 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<string> AttachAnimation = null!;
 	internal static ConfigEntry<float> SeatHeight = null!;
 	internal static ConfigEntry<bool> MountedCombat = null!;
+	internal static ConfigEntry<CombatStance> Stance = null!;
+	internal static ConfigEntry<bool> PitchControl = null!;
+	internal static ConfigEntry<float> MaxPitch = null!;
 	internal static ConfigEntry<ModelStyle> Model = null!;
 	internal static ConfigEntry<bool> Glow = null!;
 	internal static ConfigEntry<bool> Trails = null!;
@@ -65,6 +74,12 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 				new AcceptableValueRange<float>(-0.5f, 1.5f)));
 		MountedCombat = Config.Bind("1 - Riding", "Mounted Combat", true,
 			"Attack, use bows and block while riding. Off: attacking gets you off the log, like on the Lox.");
+		Stance = Config.Bind("1 - Riding", "Combat Stance", CombatStance.Stand,
+			"Stand: the rider stands up on the log to attack, draw a bow or block, then sits back down. Seated (experimental): stays seated while fighting; if attacks don't animate or land this way, switch back to Stand.");
+		PitchControl = Config.Bind("1 - Riding", "Pitch With Look", true,
+			"Looking up tips the log's nose up so it rides higher at speed and clears rising ground; looking down dips it to ride lower and dive faster.");
+		MaxPitch = Config.Bind("1 - Riding", "Max Pitch", 20f,
+			new ConfigDescription("How far the nose tips up or down, in degrees.", new AcceptableValueRange<float>(0f, 45f)));
 		Model = Config.Bind("1 - Riding", "Model", ModelStyle.Mixed,
 			"Mixed: the raw wood log with a saddle made from that wood's build piece. RawWood: just the raw wood log. BuildPiece: the build piece laid flat (the original look). Takes effect after a restart.");
 		Glow = Config.Bind("1 - Riding", "Hover Glow", true,

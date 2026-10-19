@@ -519,7 +519,7 @@ internal static class RidingControlsPatch
 		{
 			s_combatUntil = Time.time + CombatStanceLinger;
 		}
-		SetStanding(__instance, Time.time < s_combatUntil);
+		SetStanding(__instance, SnakeWoodPlugin.Stance.Value == CombatStance.Stand && Time.time < s_combatUntil);
 	}
 
 	private static void SetStanding(Player player, bool standing)
@@ -592,5 +592,23 @@ internal static class AimWhileRidingPatch
 			__instance.m_projectileAccuracy = __state.accuracy;
 			__instance.m_projectileAccuracyMin = __state.accuracyMin;
 		}
+	}
+}
+
+// Seated combat stance: Character.CanMove refuses attacks while the animation is tagged sitting,
+// so for the local rider on a log it's told "yes" instead (unless staggered).
+[HarmonyPatch(typeof(Character), nameof(Character.CanMove))]
+internal static class SeatedCombatPatch
+{
+	private static bool Prefix(Character __instance, ref bool __result)
+	{
+		if (SnakeWoodPlugin.Stance.Value != CombatStance.Seated || !SnakeWoodPlugin.MountedCombat.Value
+			|| __instance != Player.m_localPlayer || Player.m_localPlayer.GetDoodadController() is not HoverLog
+			|| __instance.IsStaggering())
+		{
+			return true;
+		}
+		__result = true;
+		return false;
 	}
 }

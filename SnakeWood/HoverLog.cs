@@ -33,6 +33,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private float m_yaw;
 	private float m_roll;
+	private float m_pitch;
 	private bool m_airborne;
 	// The velocity the log was driven at this physics step, before any collision changed it.
 	private Vector3 m_driveVelocity;
@@ -392,8 +393,29 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// to skim the surface. Otherwise a damped spring holds the hover height. Well above that
 		// (after a hop or off a cliff) it's in the air and falls under its own gravity instead.
 		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : sputtering ? 0.3f : m_v.HoverHeightCfg.Value;
+
+		// Nose pitch follows where the rider looks (up or down). Nose up rides higher the faster you
+		// go, to clear rising ground and bumps; nose down sits lower and dives faster off ledges.
+		float pitchInput = 0f;
+		if (driving && SnakeWoodPlugin.PitchControl.Value)
+		{
+			Vector3 look = m_lookDir.sqrMagnitude > 0.001f ? m_lookDir.normalized : Vector3.zero;
+			// A dead zone around the camera's usual slight downward look keeps normal riding level.
+			const float deadZone = 0.15f;
+			float y = look.y;
+			pitchInput = Mathf.Abs(y) <= deadZone ? 0f : Mathf.Clamp((y - Mathf.Sign(y) * deadZone) / 0.45f, -1f, 1f);
+		}
+		float speedAhead = Mathf.Max(0f, Vector3.Dot(vel, Quaternion.Euler(0f, m_yaw, 0f) * Vector3.forward));
+		if (pitchInput > 0f)
+		{
+			hoverHeight += Mathf.Min(3f, pitchInput * speedAhead * 0.25f);
+		}
+		else if (pitchInput < 0f)
+		{
+			hoverHeight = Mathf.Max(0.3f, hoverHeight * (1f + pitchInput * 0.4f));
+		}
 		float error = surfaceY + hoverHeight - pos.y;
-		float airGravity = Physics.gravity.y * m_v.FallGravityCfg.Value;
+		float airGravity = Physics.gravity.y * m_v.FallGravityCfg.Value * (1f + Mathf.Max(0f, -pitchInput) * 1.5f);
 		if (m_airborne && (vel.y <= 0f && error > -0.2f))
 		{
 			m_airborne = false;
@@ -461,8 +483,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Rotation: heading, a lean into turns, and a partial tilt to match the ground.
 		float targetRoll = -turnInput * Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value)) * 18f;
 		m_roll = Mathf.Lerp(m_roll, targetRoll, 4f * dt);
+		m_pitch = Mathf.Lerp(m_pitch, pitchInput * SnakeWoodPlugin.MaxPitch.Value, 4f * dt);
 		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, inAir ? 0f : 0.6f);
-		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(0f, 0f, m_roll);
+		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
 		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
 
