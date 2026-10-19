@@ -41,6 +41,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<string> AttachAnimation = null!;
 	internal static ConfigEntry<float> SeatHeight = null!;
 	internal static ConfigEntry<bool> MountedCombat = null!;
+	internal static ConfigEntry<bool> Disguise = null!;
 	internal static ConfigEntry<CombatStance> Stance = null!;
 	internal static ConfigEntry<bool> PitchControl = null!;
 	internal static ConfigEntry<float> MaxPitch = null!;
@@ -74,6 +75,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 				new AcceptableValueRange<float>(-0.5f, 1.5f)));
 		MountedCombat = Config.Bind("1 - Riding", "Mounted Combat", true,
 			"Attack, use bows and block while riding. Off: attacking gets you off the log, like on the Lox.");
+		Disguise = Config.Bind("1 - Riding", "Vanilla Disguise", true,
+			"Saves hover logs as a vanilla fallen-tree log, so players without the mod see a tree log floating along with the rider (they can't ride or chop it). Modded players still see the real log. Applies to logs as they load.");
 		Stance = Config.Bind("1 - Riding", "Combat Stance", CombatStance.Stand,
 			"Stand: the rider stands up on the log to attack, draw a bow or block, then sits back down. Seated (experimental): stays seated while fighting; if attacks don't animate or land this way, switch back to Stand.");
 		PitchControl = Config.Bind("1 - Riding", "Pitch With Look", true,

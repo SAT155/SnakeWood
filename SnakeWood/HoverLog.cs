@@ -10,6 +10,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 {
 	public string m_variant = "";
 	public Transform m_attachPoint = null!;
+	// Holds the model, collider and seat; the root carries the vanilla-disguise rotation on top.
+	public Transform m_frame = null!;
+
+	public Transform Frame => m_frame;
 	public Vector3 m_detachOffset = new(0f, 0.6f, -1f);
 	public float m_maxUseRange = 4f;
 
@@ -53,14 +57,20 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		HoverLogVariant? variant = HoverLogVariant.Get(m_variant);
 		if (m_nview.GetZDO() == null || variant == null)
 		{
-			// Placement ghost (or a broken prefab): just a picture, no physics.
+			// Placement ghost (or a broken prefab): just a picture, no physics. The ghost is turned by
+			// the placement rotation alone, so the frame drops the disguise offset to lie flat.
+			m_frame.localRotation = Quaternion.identity;
 			m_body.isKinematic = true;
 			enabled = false;
 			return;
 		}
 		m_v = variant;
 		m_attachPoint.localPosition = new Vector3(0f, SnakeWoodPlugin.SeatHeight.Value, -0.2f * m_v.Length);
-		m_yaw = transform.eulerAngles.y;
+		if (m_nview.IsOwner())
+		{
+			HoverLogDisguise.Apply(this, m_nview.GetZDO());
+		}
+		m_yaw = FrameYaw();
 
 		if (s_groundMask == 0)
 		{
@@ -143,6 +153,46 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	public float Speed => m_body.linearVelocity.magnitude;
 
+	// ---- Letting the rider's own attacks pass through the log ----------------------------------
+
+	private static int s_passThroughLayer = -1;
+	private int m_solidLayer = -1;
+
+	// Attack and projectile raycasts include the "vehicle" layer the log sits on, so a rider's
+	// swings and arrows hit their own log. For the length of those checks the log moves to
+	// Ignore Raycast, which those masks leave out.
+	internal static HoverLog? BeginRiderPassThrough()
+	{
+		Player player = Player.m_localPlayer;
+		if (player == null || player.GetDoodadController() is not HoverLog log)
+		{
+			return null;
+		}
+		if (s_passThroughLayer < 0)
+		{
+			s_passThroughLayer = LayerMask.NameToLayer("Ignore Raycast");
+		}
+		log.m_solidLayer = log.gameObject.layer;
+		log.SetColliderLayer(s_passThroughLayer);
+		return log;
+	}
+
+	internal void EndRiderPassThrough()
+	{
+		if (m_solidLayer >= 0)
+		{
+			SetColliderLayer(m_solidLayer);
+		}
+	}
+
+	private void SetColliderLayer(int layer)
+	{
+		foreach (Collider collider in GetComponentsInChildren<Collider>())
+		{
+			collider.gameObject.layer = layer;
+		}
+	}
+
 	// ---- Hover text and mounting -------------------------------------------------------------
 
 	public string GetHoverName() => m_v?.Name ?? "";
@@ -195,7 +245,28 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			return false;
 		}
 		m_nview.InvokeRPC("SnakeWood_RequestControl", player.GetZDOID().UserID);
+		m_controlRequestedAt = Time.time;
 		return false;
+	}
+
+	// A log can end up owned by a player without the mod, who never answers a request. If no answer
+	// comes, take ownership and grant the request here.
+	private float m_controlRequestedAt;
+
+	private void CheckUnansweredRequest()
+	{
+		if (m_controlRequestedAt <= 0f || Time.time - m_controlRequestedAt < 1.5f)
+		{
+			return;
+		}
+		m_controlRequestedAt = 0f;
+		Player player = Player.m_localPlayer;
+		if (player == null || player.GetDoodadController() != null || !m_nview.IsValid())
+		{
+			return;
+		}
+		m_nview.ClaimOwnership();
+		RPC_RequestControl(ZNet.GetUID(), player.GetZDOID().UserID);
 	}
 
 	// Using the fuel item on the log from the hotbar adds one.
@@ -236,6 +307,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private void RPC_RequestResponse(long sender, bool granted)
 	{
+		m_controlRequestedAt = 0f;
 		Player player = Player.m_localPlayer;
 		if (player == null)
 		{
@@ -248,7 +320,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		ResetControls();
 		RidingControlsPatch.ResetStance();
-		m_yaw = transform.eulerAngles.y;
+		m_yaw = FrameYaw();
 		player.StartDoodadControl(this);
 		player.AttachStart(m_attachPoint, gameObject, hideWeapons: false, isBed: false, onShip: false,
 			SnakeWoodPlugin.AttachAnimation.Value, m_detachOffset);
@@ -267,6 +339,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private void Update()
 	{
+		CheckUnansweredRequest();
 		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 	}
 
@@ -282,7 +355,15 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		ResetControls();
 	}
 
-	public Component GetControlledComponent() => this;
+	// Vanilla turns the rider to face this component's forward, so it's the frame, not the root.
+	public Component GetControlledComponent() => m_frame;
+
+	private float FrameYaw()
+	{
+		Vector3 forward = m_frame.forward;
+		forward.y = 0f;
+		return forward.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(forward).eulerAngles.y : transform.eulerAngles.y;
+	}
 
 	public Vector3 GetPosition() => m_attachPoint.position;
 
@@ -294,7 +375,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private void ResetControls()
 	{
 		m_moveInput = Vector3.zero;
-		m_lookDir = transform.forward;
+		m_lookDir = m_frame.forward;
 		m_boost = false;
 		m_brake = false;
 		m_crouchBrake = false;
@@ -486,7 +567,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_pitch = Mathf.Lerp(m_pitch, pitchInput * SnakeWoodPlugin.MaxPitch.Value, 4f * dt);
 		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, inAir ? 0f : 0.6f);
 		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
-		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target, 8f * dt));
+		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * HoverLogDisguise.Offset, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
 
 		if (driving)
@@ -751,7 +832,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		hit.m_point = collision.contactCount > 0 ? collision.GetContact(0).point : target.transform.position;
 		Vector3 dir = m_body.linearVelocity;
 		dir.y = 0f;
-		hit.m_dir = dir.sqrMagnitude > 0.01f ? dir.normalized : transform.forward;
+		hit.m_dir = dir.sqrMagnitude > 0.01f ? dir.normalized : m_frame.forward;
 		hit.SetAttacker(rider);
 		destructible.Damage(hit);
 	}

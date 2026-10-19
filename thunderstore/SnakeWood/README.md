@@ -3,8 +3,10 @@
 Build a log with the hammer and ride it like a hover bike. It floats over ground and water,
 leans into turns, hops, and each wood type handles differently.
 
-**Install on every player's game and on the server.** The logs are new buildable objects, so
-anyone without the mod won't see them.
+**Install on every player's game and on the server** to build and ride logs. Players without the
+mod still see something: each log is saved as a vanilla fallen-tree log, so to them it's a tree
+trunk floating along with the rider (they can't ride or chop it). If the mod is ever removed,
+saved logs become ordinary tree logs. `Vanilla Disguise` turns this off.
 
 ## The logs
 
@@ -96,6 +98,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Seat Height**: raise or lower the rider on the log.
 - **Mounted Combat**: on by default. Off makes attacking get you off, like the Lox.
 - **Combat Stance**: `Stand` (default) or `Seated` (experimental).
+- **Vanilla Disguise**: on by default (see the top of this page).
 - **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down.
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.

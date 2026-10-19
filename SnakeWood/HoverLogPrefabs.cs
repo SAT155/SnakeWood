@@ -19,6 +19,9 @@ public static class HoverLogPrefabs
 
 	public static IEnumerable<GameObject> Prefabs => s_prefabs.Values;
 
+	public static GameObject? PrefabFor(string variantKey) =>
+		s_prefabs.TryGetValue(variantKey, out GameObject prefab) ? prefab : null;
+
 	// Called from ObjectDB.Awake: the hammer's piece table and the item prefabs both live there.
 	public static void Build(ObjectDB db)
 	{
@@ -126,10 +129,18 @@ public static class HoverLogPrefabs
 		int vehicleLayer = LayerMask.NameToLayer("vehicle");
 		prefab.layer = vehicleLayer;
 
-		GameObject model = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, prefab.transform, false);
+		// Everything you see and touch lives under "frame", which undoes the root's disguise offset
+		// (see HoverLogDisguise): the root is turned so a vanilla fallen-tree log, modelled upright,
+		// lies along the direction of travel for players without the mod.
+		GameObject frameObject = new("frame");
+		Transform frame = frameObject.transform;
+		frame.SetParent(prefab.transform, false);
+		frame.localRotation = Quaternion.Inverse(HoverLogDisguise.Offset);
+
+		GameObject model = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, frame, false);
 		model.name = "visual";
 		StripToVisual(model);
-		LayFlat(model, prefab.transform, variant);
+		LayFlat(model, frame, variant);
 		if (variant.Tint != Color.white && style == ModelStyle.BuildPiece)
 		{
 			Tint(model, variant.Tint);
@@ -137,11 +148,11 @@ public static class HoverLogPrefabs
 		if (style == ModelStyle.Mixed)
 		{
 			// The build piece shrunk into a little saddle on top of the raw log.
-			GameObject saddle = Object.Instantiate(template!, prefab.transform, false);
+			GameObject saddle = Object.Instantiate(template!, frame, false);
 			saddle.name = "saddle";
 			StripToVisual(saddle);
 			float radius = 0.225f * variant.Thickness;
-			FitToBox(saddle, prefab.transform,
+			FitToBox(saddle, frame,
 				new Vector3(2.4f * radius, 0.12f, 0.35f * variant.Length),
 				new Vector3(0f, radius + 0.04f, -0.12f * variant.Length));
 		}
@@ -152,7 +163,7 @@ public static class HoverLogPrefabs
 
 		// One smooth capsule instead of the template's colliders: mesh colliders can't go on a
 		// moving rigidbody, and a capsule glides over bumps instead of catching on them.
-		CapsuleCollider capsule = prefab.AddComponent<CapsuleCollider>();
+		CapsuleCollider capsule = frameObject.AddComponent<CapsuleCollider>();
 		capsule.direction = 2;
 		capsule.radius = 0.225f * variant.Thickness;
 		capsule.height = variant.Length;
@@ -187,10 +198,11 @@ public static class HoverLogPrefabs
 		piece.m_resources = Requirements(variant, db);
 
 		GameObject seat = new("attach");
-		seat.transform.SetParent(prefab.transform, false);
+		seat.transform.SetParent(frame, false);
 		HoverLog log = prefab.AddComponent<HoverLog>();
 		log.m_variant = variant.Key;
 		log.m_attachPoint = seat.transform;
+		log.m_frame = frame;
 
 		return prefab;
 	}
@@ -611,4 +623,32 @@ internal static class SeatedCombatPatch
 		__result = true;
 		return false;
 	}
+}
+
+// The rider's own swings, aim rays and arrows pass through the log they're riding (see
+// HoverLog.BeginRiderPassThrough). Melee hits are resolved inside DoMeleeAttack, bow aim inside
+// FireProjectileBurst, and arrows test for hits in their own update while in flight.
+[HarmonyPatch]
+internal static class RiderAttacksPassThroughLogPatch
+{
+	private static IEnumerable<MethodBase> TargetMethods()
+	{
+		foreach (MethodBase? method in new[]
+		{
+			AccessTools.Method(typeof(Attack), nameof(Attack.DoMeleeAttack)),
+			AccessTools.Method(typeof(Attack), nameof(Attack.FireProjectileBurst)),
+			AccessTools.Method(typeof(Projectile), "FixedUpdate"),
+			AccessTools.Method(typeof(Projectile), "Update"),
+		})
+		{
+			if (method != null)
+			{
+				yield return method;
+			}
+		}
+	}
+
+	private static void Prefix(out HoverLog? __state) => __state = HoverLog.BeginRiderPassThrough();
+
+	private static void Finalizer(HoverLog? __state) => __state?.EndRiderPassThrough();
 }

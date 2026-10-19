@@ -20,7 +20,7 @@ public static class HoverLogFx
 		if (SnakeWoodPlugin.Glow.Value)
 		{
 			GameObject glow = new("snakewood_glow");
-			glow.transform.SetParent(log.transform, false);
+			glow.transform.SetParent(log.Frame, false);
 			glow.transform.localPosition = new Vector3(0f, -0.6f, 0f);
 			Light light = glow.AddComponent<Light>();
 			light.type = LightType.Point;
@@ -37,7 +37,7 @@ public static class HoverLogFx
 			return;
 		}
 		GameObject trail = new("snakewood_trail");
-		trail.transform.SetParent(log.transform, false);
+		trail.transform.SetParent(log.Frame, false);
 		trail.transform.localPosition = new Vector3(0f, -0.2f, -0.4f * variant.Length);
 		ParticleSystem particles = trail.AddComponent<ParticleSystem>();
 		particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
