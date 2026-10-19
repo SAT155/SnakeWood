@@ -16,11 +16,15 @@ on:
       after:
         description: With grep, also print this many lines after each match
         default: "0"
+      assets:
+        description: Optional regex; list unique strings in the game's asset files that match (for prefab and item names)
+        default: ""
 
 env:
   TYPES: ${{ inputs.types }}
   GREP: ${{ inputs.grep }}
   AFTER: ${{ inputs.after }}
+  ASSETS: ${{ inputs.assets }}
   # ilspycmd targets .NET 6, which the runner image no longer ships.
   DOTNET_ROLL_FORWARD: Major
 
@@ -72,6 +76,15 @@ jobs:
               ilspycmd -r "$MANAGED" -t "$t" "$MANAGED/assembly_valheim.dll" | cat -n
             fi
           done
+
+      - name: Search asset strings
+        if: ${{ inputs.assets != '' }}
+        run: |
+          DATA="$RUNNER_TEMP/valheim/valheim_server_Data"
+          find "$DATA" -maxdepth 2 -type f \( -name '*.assets' -o -name '*.resource' -o -name 'level*' -o -name 'globalgamemanagers*' \) \
+            -print0 | xargs -0 strings -n 4 | grep -E "$ASSETS" | sort | uniq -c | sort -rn | head -400 || true
+          echo "=================== asset bundles ==================="
+          find "$DATA" -type f -size +1k | grep -vi managed | sed "s|$DATA/||" | head -80
 
       # Full sources too, for types too long to read back from the job log.
       - uses: actions/upload-artifact@v4
