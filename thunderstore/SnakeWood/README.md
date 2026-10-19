@@ -27,6 +27,7 @@ its materials come from, so the later logs come with the later station upgrades:
 | Artisan Table | Grouper, Coral Cod |
 | Galdr Table level 2 | Yggdrasil, Herring, Anglerfish |
 | Black Forge level 2 | Ashwood, Salmon, Magmafish |
+| Black Forge level 3 | Timberwood |
 
 Each log's `Crafting Station` (a drop-down) and `Crafting Station Level` can be changed. Turn on
 `Require Boss Kills` to also hide each log until its biome's boss is dead (`Required Boss`).
@@ -41,6 +42,7 @@ server admin can change them.
 | Ancient Bark Hover Log | 60 Ancient Bark, 30 Resin, 6 Withered Bones, 10 Guck | Floats high over swamp roots (and leeches), handles water best, carries a lot, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
 | Yggdrasil Hover Log | 50 Yggdrasil Wood, 30 Resin, 4 Dvergr Key Fragments, 10 Sap | The Mistlands scout: quiet, climbs steepest, floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. Fast enough to catch a hare. |
 | Ashwood Hover Log | 60 Ashwood, 30 Resin, 3 Bell Fragments | The fastest, just. Trails embers, and its ram sets things on fire. |
+| Timberwood Hover Log | 60 Timberwood, 30 Resin, 3 Frostcores, 10 Ice | The Deep North log: as fast as Ashwood, climbs steep snow and ice, floats high, glides, one mid-air hop, trails frost, and its ram chills and slows. |
 
 ### Fish logs
 
@@ -74,6 +76,7 @@ a little faster than a ridden Lox, and only with light packs.
 | Ancient Bark Hover Log | 7 (9.5) m/s | 30° | 500 | 150 | normal |
 | Yggdrasil Hover Log | 9 (13) m/s | 40° | 200 | 120 | quiet |
 | Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 250 | 150 | a little louder |
+| Timberwood Hover Log | 9.5 (13.8) m/s | 42° | 350 | 200 | a little quieter |
 
 Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new defaults once,
 and updating from 1.4 or earlier resets the wood logs' Recipes (other settings you changed are

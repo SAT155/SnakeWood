@@ -85,6 +85,18 @@ public class HoverLogVariant
 			Fx = TrailFx.Embers, Glow = new Color(1f, 0.45f, 0.15f),
 			RamDamage = 15f, RamFire = 25f, RamPush = 30f,
 		},
+		new HoverLogVariant("Frostwood", "Timberwood Hover Log", "Cut from the frozen trees of the Deep North. Sure-footed on snow and steep ice, floats high and glides far, trailing frost; anything it rams is chilled and slowed.")
+		{
+			WoodItem = "Frostwood", Station = Station.BlackForge, StationLevel = 3, Boss = Boss.Fader, Recipe = "Frostwood:60,Resin:30,FrostCore:3,Ice:10",
+			TemplateHints = new[] { "wood_pole2", "wood_pole" },
+			Tint = new Color(0.85f, 0.95f, 1.1f),
+			Length = 2.9f, Thickness = 1.1f, Mass = 80f,
+			AimPenalty = 3f, RideStamina = 1.3f, MaxSpeed = 9.5f, Boost = 1.45f, Acceleration = 12f, TurnSpeed = 130f, Grip = 11f,
+			HoverHeight = 1.5f, HopHeight = 4f, AirHops = 1, FallGravity = 0.6f, CrashSpeed = 9f, DeepWaterSpeed = 0.5f,
+			MaxClimb = 42f, LoadCapacity = 350f, Durability = 200f, Noise = 0.7f,
+			Fx = TrailFx.Sparkles, Glow = new Color(0.6f, 0.85f, 1f),
+			RamDamage = 15f, RamFrost = 25f, RamPush = 30f,
+		},
 		// The fish logs. Each needs a top-level (5) fish (Fish Quality Required), so they're rare and
 		// ride well: most are made for water, and each has a trick of its own.
 		new HoverLogVariant("Fish1", "Hover Perch", "A top-level perch, enchanted. The friendliest fish to learn on: steady, light on stamina, and quick over rivers and the sea.")
@@ -268,7 +280,7 @@ public class HoverLogVariant
 	public float MaxClimb, LoadCapacity, Durability, Noise;
 	public float AimPenalty, RideStamina, MaxSpeed, Boost, Acceleration, TurnSpeed, Grip, HoverHeight, HopHeight, FallGravity, CrashSpeed, DeepWaterSpeed;
 	public int AirHops;
-	public float RamDamage, RamChop, RamPickaxe, RamFire, RamPoison, RamPush, PoisonCloud;
+	public float RamDamage, RamChop, RamPickaxe, RamFire, RamFrost, RamPoison, RamPush, PoisonCloud;
 	public int RamToolTier;
 
 	public ConfigEntry<bool> Enabled = null!;
@@ -355,6 +367,7 @@ public class HoverLogVariant
 			if (RamPickaxe > 0f) extras.Add("chips rock");
 			if (RamPoison > 0f) extras.Add("poisons");
 			if (RamFire > 0f) extras.Add("burns");
+			if (RamFrost > 0f) extras.Add("chills");
 			text += Line("Ram", $"{RamDamageCfg.Value:0} damage" + (extras.Count > 0 ? ", " + string.Join(", ", extras) : ""));
 		}
 		if (PoisonCloudCfg != null && PoisonCloudCfg.Value > 0f)

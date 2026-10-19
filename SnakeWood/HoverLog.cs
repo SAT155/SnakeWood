@@ -1306,6 +1306,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		hit.m_damage.m_chop = amount * m_v.RamChop;
 		hit.m_damage.m_pickaxe = amount * m_v.RamPickaxe;
 		hit.m_damage.m_fire = m_v.RamFire * factor;
+		hit.m_damage.m_frost = m_v.RamFrost * factor;
 		hit.m_damage.m_poison = m_v.RamPoison * factor;
 		hit.m_toolTier = (short)m_v.RamToolTier;
 		hit.m_pushForce = m_v.RamPush * factor;
