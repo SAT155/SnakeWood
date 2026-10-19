@@ -475,9 +475,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	// ---- Physics (owner only) -----------------------------------------------------------------
 
 	// Character carries anyone standing on a moving body along in a straight line, but not around
-	// its turns, so passengers would slide off whenever the log turns. On each player's own game,
-	// a passenger standing on this log is swung around with it by however far it turned.
+	// its turns, so passengers would slide off whenever the log turns. On each player's own game, a
+	// passenger standing on this log is held to their spot on the deck while they stand still (grip
+	// through speeding up, braking and turns), and swung round with the log while they walk.
 	private float m_lastSeenYaw = float.NaN;
+	private bool m_holdingPassenger;
+	private Vector3 m_passengerSpot;
 
 	private void CarryPassenger()
 	{
@@ -485,16 +488,33 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float turned = float.IsNaN(m_lastSeenYaw) ? 0f : Mathf.DeltaAngle(m_lastSeenYaw, yaw);
 		m_lastSeenYaw = yaw;
 		Player player = Player.m_localPlayer;
-		if (player == null || turned == 0f || player.IsAttached() || player.m_lastGroundBody != m_body)
+		if (player == null || player.IsAttached() || player.m_lastGroundBody != m_body || !player.IsOnGround())
 		{
+			m_holdingPassenger = false;
 			return;
 		}
 		Quaternion spin = Quaternion.Euler(0f, turned, 0f);
-		Vector3 pivot = m_body.position;
-		Vector3 position = pivot + spin * (player.m_body.position - pivot);
+		player.transform.rotation = spin * player.transform.rotation;
+		Vector3 position;
+		if (player.m_moveDir.sqrMagnitude > 0.01f)
+		{
+			// Walking: let them move, just carry them round the turn.
+			m_holdingPassenger = false;
+			Vector3 pivot = m_body.position;
+			position = pivot + spin * (player.m_body.position - pivot);
+		}
+		else
+		{
+			if (!m_holdingPassenger)
+			{
+				m_holdingPassenger = true;
+				m_passengerSpot = m_frame.InverseTransformPoint(player.m_body.position);
+			}
+			position = m_frame.TransformPoint(m_passengerSpot);
+			player.m_body.linearVelocity = m_body.GetPointVelocity(position);
+		}
 		player.m_body.position = position;
 		player.transform.position = position;
-		player.transform.rotation = spin * player.transform.rotation;
 	}
 
 	private void FixedUpdate()

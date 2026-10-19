@@ -175,7 +175,7 @@ public static class HoverLogPrefabs
 		deckObject.transform.SetParent(frame, false);
 		BoxCollider deck = deckObject.AddComponent<BoxCollider>();
 		float deckRadius = 0.225f * variant.Thickness;
-		deck.size = new Vector3(2.6f * deckRadius, 0.06f, 0.85f * variant.Length);
+		deck.size = new Vector3(Mathf.Max(2.6f * deckRadius, 1.2f), 0.06f, 0.85f * variant.Length);
 		deck.center = new Vector3(0f, deckRadius + 0.12f, 0f);
 		deckObject.layer = vehicleLayer;
 
