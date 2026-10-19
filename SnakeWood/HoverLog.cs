@@ -24,6 +24,35 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	{
 		m_disguiseOffset = offset;
 		m_frame.localRotation = Quaternion.Inverse(offset);
+		MatchDisguiseSize();
+	}
+
+	// Vanilla logs can't be shrunk for players without the mod, so the real log grows instead: to
+	// about 90% of the vanilla log it's disguised as. Scaling the frame scales the model, collider,
+	// deck and seat position together; the rider keeps their own size.
+	private int m_sizedFor;
+
+	private void MatchDisguiseSize()
+	{
+		if (m_v == null || !m_nview.IsValid())
+		{
+			return;
+		}
+		int prefab = m_nview.GetZDO().GetPrefab();
+		if (prefab == m_sizedFor)
+		{
+			return;
+		}
+		m_sizedFor = prefab;
+		(float length, float girth)? size = HoverLogDisguise.SizeOf(prefab);
+		if (size == null)
+		{
+			m_frame.localScale = Vector3.one;
+			return;
+		}
+		float lengthScale = Mathf.Max(1f, size.Value.length * 0.9f / m_v.Length);
+		float girthScale = Mathf.Max(1f, size.Value.girth * 0.9f / (0.45f * m_v.Thickness));
+		m_frame.localScale = new Vector3(girthScale, girthScale, lengthScale);
 	}
 	public Vector3 m_detachOffset = new(0f, 0.6f, -1f);
 	public float m_maxUseRange = 4f;

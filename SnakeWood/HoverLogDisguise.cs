@@ -54,14 +54,36 @@ internal static class HoverLogDisguise
 		}
 		zdo.Set(VariantKey, log.m_variant);
 		zdo.Set(OffsetHash, offset);
-		log.SetDisguiseOffset(wanted);
 		GameObject? own = HoverLogPrefabs.PrefabFor(log.m_variant);
 		zdo.SetPrefab(disguise != 0 ? disguise : own != null ? own.name.GetStableHashCode() : zdo.GetPrefab());
+		log.SetDisguiseOffset(wanted);
 		if (disguise != 0)
 		{
 			// Keeps vanilla players from chopping a parked log to bits if they end up owning it.
 			zdo.Set(ZDOVars.s_health, 1e9f);
 		}
+	}
+
+	private static readonly Dictionary<int, (float length, float girth)> s_sizes = new();
+
+	// Length and thickness of a vanilla log prefab (by hash), or null for anything else, including
+	// the hover log's own prefab. The real model is scaled to about this so both sides match.
+	public static (float length, float girth)? SizeOf(int prefabHash)
+	{
+		if (s_sizes.TryGetValue(prefabHash, out (float, float) known))
+		{
+			return known;
+		}
+		GameObject? prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefabHash) : null;
+		if (prefab == null || prefab.GetComponent<TreeLog>() == null)
+		{
+			return null;
+		}
+		Vector3 size = HoverLogPrefabs.Bounds(prefab.transform).size;
+		float length = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+		float girth = size.x + size.y + size.z - length - Mathf.Min(size.x, Mathf.Min(size.y, size.z));
+		s_sizes[prefabHash] = (length, girth);
+		return (length, girth);
 	}
 
 	// The vanilla log to disguise as, and the turn that lays its longest side along +Z (forward).
@@ -75,24 +97,21 @@ internal static class HoverLogDisguise
 		Vector3 offset = Vector3.zero;
 		if (ZNetScene.instance != null)
 		{
-			HoverLogVariant? v = HoverLogVariant.Get(variant);
-			float wantLength = v?.Length ?? 2.6f;
-			float wantGirth = 0.45f * (v?.Thickness ?? 1f);
 			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : new string[0];
-			// Vanilla tree logs can't be scaled for players without the mod, so pick the one whose size
-			// is closest to this log's; its own tree's log wins only when it's nearly as close.
+			// Half logs (what a felled trunk splits into) are the right sort of size; whole trunks are
+			// the entire tree. Its own tree's half log first, else the smallest half log, else the
+			// smallest log of any kind. The real hover log is then sized to match (SizeOf).
 			var logs = ZNetScene.instance.m_prefabs
 				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null)
 				.Select(p =>
 				{
 					Vector3 size = HoverLogPrefabs.Bounds(p.transform).size;
-					float length = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
-					float girth = size.x + size.y + size.z - length - Mathf.Min(size.x, Mathf.Min(size.y, size.z));
-					float misfit = Mathf.Abs(Mathf.Log(length / wantLength)) + Mathf.Abs(Mathf.Log(Mathf.Max(0.05f, girth) / wantGirth));
-					bool ownTree = hints.Any(hint => p.name.ToLowerInvariant().Contains(hint));
-					return (prefab: p, size, misfit: misfit * (ownTree ? 0.8f : 1f));
+					string lower = p.name.ToLowerInvariant();
+					return (prefab: p, size, half: lower.Contains("half"), own: hints.Any(lower.Contains));
 				})
-				.OrderBy(c => c.misfit)
+				.OrderBy(c => c.half ? 0 : 1)
+				.ThenBy(c => c.own ? 0 : 1)
+				.ThenBy(c => c.size.x * c.size.y * c.size.z)
 				.ToList();
 			if (!s_listed)
 			{
