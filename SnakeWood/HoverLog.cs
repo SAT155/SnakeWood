@@ -246,6 +246,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			return;
 		}
 		ResetControls();
+		RidingControlsPatch.ResetStance();
 		m_yaw = transform.eulerAngles.y;
 		player.StartDoodadControl(this);
 		player.AttachStart(m_attachPoint, gameObject, hideWeapons: false, isBed: false, onShip: false,
@@ -275,6 +276,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			return;
 		}
 		m_nview.InvokeRPC("SnakeWood_ReleaseControl", player.GetZDOID().UserID);
+		RidingControlsPatch.ResetStance();
 		player.AttachStop();
 		ResetControls();
 	}

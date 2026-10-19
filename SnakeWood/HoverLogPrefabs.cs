@@ -467,11 +467,18 @@ internal static class RidingControlsPatch
 {
 	internal struct HeldAttacks
 	{
-		public bool Active, Attack, AttackHold, Secondary, SecondaryHold;
+		public bool Active, Attack, AttackHold, Secondary, SecondaryHold, Block;
 	}
 
+	// The game won't start an attack while the character's animation is tagged "sitting"
+	// (Character.CanMove), which every riding pose is. So the rider stands up on the log while
+	// fighting (attacking, drawing a bow, blocking) and sits back down a moment after.
+	private const float CombatStanceLinger = 1f;
+	private static float s_combatUntil;
+	private static bool s_standing;
+
 	private static void Prefix(Player __instance, ref bool jump, ref bool crouch, ref bool attack, ref bool attackHold,
-		ref bool secondaryAttack, ref bool secondaryAttackHold, out HeldAttacks __state)
+		ref bool secondaryAttack, ref bool secondaryAttackHold, bool blockHold, out HeldAttacks __state)
 	{
 		__state = default;
 		if (__instance.GetDoodadController() is not HoverLog log)
@@ -489,6 +496,7 @@ internal static class RidingControlsPatch
 			__state = new HeldAttacks
 			{
 				Active = true, Attack = attack, AttackHold = attackHold, Secondary = secondaryAttack, SecondaryHold = secondaryAttackHold,
+				Block = blockHold,
 			};
 			attack = attackHold = secondaryAttack = secondaryAttackHold = false;
 		}
@@ -504,6 +512,31 @@ internal static class RidingControlsPatch
 		__instance.m_attackHold = __state.AttackHold;
 		__instance.m_secondaryAttack = __state.Secondary;
 		__instance.m_secondaryAttackHold = __state.SecondaryHold;
+
+		bool fighting = __state.Attack || __state.AttackHold || __state.Secondary || __state.SecondaryHold || __state.Block
+			|| __instance.InAttack() || __instance.IsDrawingBow();
+		if (fighting)
+		{
+			s_combatUntil = Time.time + CombatStanceLinger;
+		}
+		SetStanding(__instance, Time.time < s_combatUntil);
+	}
+
+	private static void SetStanding(Player player, bool standing)
+	{
+		if (standing == s_standing || string.IsNullOrEmpty(player.m_attachAnimation))
+		{
+			return;
+		}
+		s_standing = standing;
+		player.m_zanim.SetBool(player.m_attachAnimation, !standing);
+	}
+
+	// Getting off (or being thrown) always ends the stance; AttachStop clears the pose itself.
+	internal static void ResetStance()
+	{
+		s_standing = false;
+		s_combatUntil = 0f;
 	}
 }
 

@@ -49,7 +49,8 @@ Every log burns **resin**. A new log starts empty.
 | **Crouch (Ctrl)** | Brake hard. |
 | **Attack, bow, block** | Fight from the log (Mounted Combat). |
 
-Dodging gets you off, as on the Lox. Arrows and other projectiles fired from a log spread more:
+When you attack, draw a bow or block, your rider stands up on the log for the move and sits
+back down a moment after. Dodging gets you off, as on the Lox. Arrows and other projectiles fired from a log spread more:
 each log has its own flat **Aim Penalty** (steady Core Wood least, twitchy Fine Wood and Ashwood
 most), and moving adds more on top.
 
