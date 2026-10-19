@@ -135,7 +135,8 @@ public static class HoverLogPrefabs
 		GameObject frameObject = new("frame");
 		Transform frame = frameObject.transform;
 		frame.SetParent(prefab.transform, false);
-		frame.localRotation = Quaternion.Inverse(HoverLogDisguise.Offset);
+		// Set per log at runtime (HoverLog.SetDisguiseOffset); the ghost and plain logs use none.
+		frame.localRotation = Quaternion.identity;
 
 		GameObject model = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, frame, false);
 		model.name = "visual";
@@ -339,7 +340,7 @@ public static class HoverLogPrefabs
 		(go.GetComponentsInChildren<MeshFilter>(true).Any(f => f.sharedMesh != null)
 		 || go.GetComponentsInChildren<SkinnedMeshRenderer>(true).Any(r => r.sharedMesh != null));
 
-	private static Bounds Bounds(Transform t) => Bounds(t, t);
+	internal static Bounds Bounds(Transform t) => Bounds(t, t);
 
 	// Mesh bounds in `space`'s local coordinates. Works on inactive objects, where Renderer.bounds doesn't.
 	private static Bounds Bounds(Transform t, Transform space)

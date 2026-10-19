@@ -12,12 +12,12 @@ namespace SnakeWood;
 // moves with the synced position. If the mod is ever removed, saved logs become ordinary tree logs.
 internal static class HoverLogDisguise
 {
-	// Vanilla tree logs are modelled standing up (they spawn upright and topple), so the synced root
-	// is turned by this to lay one along the log's heading. HoverLog's frame undoes it for the model.
-	public static readonly Quaternion Offset = Quaternion.Euler(90f, 0f, 0f);
-
 	public const string VariantKey = "SnakeWood_variant";
 	public static readonly int VariantHash = VariantKey.GetStableHashCode();
+	// The offset (Euler angles) applied to this log's synced rotation; see HoverLog.SetDisguiseOffset.
+	private static readonly int OffsetHash = "SnakeWood_offset".GetStableHashCode();
+	// Logs disguised by 1.2.11-1.2.12 got a fixed 90 degree turn and no stored offset.
+	private static readonly Vector3 LegacyOffset = new(90f, 0f, 0f);
 
 	// Which vanilla tree's log each wood hides as.
 	private static readonly Dictionary<string, string[]> s_hints = new()
@@ -30,39 +30,48 @@ internal static class HoverLogDisguise
 		["Blackwood"] = new[] { "ash" },
 		["Fish2"] = new[] { "beech" },
 	};
-	private static readonly Dictionary<string, int> s_disguises = new();
+	private static readonly Dictionary<string, (int hash, Vector3 offset)> s_disguises = new();
 
-	// Run by the owner when a log loads.
+	// The offset already applied to a log's synced rotation (none for a log never seen by this code).
+	public static Quaternion StoredOffset(ZDO zdo) =>
+		zdo.GetString(VariantHash).Length == 0 ? Quaternion.identity : Quaternion.Euler(zdo.GetVec3(OffsetHash, LegacyOffset));
+
+	// Run by the owner when a log loads: picks the disguise, and re-turns the root if the offset it
+	// needs differs from the one already applied (new logs have none; older ones may have a wrong one).
 	public static void Apply(HoverLog log, ZDO zdo)
 	{
-		if (zdo.GetString(VariantHash).Length == 0)
-		{
-			// Newly built (or saved before the disguise existed): the root still holds the log's own
-			// heading, so add the offset now.
-			log.transform.rotation *= Offset;
-			zdo.Set(VariantKey, log.m_variant);
-		}
-		if (!SnakeWoodPlugin.Disguise.Value)
-		{
-			return;
-		}
-		int disguise = DisguiseFor(log.m_variant);
+		(int disguise, Vector3 offset) = SnakeWoodPlugin.Disguise.Value ? DisguiseFor(log.m_variant) : (0, Vector3.zero);
 		if (disguise == 0)
 		{
-			return;
+			offset = Vector3.zero;
 		}
-		zdo.SetPrefab(disguise);
-		// Keeps vanilla players from chopping a parked log to bits if they end up owning it.
-		zdo.Set(ZDOVars.s_health, 1e9f);
+		Quaternion stored = StoredOffset(zdo);
+		Quaternion wanted = Quaternion.Euler(offset);
+		if (Quaternion.Angle(stored, wanted) > 0.5f)
+		{
+			log.transform.rotation = log.transform.rotation * Quaternion.Inverse(stored) * wanted;
+		}
+		zdo.Set(VariantKey, log.m_variant);
+		zdo.Set(OffsetHash, offset);
+		log.SetDisguiseOffset(wanted);
+		GameObject? own = HoverLogPrefabs.PrefabFor(log.m_variant);
+		zdo.SetPrefab(disguise != 0 ? disguise : own != null ? own.name.GetStableHashCode() : zdo.GetPrefab());
+		if (disguise != 0)
+		{
+			// Keeps vanilla players from chopping a parked log to bits if they end up owning it.
+			zdo.Set(ZDOVars.s_health, 1e9f);
+		}
 	}
 
-	private static int DisguiseFor(string variant)
+	// The vanilla log to disguise as, and the turn that lays its longest side along +Z (forward).
+	private static (int hash, Vector3 offset) DisguiseFor(string variant)
 	{
-		if (s_disguises.TryGetValue(variant, out int cached))
+		if (s_disguises.TryGetValue(variant, out (int, Vector3) cached))
 		{
 			return cached;
 		}
 		int hash = 0;
+		Vector3 offset = Vector3.zero;
 		if (ZNetScene.instance != null)
 		{
 			List<GameObject> logs = ZNetScene.instance.m_prefabs
@@ -76,15 +85,31 @@ internal static class HoverLogDisguise
 			if (pick != null)
 			{
 				hash = pick.name.GetStableHashCode();
-				SnakeWoodPlugin.Log.LogInfo($"{variant} logs show as {pick.name} to players without the mod.");
+				Vector3 size = HoverLogPrefabs.Bounds(pick.transform).size;
+				string axis;
+				if (size.y >= size.x && size.y >= size.z)
+				{
+					offset = new Vector3(90f, 0f, 0f); // Euler(90,0,0) turns +Y onto +Z
+					axis = "Y";
+				}
+				else if (size.x >= size.z)
+				{
+					offset = new Vector3(0f, -90f, 0f); // Euler(0,-90,0) turns +X onto +Z
+					axis = "X";
+				}
+				else
+				{
+					axis = "Z";
+				}
+				SnakeWoodPlugin.Log.LogInfo($"{variant} logs show as {pick.name} to players without the mod (long side {axis}, size {size}).");
 			}
 			else
 			{
 				SnakeWoodPlugin.Log.LogWarning("No vanilla tree log found to disguise hover logs as; players without the mod won't see them.");
 			}
 		}
-		s_disguises[variant] = hash;
-		return hash;
+		s_disguises[variant] = (hash, offset);
+		return (hash, offset);
 	}
 }
 

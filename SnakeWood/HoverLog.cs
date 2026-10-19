@@ -14,6 +14,17 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	public Transform m_frame = null!;
 
 	public Transform Frame => m_frame;
+
+	// How the synced root is turned relative to the log itself, so the vanilla log it disguises as
+	// lies along the heading for players without the mod. The frame undoes it for the real model.
+	private Quaternion m_disguiseOffset = Quaternion.identity;
+	private float m_offsetCheckTimer;
+
+	internal void SetDisguiseOffset(Quaternion offset)
+	{
+		m_disguiseOffset = offset;
+		m_frame.localRotation = Quaternion.Inverse(offset);
+	}
 	public Vector3 m_detachOffset = new(0f, 0.6f, -1f);
 	public float m_maxUseRange = 4f;
 
@@ -69,6 +80,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (m_nview.IsOwner())
 		{
 			HoverLogDisguise.Apply(this, m_nview.GetZDO());
+		}
+		else
+		{
+			SetDisguiseOffset(HoverLogDisguise.StoredOffset(m_nview.GetZDO()));
 		}
 		m_yaw = FrameYaw();
 
@@ -340,6 +355,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private void Update()
 	{
 		CheckUnansweredRequest();
+		// Watchers follow whatever offset the owner has applied.
+		if (m_nview.IsValid() && !m_nview.IsOwner() && (m_offsetCheckTimer -= Time.deltaTime) <= 0f)
+		{
+			m_offsetCheckTimer = 1f;
+			SetDisguiseOffset(HoverLogDisguise.StoredOffset(m_nview.GetZDO()));
+		}
 		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 	}
 
@@ -567,7 +588,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_pitch = Mathf.Lerp(m_pitch, pitchInput * SnakeWoodPlugin.MaxPitch.Value, 4f * dt);
 		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, inAir ? 0f : 0.6f);
 		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
-		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * HoverLogDisguise.Offset, 8f * dt));
+		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
 
 		if (driving)
