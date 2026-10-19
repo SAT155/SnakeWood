@@ -112,7 +112,7 @@ jobs:
           print("=================== matching GameObjects ===================")
           print("\n".join(sorted(names)))
           print("=================== matching text lines ===================")
-          print("\n".join(sorted(set(texts))[:300]))
+          print("\n".join(sorted(set(texts))[:1500]))
           PY
 
       # Full sources too, for types too long to read back from the job log.
