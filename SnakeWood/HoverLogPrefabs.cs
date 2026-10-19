@@ -169,6 +169,16 @@ public static class HoverLogPrefabs
 		capsule.radius = 0.225f * variant.Thickness;
 		capsule.height = variant.Length;
 
+		// An invisible flat deck along the top, so other players can stand on the log and ride along:
+		// Character carries anyone standing on a moving rigidbody (as on a ship). The rider ignores it.
+		GameObject deckObject = new("deck");
+		deckObject.transform.SetParent(frame, false);
+		BoxCollider deck = deckObject.AddComponent<BoxCollider>();
+		float deckRadius = 0.225f * variant.Thickness;
+		deck.size = new Vector3(2.6f * deckRadius, 0.06f, 0.85f * variant.Length);
+		deck.center = new Vector3(0f, deckRadius + 0.12f, 0f);
+		deckObject.layer = vehicleLayer;
+
 		ZNetView nview = prefab.AddComponent<ZNetView>();
 		nview.m_persistent = true;
 

@@ -4,8 +4,9 @@ Build a log with the hammer and ride it like a hover bike. It floats over ground
 leans into turns, hops, and each wood type handles differently.
 
 **Install on every player's game and on the server** to build and ride logs. Players without the
-mod still see something: each log is saved as a vanilla fallen-tree log, so to them it's a tree
-trunk floating along with the rider (they can't ride or chop it). If the mod is ever removed,
+mod still see something: each log is saved as a vanilla half log (what a felled tree splits
+into), so to them it's a log floating along with the rider (they can't ride or chop it). The game
+can't shrink that log for them, so the real hover log grows to about the same size instead. If the mod is ever removed,
 saved logs become ordinary tree logs. `Vanilla Disguise` turns this off.
 
 ## The logs
@@ -26,6 +27,11 @@ server admin can change them.
 | Yggdrasil Hover Log | 20 Yggdrasil Wood, 10 Resin, 2 Dvergr Key Fragments | Floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. |
 | Hover Pike | 1 Pike, 10 Resin, 5 Serpent Scales | A giant enchanted pike for the open sea: faster than a longship over deep water (twice its land speed), but slow and floppy on land. Gentle stamina drain, but long crossings still wear you down. |
 | Ashwood Hover Log | 20 Ashwood, 10 Resin, 1 Bell Fragment | The fastest. Trails embers, and its ram sets things on fire. |
+
+## Passengers
+
+Other players can jump onto a log and ride along standing on it while someone drives, the way
+you stand on a ship's deck. Hold on through the turns!
 
 ## Fuel
 
