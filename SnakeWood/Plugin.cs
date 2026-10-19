@@ -64,7 +64,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.8.0";
+	internal const string PluginVersion = "1.9.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -137,8 +137,6 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> CrashWear = null!;
 	internal static ConfigEntry<float> RamWear = null!;
 	internal static ConfigEntry<float> RepairPerItem = null!;
-	internal static ConfigEntry<bool> BreakWhenWornOut = null!;
-	internal static ConfigEntry<float> BrokenMaterialReturn = null!;
 	internal static ConfigEntry<bool> RamBuildings = null!;
 
 	// True while binding the per-log entries if this config was written before the speed rebalance,
@@ -220,17 +218,13 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		NoiseAtSpeed = Config.Bind("3 - Balance", "Noise At Top Speed", 35f,
 			new ConfigDescription("How far away creatures can hear a log at top speed, before each log's own Noise multiplier. A running player is heard from about 30 m.", new AcceptableValueRange<float>(0f, 200f)));
 		WearEnabled = Config.Bind("5 - Wear", "Wear", true,
-			"Logs wear out from crashes and rams. A worn-out log won't fly until it's repaired with its own wood (Shift+E; each log's Repair Item). Off: logs never wear.");
+			"Logs wear out from crashes and rams. A worn-out log is wrecked: it drops where it is and stays there until it's fully repaired with its own wood (Shift+E; each log's Repair Item). Off: logs never wear.");
 		CrashWear = Config.Bind("5 - Wear", "Crash Wear", 1f,
 			new ConfigDescription("Multiplies the wear from hitting trees, rocks and walls (harder hits wear more).", new AcceptableValueRange<float>(0f, 10f)));
 		RamWear = Config.Bind("5 - Wear", "Ram Wear", 1f,
 			new ConfigDescription("Multiplies the wear from ramming things (a twentieth of the ram's damage).", new AcceptableValueRange<float>(0f, 10f)));
 		RepairPerItem = Config.Bind("5 - Wear", "Repair Per Item", 10f,
 			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
-		BreakWhenWornOut = Config.Bind("5 - Wear", "Break When Worn Out", false,
-			"On: a log that wears out breaks apart (dropping its fuel and some of its materials, see below) instead of waiting for repair.");
-		BrokenMaterialReturn = Config.Bind("5 - Wear", "Broken Material Return", 0.5f,
-			new ConfigDescription("Share of a log's building materials dropped when it breaks (only with Break When Worn Out).", new AcceptableValueRange<float>(0f, 1f)));
 		RamBuildings = Config.Bind("2 - Ramming", "Ram Damages Buildings", false,
 			"Ramming logs (Core Wood, Ashwood, Ancient Bark) also damage build pieces they hit. Off by default so a bad landing can't knock a hole in your base.");
 		RamFriendlies = Config.Bind("2 - Ramming", "Ram Damages Players And Tames", false,

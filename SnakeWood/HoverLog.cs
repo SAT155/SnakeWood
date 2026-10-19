@@ -226,8 +226,6 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private float GetWear() => m_nview.IsValid() ? m_nview.GetZDO().GetFloat(s_wearKey, 0f) : 0f;
 
-	private bool WornOut() => WearEnabled && GetWear() >= m_v.DurabilityCfg.Value;
-
 	private float Condition() => Mathf.Clamp01(1f - GetWear() / Mathf.Max(1f, m_v.DurabilityCfg.Value));
 
 	// Each log is mended with the raw material it's made of (its Repair Item).
@@ -242,21 +240,16 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return;
 		}
-		bool wasWorn = WornOut();
-		float wear = Mathf.Min(m_v.DurabilityCfg.Value, GetWear() + amount);
-		m_nview.GetZDO().Set(s_wearKey, wear);
-		if (wasWorn || !WornOut())
+		if (IsWrecked())
 		{
 			return;
 		}
-		if (SnakeWoodPlugin.BreakWhenWornOut.Value)
+		float wear = Mathf.Min(m_v.DurabilityCfg.Value, GetWear() + amount);
+		m_nview.GetZDO().Set(s_wearKey, wear);
+		if (wear >= m_v.DurabilityCfg.Value)
 		{
-			Break();
-		}
-		else if (IsLocallyDriven())
-		{
-			Player.m_localPlayer.Message(MessageHud.MessageType.Center,
-				Localization.instance.Localize($"The log is worn out! Repair it with {RepairName()}"));
+			m_nview.GetZDO().Set(s_wreckedKey, true);
+			ThrowRider($"Your log is wrecked! Bring {RepairsNeeded()} {RepairName()} to repair it");
 		}
 	}
 
@@ -273,7 +266,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		player.GetInventory().RemoveItem(name, amount);
 		m_nview.InvokeRPC("SnakeWood_Repair", amount * SnakeWoodPlugin.RepairPerItem.Value);
-		player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"Repaired with {amount} {name}"));
+		int left = needed - amount;
+		player.Message(MessageHud.MessageType.Center, Localization.instance.Localize(left > 0 && IsWrecked()
+			? $"Repaired with {amount} {name}. {left} more to get it flying"
+			: $"Repaired with {amount} {name}"));
 		return true;
 	}
 
@@ -281,30 +277,105 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	{
 		if (m_nview.IsOwner())
 		{
-			m_nview.GetZDO().Set(s_wearKey, Mathf.Max(0f, GetWear() - amount));
+			float wear = Mathf.Max(0f, GetWear() - amount);
+			m_nview.GetZDO().Set(s_wearKey, wear);
+			if (wear <= 0f)
+			{
+				// Fully mended: the wreck is a working log again.
+				m_nview.GetZDO().Set(s_wreckedKey, false);
+			}
 		}
 	}
 
-	// Worn out with Break When Worn Out on: the log falls apart, dropping its fuel and a share of
-	// what it was built from.
-	private void Break()
+	// ---- Wreckage ------------------------------------------------------------------------------
+
+	// A log worn right out is wrecked: it drops where it is, dark and lifeless, and stays put (no
+	// one can push or ride it) until it's repaired all the way back up.
+	private static readonly int s_wreckedKey = "SnakeWood_wrecked".GetStableHashCode();
+
+	private bool IsWrecked() => WearEnabled && m_nview.IsValid() && m_nview.GetZDO().GetBool(s_wreckedKey, false);
+
+	private int RepairsNeeded() => Mathf.CeilToInt(GetWear() / SnakeWoodPlugin.RepairPerItem.Value);
+
+	private bool m_wreckSettled;
+
+	// Owner: lays the wreck on whatever's under it, tipped on its side, and pins it there.
+	private void HoldWreck()
 	{
-		ThrowRider("The log breaks apart!");
-		DropFuel();
-		float share = SnakeWoodPlugin.BrokenMaterialReturn.Value;
-		Piece piece = GetComponent<Piece>();
-		if (piece != null && share > 0f)
+		if (m_wreckSettled)
 		{
-			foreach (Piece.Requirement requirement in piece.m_resources)
+			return;
+		}
+		m_wreckSettled = true;
+		Vector3 pos = m_body.position;
+		GetSurface(pos, out float surfaceY, out _, out _, out _);
+		if (!float.IsNegativeInfinity(surfaceY))
+		{
+			pos.y = surfaceY + 0.2f * m_v.Thickness * m_frame.localScale.x;
+		}
+		m_body.linearVelocity = Vector3.zero;
+		m_body.angularVelocity = Vector3.zero;
+		m_body.isKinematic = true;
+		Quaternion rotation = Quaternion.Euler(0f, m_yaw, 0f) * Quaternion.Euler(-6f, 0f, 28f) * m_disguiseOffset;
+		m_body.position = pos;
+		m_body.rotation = rotation;
+		transform.SetPositionAndRotation(pos, rotation);
+	}
+
+	// Everyone: a wreck loses its glow and trail and goes dark.
+	private bool m_showingWreck;
+	private float m_wreckCheckTimer;
+	private static MaterialPropertyBlock? s_block;
+
+	private void UpdateWreckLook()
+	{
+		if ((m_wreckCheckTimer -= Time.deltaTime) > 0f)
+		{
+			return;
+		}
+		m_wreckCheckTimer = 0.5f;
+		bool wrecked = IsWrecked();
+		if (wrecked == m_showingWreck)
+		{
+			return;
+		}
+		m_showingWreck = wrecked;
+		foreach (Light light in m_frame.GetComponentsInChildren<Light>(true))
+		{
+			light.enabled = !wrecked;
+		}
+		foreach (ParticleSystem particles in m_frame.GetComponentsInChildren<ParticleSystem>(true))
+		{
+			if (wrecked)
 			{
-				int amount = Mathf.FloorToInt(requirement.m_amount * share);
-				if (requirement.m_resItem != null && amount > 0)
-				{
-					ItemDrop.DropItem(requirement.m_resItem.m_itemData, amount, transform.position + Vector3.up * 0.5f, Quaternion.identity);
-				}
+				particles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+			}
+			else
+			{
+				particles.Play();
 			}
 		}
-		ZNetScene.instance.Destroy(gameObject);
+		s_block ??= new MaterialPropertyBlock();
+		foreach (Renderer renderer in m_frame.GetComponentsInChildren<Renderer>(true))
+		{
+			if (renderer is ParticleSystemRenderer)
+			{
+				continue;
+			}
+			if (!wrecked)
+			{
+				renderer.SetPropertyBlock(null);
+				continue;
+			}
+			Material material = renderer.sharedMaterial;
+			if (material == null || !material.HasProperty("_Color"))
+			{
+				continue;
+			}
+			renderer.GetPropertyBlock(s_block);
+			s_block.SetColor("_Color", material.color * new Color(0.35f, 0.32f, 0.3f, 1f));
+			renderer.SetPropertyBlock(s_block);
+		}
 	}
 
 	// ---- Load (carry weight) and cargo ----------------------------------------------------------
@@ -427,7 +498,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		string fuel = "";
 		if (WearEnabled)
 		{
-			fuel += $"\nCondition: {Condition() * 100f:0}%" + (WornOut() ? " <color=red>(worn out)</color>" : "");
+			fuel += IsWrecked()
+				? $"\n<color=red>Wrecked</color>: needs {RepairsNeeded()} {RepairName()} to fly again"
+				: $"\nCondition: {Condition() * 100f:0}%";
 		}
 		if (FuelEnabled)
 		{
@@ -487,9 +560,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It needs {FuelName()} to fly (Shift+E to add)"));
 			return false;
 		}
-		if (WornOut())
+		if (IsWrecked())
 		{
-			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It's too battered to fly. Repair it with {RepairName()} (Shift+E)"));
+			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It's wrecked. Repair it with {RepairsNeeded()} {RepairName()} (Shift+E)"));
 			return false;
 		}
 		if (CarriesMetal(player))
@@ -608,6 +681,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 		CheckTakeFuelKey();
+		UpdateWreckLook();
 	}
 
 	private void CheckTakeFuelKey()
@@ -770,6 +844,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			ResetControls();
 		}
 
+		if (IsWrecked())
+		{
+			HoldWreck();
+			return;
+		}
+		m_wreckSettled = false;
 		m_body.isKinematic = false;
 		m_body.useGravity = false;
 
@@ -787,10 +867,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			driving = false;
 		}
 		float load = driving ? Mathf.Min(1f, m_load) : 0f;
-		// Out of fuel, worn out or overloaded, the log still carries you, but only just: low, slow,
+		// Out of fuel or overloaded, the log still carries you, but only just: low, slow,
 		// no boost or hops.
 		bool outOfFuel = driving && !BurnFuel(dt);
-		bool sputtering = driving && (outOfFuel || WornOut() || m_load > 1f);
+		bool sputtering = driving && (outOfFuel || m_load > 1f);
 		if (sputtering)
 		{
 			m_boost = false;

@@ -151,11 +151,12 @@ crash limit, aim, deep-water speed, climb angle, load capacity, noise, durabilit
 Logs wear out from crashes (harder hits wear more, even on Core Wood, which never throws you)
 and from ramming. Just riding doesn't wear them. Hover over a log to see its condition.
 
-- A worn-out log won't take off, and one that wears out mid-ride sputters along low and slow.
+- A log that wears right out is **wrecked**: you're thrown off, and it drops where it is, dark
+  and lifeless, and stays put. Nobody can ride or push it, and nothing is lost.
 - **Shift+E** repairs it with **its own wood** (Wood, Fine Wood, Core Wood, Ancient Bark,
   Yggdrasil Wood, Ashwood; raw fish for the fish logs), 10 wear per piece, before it adds any fuel.
-- Logs never break or lose materials by default. `Break When Worn Out` makes a worn-out log fall
-  apart instead, dropping its fuel and `Broken Material Return` (half) of its materials.
+  A wreck has to be repaired all the way (hover over it to see how much it needs) before it
+  flies again, so bring the materials to it. You can do it over several trips.
 
 ## Water
 
@@ -196,7 +197,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   **Load Height Penalty**, **Load Handling Penalty**), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
   **Take Out Fuel Key** (R).
-- **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, **Repair Per Item**, **Break When Worn Out** (off) and **Broken Material Return**.
+- **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, and **Repair Per Item**.
 - **Ram Damages Buildings / Players And Tames**: both off by default.
 - One section per log: **Buildable**, **Recipe**, **Crafting Station**, **Crafting Station Level**, **Required Boss**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
   **Boost Multiplier**, **Acceleration**, **Turn Speed**, **Hover Height**, **Hop Height**,
