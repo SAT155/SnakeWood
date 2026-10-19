@@ -66,6 +66,8 @@ internal static class HoverLogDisguise
 
 	private static readonly Dictionary<int, (float length, float girth)> s_sizes = new();
 
+	private static float LongSide(Vector3 size) => Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+
 	// Length and thickness of a vanilla log prefab (by hash), or null for anything else, including
 	// the hover log's own prefab. The real model is scaled to about this so both sides match.
 	public static (float length, float girth)? SizeOf(int prefabHash)
@@ -99,8 +101,7 @@ internal static class HoverLogDisguise
 		{
 			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : new string[0];
 			// Half logs (what a felled trunk splits into) are the right sort of size; whole trunks are
-			// the entire tree. Its own tree's half log first, else the smallest half log, else the
-			// smallest log of any kind. The real hover log is then sized to match (SizeOf).
+			// the entire tree. The real hover log is then sized to match (SizeOf).
 			var logs = ZNetScene.instance.m_prefabs
 				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null)
 				.Select(p =>
@@ -109,8 +110,9 @@ internal static class HoverLogDisguise
 					string lower = p.name.ToLowerInvariant();
 					return (prefab: p, size, half: lower.Contains("half"), own: hints.Any(lower.Contains));
 				})
+				// Its own tree's half log if that's no longer than 5 m; otherwise the smallest half log.
 				.OrderBy(c => c.half ? 0 : 1)
-				.ThenBy(c => c.own ? 0 : 1)
+				.ThenBy(c => c.own && LongSide(c.size) <= 5f ? 0 : 1)
 				.ThenBy(c => c.size.x * c.size.y * c.size.z)
 				.ToList();
 			if (!s_listed)

@@ -474,9 +474,37 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	// ---- Physics (owner only) -----------------------------------------------------------------
 
+	// Character carries anyone standing on a moving body along in a straight line, but not around
+	// its turns, so passengers would slide off whenever the log turns. On each player's own game,
+	// a passenger standing on this log is swung around with it by however far it turned.
+	private float m_lastSeenYaw = float.NaN;
+
+	private void CarryPassenger()
+	{
+		float yaw = FrameYaw();
+		float turned = float.IsNaN(m_lastSeenYaw) ? 0f : Mathf.DeltaAngle(m_lastSeenYaw, yaw);
+		m_lastSeenYaw = yaw;
+		Player player = Player.m_localPlayer;
+		if (player == null || turned == 0f || player.IsAttached() || player.m_lastGroundBody != m_body)
+		{
+			return;
+		}
+		Quaternion spin = Quaternion.Euler(0f, turned, 0f);
+		Vector3 pivot = m_body.position;
+		Vector3 position = pivot + spin * (player.m_body.position - pivot);
+		player.m_body.position = position;
+		player.transform.position = position;
+		player.transform.rotation = spin * player.transform.rotation;
+	}
+
 	private void FixedUpdate()
 	{
-		if (!m_nview.IsValid() || !m_nview.IsOwner())
+		if (!m_nview.IsValid())
+		{
+			return;
+		}
+		CarryPassenger();
+		if (!m_nview.IsOwner())
 		{
 			return;
 		}
