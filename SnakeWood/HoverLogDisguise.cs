@@ -67,7 +67,8 @@ internal static class HoverLogDisguise
 		{
 			List<GameObject> logs = ZNetScene.instance.m_prefabs
 				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null)
-				.OrderBy(p => p.name.ToLowerInvariant().Contains("half") ? 1 : 0)
+				// The half logs a felled trunk splits into are log-sized; whole trunks are the entire tree.
+				.OrderBy(p => p.name.ToLowerInvariant().Contains("half") ? 0 : 1)
 				.ToList();
 			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : new string[0];
 			GameObject? pick = logs.FirstOrDefault(p => hints.Any(hint => p.name.ToLowerInvariant().Contains(hint)))
