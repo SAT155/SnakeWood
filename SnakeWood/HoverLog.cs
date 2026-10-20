@@ -501,7 +501,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Vector3 pos = player.transform.position + player.transform.rotation * new Vector3(1.8f, 0.6f, 0.5f);
 		zdo.SetOwner(ZDOMan.GetSessionID());
 		zdo.SetPosition(pos);
-		if (ZNetScene.instance.FindInstance(zdo) is GameObject instance && instance.GetComponent<HoverLog>() is HoverLog log)
+		if (ZNetScene.instance.FindInstance(zdo) is ZNetView instance && instance && instance.GetComponent<HoverLog>() is HoverLog log)
 		{
 			log.m_body.linearVelocity = Vector3.zero;
 			log.m_body.position = pos;
