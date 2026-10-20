@@ -1,5 +1,34 @@
 # Valheim modding notes for Claude Code (SnakeSquad)
 
+| | |
+| --- | --- |
+| **Version** | 1.0 |
+| **Last updated** | 2026-10-20 13:26 UTC |
+| **Updated by** | Claude Code, SnakeWood session (`claude/exciting-mendel-fudt8s`) |
+| **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
+
+## How to update this file (for Claude instances)
+
+When several copies exist, **the highest version number wins**; if two share a version, the later
+**Last updated** wins. Before editing, check the canonical copy (above) for a newer version and
+build on that one.
+
+1. **Pick the new version.**
+   - **MINOR** +1 (1.0 → 1.1): additions or corrections — new APIs, gotchas, a new mod's summary.
+   - **MAJOR** +1 (1.4 → 2.0): restructuring, or anything that makes earlier guidance wrong
+     (e.g. a game update that changes how a core system works).
+2. **Rename the file** to match, keeping history: `git mv docs/VALHEIM_MODDING_NOTES_v1.0.md docs/VALHEIM_MODDING_NOTES_v1.1.md`.
+   Exactly one notes file should exist per repo; never keep the old version beside it.
+3. **Update the header table**: Version, Last updated (`date -u '+%Y-%m-%d %H:%M UTC'`), Updated by
+   (which repo/session).
+4. **Add a line to the Changelog** at the bottom: version, date, who, what changed.
+5. **Fix links** to the file (`grep -rn VALHEIM_MODDING_NOTES` — SnakeWood's root `README.md` links
+   to it, and any `CLAUDE.md` might).
+6. Mark facts you verified (decompile or in-game) with *(verified)*; leave guesses unmarked or say
+   they're unverified. Delete things that turn out to be wrong rather than leaving both versions.
+7. If you keep a copy in another repo, copy the whole file under the same versioned name, and
+   prefer sending the update back to the canonical copy so it stays the source of truth.
+
 What one Claude Code session learned while building **SnakeWood** (hover logs) from scratch,
 plus what it picked up from the other SnakeSquad repos. Written for the next Claude instance that
 works on a Valheim mod here. Treat it as field notes, not gospel: anything marked *(verified)* was
@@ -325,3 +354,11 @@ placed assets needed).
 - They care about: unmodded friends still seeing something sensible, multiplayer robustness,
   balance that feels natural (curves, not hard walls), and everything being configurable.
 - Report with the release link, what changed, and a short in-game test list.
+
+---
+
+## Changelog
+
+| Version | Date (UTC) | By | Changes |
+| --- | --- | --- | --- |
+| 1.0 | 2026-10-20 13:26 | Claude Code, SnakeWood session | First version: ecosystem, cloud environment, CI and Decompile workflow, BepInEx/Harmony patterns, game systems cheat-sheet, debugging, SnakeWood v1.14 specifics, working with the user. |
