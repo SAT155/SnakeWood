@@ -470,21 +470,43 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	}
 
 	// Riding into a portal: the rider is pinned to the seat, so they'd never arrive (the loading
-	// screen waits forever). They get off, and the log is sent on ahead to wait beside where
-	// they'll come out. Its ZDO moves now; the game drops the object here and loads it there.
-	internal void SendThroughPortal(Player rider, Vector3 target, Quaternion rotation)
+	// screen waits forever). They get off, and once they've arrived the log is fetched to wait
+	// beside them (FetchAfterPortal). Moving it any sooner drags anyone it's carrying along to an
+	// area that hasn't loaded yet, and the game unloads them.
+	private static ZDOID s_portalLog = ZDOID.None;
+
+	internal void SendThroughPortal(Player rider)
 	{
 		rider.StopDoodadControl();
 		rider.AttachStop();
-		if (!m_nview.IsValid() || !m_nview.IsOwner())
+		m_holdingPassenger = false;
+		if (m_nview.IsValid())
+		{
+			s_portalLog = m_nview.GetZDO().m_uid;
+		}
+	}
+
+	internal static void FetchAfterPortal(Player player)
+	{
+		if (s_portalLog == ZDOID.None || player.IsTeleporting())
 		{
 			return;
 		}
-		Vector3 pos = target + rotation * new Vector3(1.8f, 0.6f, 0.5f);
-		m_body.linearVelocity = Vector3.zero;
-		m_body.position = pos;
-		transform.position = pos;
-		m_nview.GetZDO().SetPosition(pos);
+		ZDO? zdo = ZDOMan.instance.GetZDO(s_portalLog);
+		s_portalLog = ZDOID.None;
+		if (zdo == null)
+		{
+			return;
+		}
+		Vector3 pos = player.transform.position + player.transform.rotation * new Vector3(1.8f, 0.6f, 0.5f);
+		zdo.SetOwner(ZDOMan.GetSessionID());
+		zdo.SetPosition(pos);
+		if (ZNetScene.instance.FindInstance(zdo) is GameObject instance && instance.GetComponent<HoverLog>() is HoverLog log)
+		{
+			log.m_body.linearVelocity = Vector3.zero;
+			log.m_body.position = pos;
+			log.transform.position = pos;
+		}
 	}
 
 	internal void EndRiderPassThrough()
@@ -809,7 +831,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float turned = float.IsNaN(m_lastSeenYaw) ? 0f : Mathf.DeltaAngle(m_lastSeenYaw, yaw);
 		m_lastSeenYaw = yaw;
 		Player player = Player.m_localPlayer;
-		if (player == null || player.IsAttached() || player.m_lastGroundBody != m_body || !player.IsOnGround())
+		if (player == null || player.IsAttached() || player.IsTeleporting() || player.m_lastGroundBody != m_body || !player.IsOnGround())
 		{
 			m_holdingPassenger = false;
 			return;

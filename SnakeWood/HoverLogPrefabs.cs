@@ -836,11 +836,23 @@ internal static class FishQualityConsumePatch
 [HarmonyPatch(typeof(Player), nameof(Player.TeleportTo))]
 internal static class RideThroughPortalPatch
 {
-	private static void Postfix(Player __instance, Vector3 pos, Quaternion rot, bool __result)
+	private static void Postfix(Player __instance, bool __result)
 	{
 		if (__result && __instance == Player.m_localPlayer && __instance.GetDoodadController() is HoverLog log)
 		{
-			log.SendThroughPortal(__instance, pos, rot);
+			log.SendThroughPortal(__instance);
+		}
+	}
+}
+
+[HarmonyPatch(typeof(Player), nameof(Player.UpdateTeleport))]
+internal static class FetchLogAfterPortalPatch
+{
+	private static void Postfix(Player __instance)
+	{
+		if (__instance == Player.m_localPlayer)
+		{
+			HoverLog.FetchAfterPortal(__instance);
 		}
 	}
 }
