@@ -53,6 +53,20 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float lengthScale = Mathf.Max(1f, size.Value.length * 0.9f / m_v.Length);
 		float girthScale = Mathf.Max(1f, size.Value.girth * 0.9f / (0.45f * m_v.Thickness));
 		m_frame.localScale = new Vector3(girthScale, girthScale, lengthScale);
+		// What it bumps into stays the log's own size (a little shorter, even), so the bigger look
+		// doesn't wedge it in doorways and beside portals. The deck keeps its width and height so
+		// passengers still stand on top of what they see, but not its length.
+		if (m_frame.GetComponent<CapsuleCollider>() is CapsuleCollider capsule)
+		{
+			capsule.radius = 0.225f * m_v.Thickness / girthScale;
+			capsule.height = 0.9f * m_v.Length / lengthScale;
+		}
+		if (m_frame.Find("deck")?.GetComponent<BoxCollider>() is BoxCollider deck)
+		{
+			Vector3 deckSize = deck.size;
+			deckSize.z = 0.8f * m_v.Length / lengthScale;
+			deck.size = deckSize;
+		}
 	}
 	public Vector3 m_detachOffset = new(0f, 0.6f, -1f);
 	public float m_maxUseRange = 4f;
@@ -479,78 +493,56 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		return log;
 	}
 
-	// Riding into a portal: the rider is pinned to the seat, so they'd never arrive (the loading
-	// screen waits forever). They get off, and once they've arrived the log is fetched to wait
-	// beside them (FetchAfterPortal). Moving it any sooner drags anyone it's carrying along to an
-	// area that hasn't loaded yet, and the game unloads them.
-	private static ZDOID s_portalLog = ZDOID.None;
+	// ---- Riding through portals (see MountedPortal) ---------------------------------------------
 
-	internal void SendThroughPortal(Player rider)
-	{
-		rider.StopDoodadControl();
-		rider.AttachStop();
-		m_holdingPassenger = false;
-		if (m_nview.IsValid())
-		{
-			s_portalLog = m_nview.GetZDO().m_uid;
-		}
-	}
+	internal ZDOID Id => m_nview.IsValid() ? m_nview.GetZDO().m_uid : ZDOID.None;
 
-	internal static void FetchAfterPortal(Player player)
+	// Once the rider has arrived: puts the log under them, facing the way they face, and seats
+	// them again if the log had to be unloaded on the way.
+	internal void ArriveUnder(Player rider)
 	{
-		if (s_portalLog == ZDOID.None || player.IsTeleporting())
+		if (!m_nview.IsValid())
 		{
 			return;
 		}
-		ZDO? zdo = ZDOMan.instance.GetZDO(s_portalLog);
-		s_portalLog = ZDOID.None;
-		if (zdo == null)
+		m_nview.ClaimOwnership();
+		m_nview.GetZDO().Set(ZDOVars.s_user, rider.GetZDOID().UserID);
+		float yaw = rider.transform.eulerAngles.y;
+		Quaternion heading = Quaternion.Euler(0f, yaw, 0f);
+		// The seat sits behind the middle, so the middle goes a little ahead of the rider.
+		Vector3 pos = rider.transform.position + heading * new Vector3(0f, 0f, 0.2f * m_v.Length * m_frame.localScale.z)
+			- Vector3.up * SnakeWoodPlugin.SeatHeight.Value;
+		Quaternion rotation = heading * m_disguiseOffset;
+		m_body.linearVelocity = Vector3.zero;
+		m_body.angularVelocity = Vector3.zero;
+		m_body.position = pos;
+		m_body.rotation = rotation;
+		transform.SetPositionAndRotation(pos, rotation);
+		m_nview.GetZDO().SetPosition(pos);
+		m_nview.GetZDO().SetRotation(rotation);
+		m_yaw = yaw;
+		m_pitch = 0f;
+		m_roll = 0f;
+		m_unstickUntil = Time.time + 3f;
+		if (!ReferenceEquals(rider.GetDoodadController(), this))
 		{
-			return;
-		}
-		HoverLogVariant? variant = HoverLogVariant.Get(zdo.GetString(HoverLogDisguise.VariantHash));
-		Vector3 pos = ClearSpotNear(player, variant?.Length ?? 3f);
-		zdo.SetOwner(ZDOMan.GetSessionID());
-		zdo.SetPosition(pos);
-		if (ZNetScene.instance.FindInstance(zdo) is ZNetView instance && instance && instance.GetComponent<HoverLog>() is HoverLog log)
-		{
-			log.m_body.linearVelocity = Vector3.zero;
-			log.m_body.position = pos;
-			log.transform.position = pos;
+			// The old log object was unloaded during the trip: seat the rider on this one.
+			rider.m_doodadController = null;
+			rider.AttachStop();
+			ResetControls();
+			RidingControlsPatch.ResetStance();
+			rider.StartDoodadControl(this);
+			rider.AttachStart(m_attachPoint, gameObject, hideWeapons: false, isBed: false, onShip: false,
+				SnakeWoodPlugin.AttachAnimation, m_detachOffset);
 		}
 	}
 
-	// Somewhere beside the player with room for the whole log, so it doesn't end up half inside
-	// the wall next to the portal: tries a ring of spots at growing distances, each lowered onto
-	// the ground, and keeps the first where a log-sized box hits nothing. Falls back to above the
-	// player's head.
-	private static Vector3 ClearSpotNear(Player player, float length)
+	private void Start()
 	{
-		int solid = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle");
-		Vector3 origin = player.transform.position;
-		Quaternion facing = Quaternion.Euler(0f, player.transform.eulerAngles.y, 0f);
-		Vector3 halfExtents = new(0.6f, 0.5f, length * 0.6f);
-		foreach (float distance in new[] { 2f, 3f, 4.5f, 6f })
+		if (m_nview != null && m_nview.IsValid() && Player.m_localPlayer != null)
 		{
-			foreach (float angle in new[] { 90f, -90f, 180f, 0f, 135f, -135f, 45f, -45f })
-			{
-				Vector3 spot = origin + Quaternion.Euler(0f, angle, 0f) * facing * Vector3.forward * distance;
-				if (Physics.Raycast(spot + Vector3.up * 3f, Vector3.down, out RaycastHit ground, 8f, solid, QueryTriggerInteraction.Ignore))
-				{
-					spot.y = ground.point.y + 0.9f;
-				}
-				else
-				{
-					spot.y = origin.y + 0.9f;
-				}
-				if (!Physics.CheckBox(spot, halfExtents, facing, solid, QueryTriggerInteraction.Ignore)
-					&& !Physics.Linecast(origin + Vector3.up, spot, solid, QueryTriggerInteraction.Ignore))
-				{
-					return spot;
-				}
-			}
+			MountedPortal.OnLogLoaded(this, Player.m_localPlayer);
 		}
-		return origin + Vector3.up * 2.5f;
 	}
 
 	internal void EndRiderPassThrough()
@@ -767,6 +759,73 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		UpdateWreckLook();
 		UpdateShake();
 		LogSync();
+	}
+
+	// ---- Getting unstuck --------------------------------------------------------------------------
+
+	// A log wedged inside something (a wall beside a portal, a rock it was shoved into) lets go of
+	// it: once it has been overlapping solid things for a moment, its colliders go soft until it's
+	// clear. Hover doesn't need them (it's raycast), and merely pushing against a wall isn't an
+	// overlap, so this can't be used to drive through walls.
+	private float m_unstickUntil;
+	private float m_unstickTimer;
+	private int m_overlapChecks;
+	private bool m_ghost;
+	private static readonly Collider[] s_overlaps = new Collider[16];
+
+	private void UpdateUnstick(float dt)
+	{
+		if ((m_unstickTimer -= dt) > 0f)
+		{
+			return;
+		}
+		m_unstickTimer = 0.25f;
+		bool overlapping = Embedded();
+		m_overlapChecks = overlapping ? m_overlapChecks + 1 : 0;
+		if (!overlapping)
+		{
+			SetGhost(false);
+		}
+		else if (m_overlapChecks >= 3 || Time.time < m_unstickUntil)
+		{
+			SetGhost(true);
+		}
+	}
+
+	private bool Embedded()
+	{
+		if (m_frame.GetComponent<CapsuleCollider>() is not CapsuleCollider capsule)
+		{
+			return false;
+		}
+		Vector3 axis = m_frame.forward;
+		float radius = capsule.radius * m_frame.lossyScale.x * 0.8f;
+		float half = Mathf.Max(0f, capsule.height * m_frame.lossyScale.z * 0.5f - radius);
+		Vector3 centre = m_frame.TransformPoint(capsule.center);
+		int count = Physics.OverlapCapsuleNonAlloc(centre - axis * half, centre + axis * half, radius, s_overlaps,
+			s_groundMask & ~LayerMask.GetMask("terrain"), QueryTriggerInteraction.Ignore);
+		for (int i = 0; i < count; i++)
+		{
+			Collider other = s_overlaps[i];
+			if (other.attachedRigidbody != m_body && other.GetComponentInParent<Character>() == null)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void SetGhost(bool ghost)
+	{
+		if (ghost == m_ghost)
+		{
+			return;
+		}
+		m_ghost = ghost;
+		foreach (Collider collider in m_frame.GetComponentsInChildren<Collider>())
+		{
+			collider.isTrigger = ghost;
+		}
 	}
 
 	// ---- Network sync ------------------------------------------------------------------------------
@@ -1026,6 +1085,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			CalculateHaveValidUser();
 		}
 		bool driving = IsLocallyDriven();
+		if (MountedPortal.Holds(this))
+		{
+			// In a portal: no flying, no stamina or fuel, until the rider arrives.
+			m_body.linearVelocity = Vector3.zero;
+			return;
+		}
 		if (!driving)
 		{
 			ResetControls();
@@ -1039,6 +1104,14 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_wreckSettled = false;
 		m_body.isKinematic = false;
 		m_body.useGravity = false;
+		if (driving || Time.time < m_unstickUntil)
+		{
+			UpdateUnstick(dt);
+		}
+		else
+		{
+			SetGhost(false);
+		}
 
 		Vector3 pos = m_body.position;
 		Vector3 vel = m_body.linearVelocity;
@@ -1508,13 +1581,21 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		hit.m_dir = dir.sqrMagnitude > 0.01f ? dir.normalized : m_frame.forward;
 		hit.SetAttacker(rider);
 		destructible.Damage(hit);
-		AddWear(amount * 0.05f * SnakeWoodPlugin.RamWear.Value, hit.m_point);
+		if (m_v.RamKeepSpeed > 0f)
+		{
+			// A heavy ram ploughs on instead of stopping dead against what it hit.
+			Vector3 keep = m_driveVelocity * m_v.RamKeepSpeed;
+			m_body.linearVelocity = new Vector3(keep.x, m_body.linearVelocity.y, keep.z);
+		}
+		// Tool-like rams (felling, mining) are built for it and wear slower.
+		float wearShare = m_v.RamChop > 0f || m_v.RamPickaxe > 0f ? 0.02f : 0.05f;
+		AddWear(amount * wearShare * SnakeWoodPlugin.RamWear.Value, hit.m_point);
 	}
 
 	private void OnDestroy()
 	{
 		Player player = Player.m_localPlayer;
-		if (player != null && ReferenceEquals(player.GetDoodadController(), this))
+		if (player != null && ReferenceEquals(player.GetDoodadController(), this) && !MountedPortal.Holds(this))
 		{
 			player.StopDoodadControl();
 			player.AttachStop();

@@ -38,7 +38,7 @@ server admin can change them.
 | --- | --- | --- |
 | Hover Log | 50 Wood, 20 Resin, 4 Deer Trophies, 10 Deer Hides | Balanced and forgiving. |
 | Fine Hover Log | 50 Fine Wood, 30 Resin, 5 Ancient Seeds, 3 Troll Hides | Light, quick and twitchy: a scout. Fast enough to run down a hare, but carries little. |
-| Core Wood Battering Log | 60 Core Wood, 30 Resin, 5 Ancient Seeds, 5 Troll Hides | Heavy and slow, but **nothing knocks you off it** and it hauls the heaviest loads. Rams creatures and fells trees in its way. |
+| Core Wood Battering Log | 60 Core Wood, 30 Resin, 5 Ancient Seeds, 5 Troll Hides | Heavy and slow, but **nothing knocks you off it** and it hauls the heaviest loads. A battering ram: ploughs on through what it hits, fells trees, and smashes rock and copper/tin deposits (about as well as a pickaxe between antler and bronze, counting the back-up-and-charge time). |
 | Ancient Bark Hover Log | 60 Ancient Bark, 30 Resin, 6 Withered Bones, 10 Guck | Floats high over swamp roots (and leeches), handles water best, carries a lot, and **trails a poison cloud** that sickens creatures caught in it. Its ram poisons too. |
 | Yggdrasil Hover Log | 50 Yggdrasil Wood, 30 Resin, 4 Dvergr Key Fragments, 10 Sap | The Mistlands scout: quiet, climbs steepest, floats and hops highest, **hops twice more in mid-air**, glides down from cliffs, and trails sparks of light. Fast enough to catch a hare. |
 | Ashwood Hover Log | 60 Ashwood, 30 Resin, 3 Bell Fragments | The fastest, just. Trails embers, and its ram sets things on fire. |
@@ -72,7 +72,7 @@ a little faster than a ridden Lox, and only with light packs.
 | --- | --- | --- | --- | --- | --- |
 | Hover Log | 7 (9.1) m/s | 30° | 210 | 100 | normal |
 | Fine Hover Log | 9 (13) m/s | 35° | 130 | 60 | a little quieter |
-| Core Wood Battering Log | 5.5 (7.2) m/s | 22° | 490 | 300 | loud |
+| Core Wood Battering Log | 5.5 (7.2) m/s | 32° | 490 | 300 | loud |
 | Ancient Bark Hover Log | 7 (9.5) m/s | 30° | 350 | 150 | normal |
 | Yggdrasil Hover Log | 9 (13) m/s | 40° | 140 | 120 | quiet |
 | Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 180 | 150 | a little louder |
@@ -84,8 +84,13 @@ resets every log's Load Capacity (other settings you changed are kept).
 
 ## Portals
 
-Ride into a portal and you come out on foot with your log waiting beside you (in the nearest
-clear spot), ready to get back on. Anything you carry still follows the game's portal rules.
+Ride straight into a portal and you stay on: you come out the other side still riding, with
+the log under you. It doesn't fly, drain stamina or burn fuel during the loading screen.
+Anything you carry still follows the game's portal rules.
+
+Tight spots: the log bumps into things at its own size (smaller than it looks), and if it ever
+ends up wedged inside a wall or rock it lets go of it for a moment and slides free. Holding
+Crouch sinks it low for squeezing in.
 
 ## Multiplayer
 
@@ -117,7 +122,8 @@ Every log burns **resin**. A new log starts empty.
 | Key | Does |
 | --- | --- |
 | **E** on a log | Get on. |
-| **E** again | Get off. |
+| **E** again | Get off (looking at the log or at nothing). |
+| **E** on a door | Open or close it without getting off. |
 | **W / S** | Throttle and reverse. |
 | **Mouse** | Steer. The log turns toward where you look, like the Lox. |
 | **A / D** | Strafe. With `Steering = Keys`, A and D turn instead. |
@@ -200,8 +206,8 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 `BepInEx/config/com.snakesquad.snakewood.cfg`, or Configuration Manager (F1):
 
 - **Steering**: `Camera` (default) or `Keys`.
-- **Riding Pose** (drop-down): `Straddle` (default, like the Lox), `SideSaddle`, `Surf` (stand
-  on it like a surfboard) or `LieDown`.
+- **Riding Pose** (drop-down): `Surf` (default, stand on it like a surfboard), `Straddle` (like
+  the Lox), `SideSaddle` or `LieDown`.
 - **Seat Height**: raise or lower the rider on the log.
 - **Mounted Combat**: on by default. Off makes attacking get you off, like the Lox.
 - **Crouch Action**: `Lower` (default, sink and creep) or `Brake`.

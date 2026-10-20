@@ -44,11 +44,11 @@ public class HoverLogVariant
 			WoodItem = "RoundLog", Station = Station.Forge, StationLevel = 3, Boss = Boss.TheElder, Recipe = "RoundLog:60,Resin:30,AncientSeed:5,TrollHide:5",
 			TemplateHints = new[] { "wood_pole_log_4", "wood_pole_log", "wood_log_45", "wood_log_26" },
 			Length = 3.6f, Thickness = 1.5f, Mass = 250f,
-			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 5.5f, Boost = 1.3f, Acceleration = 4.5f, TurnSpeed = 65f, Grip = 5f,
+			AimPenalty = 2f, RideStamina = 0.8f, MaxSpeed = 5.5f, Boost = 1.3f, Acceleration = 6f, TurnSpeed = 65f, Grip = 5f,
 			HoverHeight = 0.7f, HopHeight = 2f, FallGravity = 1.3f, CrashSpeed = 0f, DeepWaterSpeed = 0.25f,
-			MaxClimb = 22f, LoadCapacity = 490f, Durability = 300f, Noise = 1.6f,
+			MaxClimb = 32f, LoadCapacity = 490f, Durability = 300f, Noise = 1.6f,
 			Fx = TrailFx.Dust, Glow = new Color(1f, 0.6f, 0.3f),
-			RamDamage = 60f, RamChop = 1f, RamPickaxe = 0.5f, RamPush = 60f, RamToolTier = 2,
+			RamDamage = 90f, RamChop = 1f, RamPickaxe = 0.55f, RamPush = 60f, RamToolTier = 2, RamKeepSpeed = 0.85f,
 		},
 		new HoverLogVariant("ElderBark", "Ancient Bark Hover Log", "Rides high enough to clear swamp roots and shallow water. It trails a poison cloud that sickens creatures caught in it, and its bark poisons whatever it rams.")
 		{
@@ -282,6 +282,8 @@ public class HoverLogVariant
 	public int AirHops;
 	public float RamDamage, RamChop, RamPickaxe, RamFire, RamFrost, RamPoison, RamPush, PoisonCloud;
 	public int RamToolTier;
+	// Share of its speed a ram keeps after hitting something it damages (Core Wood ploughs on).
+	public float RamKeepSpeed;
 
 	public ConfigEntry<bool> Enabled = null!;
 	public ConfigEntry<string> RecipeCfg = null!;
@@ -360,6 +362,7 @@ public class HoverLogVariant
 		{
 			string ram = $"ram {RamDamageCfg.Value:0}";
 			if (RamChop > 0f) ram += ", fells trees";
+			if (RamPickaxe > 0f) ram += ", mines rock and ore";
 			if (RamPoison > 0f) ram += ", poisons";
 			if (RamFire > 0f) ram += ", burns";
 			if (RamFrost > 0f) ram += ", chills";
@@ -423,6 +426,11 @@ public class HoverLogVariant
 			"What repairs it (the game's item name): Shift+E on a worn log uses these before adding fuel. Each fixes Repair Per Item wear (see 5 - Wear).");
 		NoiseCfg = config.Bind(section, "Noise", Noise,
 			new ConfigDescription("Multiplies how far away creatures hear you riding it (see Noise settings under 3 - Balance).", new AcceptableValueRange<float>(0f, 5f)));
+		if (SnakeWoodPlugin.ResetV5 && Key == "RoundLog")
+		{
+			AccelerationCfg.Value = Acceleration;
+			MaxClimbCfg.Value = MaxClimb;
+		}
 		if (SnakeWoodPlugin.ResetLoads)
 		{
 			LoadCapacityCfg.Value = LoadCapacity;
@@ -438,6 +446,10 @@ public class HoverLogVariant
 		}
 		RamDamageCfg = config.Bind(section, "Ram Damage", RamDamage,
 			new ConfigDescription("Damage dealt at full speed to what the log runs into. Scales down at lower speeds. 0 turns ramming off.", new AcceptableValueRange<float>(0f, 500f)));
+		if (SnakeWoodPlugin.ResetV5 && Key == "RoundLog")
+		{
+			RamDamageCfg.Value = RamDamage;
+		}
 		if (Fx == TrailFx.Poison)
 		{
 			PoisonCloudCfg = config.Bind(section, "Poison Cloud Damage", PoisonCloud,

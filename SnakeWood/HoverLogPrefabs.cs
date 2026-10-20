@@ -832,31 +832,6 @@ internal static class FishQualityConsumePatch
 	}
 }
 
-// Taking a portal while riding: see HoverLog.SendThroughPortal.
-[HarmonyPatch(typeof(Player), nameof(Player.TeleportTo))]
-internal static class RideThroughPortalPatch
-{
-	private static void Postfix(Player __instance, bool __result)
-	{
-		if (__result && __instance == Player.m_localPlayer && __instance.GetDoodadController() is HoverLog log)
-		{
-			log.SendThroughPortal(__instance);
-		}
-	}
-}
-
-[HarmonyPatch(typeof(Player), nameof(Player.UpdateTeleport))]
-internal static class FetchLogAfterPortalPatch
-{
-	private static void Postfix(Player __instance)
-	{
-		if (__instance == Player.m_localPlayer)
-		{
-			HoverLog.FetchAfterPortal(__instance);
-		}
-	}
-}
-
 // Taking a log down (or clearing a wreck) only needs a workbench nearby, whatever station it was
 // built at: the check vanilla makes against the piece's own station is pointed at the workbench.
 [HarmonyPatch(typeof(Player), nameof(Player.CheckCanRemovePiece))]

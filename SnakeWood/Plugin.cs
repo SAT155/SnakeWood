@@ -70,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.13.0";
+	internal const string PluginVersion = "1.14.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -152,7 +152,9 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static bool ResetRecipes;
 	// And the load capacities, lowered in balance version 4 when they became the soft limit.
 	internal static bool ResetLoads;
-	private const int CurrentBalanceVersion = 4;
+	// Balance version 5: Surf became the default pose and Core Wood got stronger.
+	internal static bool ResetV5;
+	private const int CurrentBalanceVersion = 5;
 	internal static ConfigEntry<bool> RamFriendlies = null!;
 
 	private void Awake()
@@ -162,7 +164,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 
 		Steering = Config.Bind("1 - Riding", "Steering", SteeringMode.Camera,
 			"Camera: the log turns toward where you look (like the Lox) and A/D strafe. Keys: A/D turn the log and the camera is free.");
-		Pose = Config.Bind("1 - Riding", "Riding Pose", RiderPose.Straddle,
+		Pose = Config.Bind("1 - Riding", "Riding Pose", RiderPose.Surf,
 			"How you ride. Straddle: astride like the Lox saddle. SideSaddle: sitting sideways, like a chair. Surf: standing on it like a surfboard. LieDown: flat on your back. Takes effect next time you get on.");
 		SeatHeight = Config.Bind("1 - Riding", "Seat Height", 0.25f,
 			new ConfigDescription("How far above the log's centre the rider sits, in metres. Only affects logs that load after you change it.",
@@ -243,13 +245,18 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		ResetSpeeds = balanceVersion.Value < 2;
 		ResetRecipes = balanceVersion.Value < 3;
 		ResetLoads = balanceVersion.Value < 4;
+		ResetV5 = balanceVersion.Value < 5;
+		if (ResetV5)
+		{
+			Pose.Value = RiderPose.Surf;
+		}
 		foreach (HoverLogVariant variant in HoverLogVariant.All)
 		{
 			variant.BindConfig(Config);
 		}
 		if (balanceVersion.Value < CurrentBalanceVersion)
 		{
-			ResetSpeeds = ResetRecipes = ResetLoads = false;
+			ResetSpeeds = ResetRecipes = ResetLoads = ResetV5 = false;
 			balanceVersion.Value = CurrentBalanceVersion;
 			Log.LogInfo("Settings changed by a rebalance (log speeds, wood log recipes, load capacities) reset to this version's defaults.");
 		}
