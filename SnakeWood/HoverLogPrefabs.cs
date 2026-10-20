@@ -831,3 +831,16 @@ internal static class FishQualityConsumePatch
 		return false;
 	}
 }
+
+// Taking a portal while riding: see HoverLog.SendThroughPortal.
+[HarmonyPatch(typeof(Player), nameof(Player.TeleportTo))]
+internal static class RideThroughPortalPatch
+{
+	private static void Postfix(Player __instance, Vector3 pos, Quaternion rot, bool __result)
+	{
+		if (__result && __instance == Player.m_localPlayer && __instance.GetDoodadController() is HoverLog log)
+		{
+			log.SendThroughPortal(__instance, pos, rot);
+		}
+	}
+}

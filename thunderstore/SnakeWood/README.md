@@ -82,6 +82,11 @@ Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new 
 and updating from 1.4 or earlier resets the wood logs' Recipes (other settings you changed are
 kept).
 
+## Portals
+
+Ride into a portal and you come out on foot with your log waiting beside you, ready to get
+back on. Anything you carry still follows the game's portal rules.
+
 ## Passengers
 
 Other players can jump onto a log and ride along standing on it while someone drives, the way

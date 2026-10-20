@@ -469,6 +469,24 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		return log;
 	}
 
+	// Riding into a portal: the rider is pinned to the seat, so they'd never arrive (the loading
+	// screen waits forever). They get off, and the log is sent on ahead to wait beside where
+	// they'll come out. Its ZDO moves now; the game drops the object here and loads it there.
+	internal void SendThroughPortal(Player rider, Vector3 target, Quaternion rotation)
+	{
+		rider.StopDoodadControl();
+		rider.AttachStop();
+		if (!m_nview.IsValid() || !m_nview.IsOwner())
+		{
+			return;
+		}
+		Vector3 pos = target + rotation * new Vector3(1.8f, 0.6f, 0.5f);
+		m_body.linearVelocity = Vector3.zero;
+		m_body.position = pos;
+		transform.position = pos;
+		m_nview.GetZDO().SetPosition(pos);
+	}
+
 	internal void EndRiderPassThrough()
 	{
 		if (m_solidLayer >= 0)

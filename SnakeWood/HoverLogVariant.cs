@@ -318,18 +318,20 @@ public class HoverLogVariant
 	// The build menu tooltip: flavour text plus the live numbers from config.
 	public string Describe()
 	{
-		string Line(string label, string value) => $"\n<color=orange>{label}</color> {value}";
-		string text = Description + "\n";
-		text += Line("Built at", StationCfg.Value switch
+		// Valheim shrinks the tooltip font to fit, so this stays short: the first sentence of the
+		// flavour text and a few packed lines of stats. The full story is in the README.
+		string Label(string label) => $"<color=orange>{label}</color>";
+		int stop = Description.IndexOf(". ");
+		string text = (stop > 0 ? Description.Substring(0, stop + 1) : Description) + "\n";
+
+		List<string> needs = new();
+		if (StationLevelCfg.Value > 1)
 		{
-			Station.ArtisanTable => "an Artisan Table",
-			Station.GaldrTable => "a Galdr Table",
-			Station.BlackForge => "a Black Forge",
-			Station station => "a " + station,
-		} + (StationLevelCfg.Value > 1 ? $" (level {StationLevelCfg.Value})" : ""));
+			needs.Add($"station level {StationLevelCfg.Value}");
+		}
 		if (SnakeWoodPlugin.BossGate.Value && RequiredBossCfg.Value != Boss.None)
 		{
-			text += Line("Unlocked by", "defeating " + RequiredBossCfg.Value switch
+			needs.Add("beat " + RequiredBossCfg.Value switch
 			{
 				Boss.TheElder => "The Elder",
 				Boss.TheQueen => "The Queen",
@@ -338,41 +340,38 @@ public class HoverLogVariant
 		}
 		if (IsFish && SnakeWoodPlugin.FishQuality.Value > 1)
 		{
-			text += Line("Needs", $"a level {SnakeWoodPlugin.FishQuality.Value} fish or better");
+			needs.Add($"a level {SnakeWoodPlugin.FishQuality.Value} fish");
 		}
-		text += Line("Speed", $"{MaxSpeedCfg.Value:0.#} m/s, boost x{BoostCfg.Value:0.##}");
-		text += Line("Turning", $"{TurnSpeedCfg.Value:0}°/s");
-		text += Line("Climbs", $"slopes up to {MaxClimbCfg.Value:0}°");
-		text += Line("Carries", $"up to {LoadCapacityCfg.Value:0} weight, slower and lower as it fills");
-		text += Line("Hover", $"{HoverHeightCfg.Value:0.#} m");
-		string airHops = AirHopsCfg.Value > 0 ? $", +{AirHopsCfg.Value} in mid-air" : "";
-		text += Line("Hop", HopHeightCfg.Value > 0f ? $"{HopHeightCfg.Value:0.#} m{airHops}" : "none");
-		if (FallGravityCfg.Value < 0.75f)
+		if (needs.Count > 0)
 		{
-			text += Line("Glide", $"falls at {FallGravityCfg.Value * 100f:0}% gravity");
+			text += $"\n{Label("Needs")} {string.Join(", ", needs)}";
 		}
-		text += Line("Balance", RideStaminaCfg.Value > 0f ? $"{RideStaminaCfg.Value:0.#} stamina/s" : "free");
-		text += Line("Crashes", CrashSpeedCfg.Value > 0f ? $"thrown off above {CrashSpeedCfg.Value:0.#} m/s" : "never thrown off");
-		text += Line("Aim", $"+{AimPenaltyCfg.Value:0.#}° spread, more at speed");
-		text += Line("Deep water", $"{DeepWaterSpeedCfg.Value * 100f:0}% speed");
-		text += Line("Noise", NoiseCfg.Value < 0.75f ? "quiet" : NoiseCfg.Value > 1.25f ? "loud" : "normal");
-		if (SnakeWoodPlugin.WearEnabled.Value)
-		{
-			text += Line("Durability", $"{DurabilityCfg.Value:0}");
-		}
+
+		string hop = HopHeightCfg.Value > 0f ? $"hop {HopHeightCfg.Value:0.#} m" + (AirHopsCfg.Value > 0 ? $" +{AirHopsCfg.Value} air" : "") : "no hop";
+		text += $"\n{Label("Speed")} {MaxSpeedCfg.Value:0.#} m/s (x{BoostCfg.Value:0.##}), sea {DeepWaterSpeedCfg.Value * 100f:0}%, turns {TurnSpeedCfg.Value:0}°/s";
+		text += $"\n{Label("Hover")} {HoverHeightCfg.Value:0.#} m, {hop}, climbs {MaxClimbCfg.Value:0}°" + (FallGravityCfg.Value < 0.75f ? ", glides" : "");
+		text += $"\n{Label("Rider")} {(RideStaminaCfg.Value > 0f ? $"{RideStaminaCfg.Value:0.#} stamina/s" : "no stamina")}, "
+			+ (CrashSpeedCfg.Value > 0f ? $"thrown at {CrashSpeedCfg.Value:0.#} m/s" : "never thrown") + $", aim +{AimPenaltyCfg.Value:0.#}°";
+		text += $"\n{Label("Carries")} {LoadCapacityCfg.Value:0}" + (SnakeWoodPlugin.WearEnabled.Value ? $", durability {DurabilityCfg.Value:0}" : "")
+			+ (NoiseCfg.Value < 0.75f ? ", quiet" : NoiseCfg.Value > 1.25f ? ", loud" : "");
+
+		List<string> extras = new();
 		if (RamDamageCfg.Value > 0f)
 		{
-			List<string> extras = new();
-			if (RamChop > 0f) extras.Add("fells trees");
-			if (RamPickaxe > 0f) extras.Add("chips rock");
-			if (RamPoison > 0f) extras.Add("poisons");
-			if (RamFire > 0f) extras.Add("burns");
-			if (RamFrost > 0f) extras.Add("chills");
-			text += Line("Ram", $"{RamDamageCfg.Value:0} damage" + (extras.Count > 0 ? ", " + string.Join(", ", extras) : ""));
+			string ram = $"ram {RamDamageCfg.Value:0}";
+			if (RamChop > 0f) ram += ", fells trees";
+			if (RamPoison > 0f) ram += ", poisons";
+			if (RamFire > 0f) ram += ", burns";
+			if (RamFrost > 0f) ram += ", chills";
+			extras.Add(ram);
 		}
 		if (PoisonCloudCfg != null && PoisonCloudCfg.Value > 0f)
 		{
-			text += Line("Poison cloud", $"{PoisonCloudCfg.Value:0} poison to creatures in your wake");
+			extras.Add($"poison cloud {PoisonCloudCfg.Value:0}");
+		}
+		if (extras.Count > 0)
+		{
+			text += $"\n{Label("Special")} {string.Join("; ", extras)}";
 		}
 		return text;
 	}
