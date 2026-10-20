@@ -56,9 +56,9 @@ fast on water, and each has a trick. Repair them with raw fish.
 | Hover Pike | 5 Serpent Scales | Built for the open sea, 2.2x its land speed over deep water. |
 | Hover Tuna | 5 Serpent Scales | The fastest thing at sea (2.7x) and tireless, but sluggish on land. |
 | Hover Tetra | 5 Freeze Glands | Mountain goat of a fish: climbs 45° slopes, hops with an extra mid-air hop, trails frost. |
-| Hover Trollfish | 3 Withered Bones | Tough swamp brute: never throws you, rides high over leeches, hauls 600, rams. |
+| Hover Trollfish | 3 Withered Bones | Tough swamp brute: never throws you, rides high over leeches, hauls 420, rams. |
 | Hover Herring | 1 Dvergr Key Fragment | Quiet, agile scout for the Mistlands coast. |
-| Hover Grouper | 2 Fuling Totems | Broad sea hauler (600) that rams and shoves. |
+| Hover Grouper | 2 Fuling Totems | Broad sea hauler (420) that rams and shoves. |
 | Hover Coral Cod | 2 Fuling Totems | Smooth and steady: the best fish to shoot from. |
 | Hover Anglerfish | 1 Dvergr Key Fragment | Its lure is a bright lamp for night and mist. Quiet. |
 | Hover Salmon | 1 Bell Fragment | Leaps: big hops plus a mid-air hop, fast in northern seas. |
@@ -68,24 +68,32 @@ fast on water, and each has a trick. Repair them with raw fish.
 Logs are scouting and utility rides, not a faster way to haul everything: the quickest are only
 a little faster than a ridden Lox, and only with light packs.
 
-| Log | Top speed (boost) | Climbs | Carries | Durability | Noise |
+| Log | Top speed (boost) | Climbs | Load Capacity | Durability | Noise |
 | --- | --- | --- | --- | --- | --- |
-| Hover Log | 7 (9.1) m/s | 30° | 300 | 100 | normal |
-| Fine Hover Log | 9 (13) m/s | 35° | 180 | 60 | a little quieter |
-| Core Wood Battering Log | 5.5 (7.2) m/s | 22° | 700 | 300 | loud |
-| Ancient Bark Hover Log | 7 (9.5) m/s | 30° | 500 | 150 | normal |
-| Yggdrasil Hover Log | 9 (13) m/s | 40° | 200 | 120 | quiet |
-| Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 250 | 150 | a little louder |
-| Timberwood Hover Log | 9.5 (13.8) m/s | 42° | 350 | 200 | a little quieter |
+| Hover Log | 7 (9.1) m/s | 30° | 210 | 100 | normal |
+| Fine Hover Log | 9 (13) m/s | 35° | 130 | 60 | a little quieter |
+| Core Wood Battering Log | 5.5 (7.2) m/s | 22° | 490 | 300 | loud |
+| Ancient Bark Hover Log | 7 (9.5) m/s | 30° | 350 | 150 | normal |
+| Yggdrasil Hover Log | 9 (13) m/s | 40° | 140 | 120 | quiet |
+| Ashwood Hover Log | 9.5 (13.8) m/s | 35° | 180 | 150 | a little louder |
+| Timberwood Hover Log | 9.5 (13.8) m/s | 42° | 240 | 200 | a little quieter |
 
 Updating from 1.2 resets each log's Top Speed and Boost Multiplier to these new defaults once,
-and updating from 1.4 or earlier resets the wood logs' Recipes (other settings you changed are
-kept).
+updating from 1.4 or earlier resets the wood logs' Recipes, and updating from 1.12 or earlier
+resets every log's Load Capacity (other settings you changed are kept).
 
 ## Portals
 
 Ride into a portal and you come out on foot with your log waiting beside you (in the nearest
 clear spot), ready to get back on. Anything you carry still follows the game's portal rules.
+
+## Multiplayer
+
+The rider's game flies the log; everyone else sees it ease towards the latest position the
+rider's game sent, without guessing ahead (guessing ahead made a laggy rider's turns fling the
+log off course). If logs still look jumpy, turn on `Sync Debug` (section 9) for the rider and a
+watcher, ride around, and compare the two LogOutput.log files: they log how often updates
+arrive, the longest gap, and how far the log you see is from the latest update.
 
 ## Passengers
 
@@ -115,7 +123,7 @@ Every log burns **resin**. A new log starts empty.
 | **A / D** | Strafe. With `Steering = Keys`, A and D turn instead. |
 | **Shift** | Boost (costs stamina). |
 | **Space** | Hop (costs stamina). The Yggdrasil log can hop again in mid-air. |
-| **Crouch (Ctrl)** | Brake hard. |
+| **Crouch (Ctrl)** | Hold to sink the log right down and creep along, for squeezing under things and into portals. (`Crouch Action = Brake` makes it brake hard instead.) |
 | **Look up / down** | Tip the nose. Nose up rides higher at speed to clear rising ground; nose down sits lower and dives faster. |
 | **Attack, bow, block** | Fight from the log (Mounted Combat). |
 
@@ -141,11 +149,11 @@ crash limit, aim, deep-water speed, climb angle, load capacity, noise, durabilit
 
 ## Weight, slopes and noise
 
-- **Carry weight.** Each log lifts up to its **Load Capacity** (your whole inventory weight,
-  gear included). Up to about a third of that makes no difference. Above it, the fuller the log,
-  the lower its top speed (up to 45% slower), hover and hop height (up to half), and the
-  sluggier its acceleration and turning. Over capacity it won't take off, and if you pick up too
-  much mid-ride it sputters along low and slow. Core Wood and Ancient Bark carry the most.
+- **Carry weight** works like a cart's: there's no hard limit, the log just flies worse the more
+  you carry (your whole inventory weight, gear included). Every bit of weight trims its top speed,
+  acceleration, turning and hops, and lowers its hover a little. At its **Load Capacity** it's
+  down to 70%; past that it gets bad fast (50% over capacity leaves it crawling at 10%, barely
+  off the ground), and you get a warning. Core Wood and Ancient Bark carry the most.
 - **Slopes.** Each log has a **Max Climb Angle**. Ground steeper than that stops it (hop over it
   or go round), and the log's nose never tips further than that either, from the ground or from
   looking up and down.
@@ -196,6 +204,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   on it like a surfboard) or `LieDown`.
 - **Seat Height**: raise or lower the rider on the log.
 - **Mounted Combat**: on by default. Off makes attacking get you off, like the Lox.
+- **Crouch Action**: `Lower` (default, sink and creep) or `Brake`.
 - **Combat Stance**: `Stand` (default) or `Seated` (experimental).
 - **Vanilla Disguise**: on by default (see the top of this page).
 - **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down.
@@ -205,8 +214,8 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
-  Also **Require Boss Kills** (off), **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Load Free Share**, **Load Speed Penalty**,
-  **Load Height Penalty**, **Load Handling Penalty**), and **Noise At Rest** / **Noise At Top Speed**.
+  Also **Require Boss Kills** (off), **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Performance At Load Capacity** 0.7,
+  **Overload Falloff** 1.2), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
   **Take Out Fuel Key** (R).
 - **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, and **Repair Per Item**.

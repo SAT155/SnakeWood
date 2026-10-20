@@ -66,6 +66,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private ZNetView m_nview = null!;
 	private Rigidbody m_body = null!;
+	private ZSyncTransform? m_sync;
 	private HoverLogVariant m_v = null!;
 
 	// Rider input, written by ApplyControlls on the rider's game.
@@ -73,7 +74,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private Vector3 m_lookDir;
 	private bool m_boost;
 	private bool m_brake;
-	private bool m_crouchBrake;
+	private bool m_crouchHeld;
 	private bool m_hopQueued;
 
 	private float m_yaw;
@@ -95,6 +96,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	{
 		m_nview = GetComponent<ZNetView>();
 		m_body = GetComponent<Rigidbody>();
+		m_sync = GetComponent<ZSyncTransform>();
 		HoverLogVariant? variant = HoverLogVariant.Get(m_variant);
 		if (m_nview.GetZDO() == null || variant == null)
 		{
@@ -386,20 +388,22 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	// ---- Load (carry weight) and cargo ----------------------------------------------------------
 
-	// 0 while carrying no more than the free share of Load Capacity, rising to 1 when full; above
-	// 1 the log is overloaded and won't lift off.
+	// Weight works like a cart's: no hard limit, just a log that flies worse the more you carry.
+	// Load is carry weight over Load Capacity. Up to 1, performance eases down in a straight line to
+	// Performance At Load Capacity; past it, it falls Overload Falloff faster, to a floor of 8%.
 	private float m_load;
 	private float m_loadTimer;
 
-	private float LoadOf(Player player)
+	private float LoadOf(Player player) =>
+		player.GetInventory().GetTotalWeight() / Mathf.Max(1f, m_v.LoadCapacityCfg.Value);
+
+	private static float Performance(float load)
 	{
-		float capacity = m_v.LoadCapacityCfg.Value;
-		float weight = player.GetInventory().GetTotalWeight();
-		if (weight > capacity)
-		{
-			return 1f + (weight - capacity) / capacity;
-		}
-		return Mathf.InverseLerp(capacity * SnakeWoodPlugin.LightLoad.Value, capacity, weight);
+		float atCapacity = SnakeWoodPlugin.LoadAtCapacity.Value;
+		float performance = load <= 1f
+			? 1f - (1f - atCapacity) * load
+			: atCapacity - SnakeWoodPlugin.OverloadFalloff.Value * (load - 1f);
+		return Mathf.Clamp(performance, 0.08f, 1f);
 	}
 
 	private static bool CarriesMetal(Player player) =>
@@ -423,7 +427,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_load = LoadOf(player);
 		if (m_load > 1f && !wasOverloaded)
 		{
-			player.Message(MessageHud.MessageType.Center, "You're carrying too much! The log can barely stay up");
+			player.Message(MessageHud.MessageType.Center, "Overloaded! The log is sinking and sluggish");
 		}
 		return true;
 	}
@@ -652,8 +656,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		if (LoadOf(player) > 1f)
 		{
-			player.Message(MessageHud.MessageType.Center, $"You're carrying too much for this log (it lifts {m_v.LoadCapacityCfg.Value:0})");
-			return false;
+			player.Message(MessageHud.MessageType.Center, $"Overloaded: this log struggles past {m_v.LoadCapacityCfg.Value:0} weight");
 		}
 		m_nview.InvokeRPC("SnakeWood_RequestControl", player.GetZDOID().UserID);
 		m_controlRequestedAt = Time.time;
@@ -746,7 +749,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_moveInput = moveDir;
 		m_lookDir = lookDir;
 		m_boost = run;
-		// With Mounted Combat, block raises your shield and Crouch brakes instead (see Update).
+		// With Mounted Combat, block raises your shield; Crouch lowers or brakes instead (see Update).
 		m_brake = block && !SnakeWoodPlugin.MountedCombat.Value;
 	}
 
@@ -759,10 +762,72 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			m_offsetCheckTimer = 1f;
 			SetDisguiseOffset(HoverLogDisguise.StoredOffset(m_nview.GetZDO()));
 		}
-		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
+		m_crouchHeld = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 		CheckTakeFuelKey();
 		UpdateWreckLook();
 		UpdateShake();
+		LogSync();
+	}
+
+	// ---- Network sync ------------------------------------------------------------------------------
+
+	// On everyone else's game the log is kinematic and simply eases towards the latest position and
+	// rotation the rider's game sent. Left as a free body, ZSyncTransform would both push it along
+	// with the synced velocity and aim it ahead along that velocity (for up to two seconds when
+	// updates are late), so a laggy rider's sharp turn sent it sailing off the way it had been
+	// going.
+	private void FollowOwner()
+	{
+		if (!m_body.isKinematic)
+		{
+			m_body.linearVelocity = Vector3.zero;
+			m_body.angularVelocity = Vector3.zero;
+			m_body.isKinematic = true;
+		}
+		if (m_sync != null)
+		{
+			m_sync.m_isKinematicBody = true;
+		}
+	}
+
+	// Sync Debug: every two seconds, how often updates for this log arrive and how far what you see
+	// is from the latest update, to tell lag from bad smoothing.
+	private long m_lastRevision = -1;
+	private float m_lastRevisionTime;
+	private float m_syncLogTimer;
+	private int m_updates;
+	private float m_longestGap;
+	private float m_worstError;
+
+	private void LogSync()
+	{
+		if (!SnakeWoodPlugin.SyncDebug.Value || !m_nview.IsValid())
+		{
+			return;
+		}
+		ZDO zdo = m_nview.GetZDO();
+		if ((long)zdo.DataRevision != m_lastRevision)
+		{
+			if (m_lastRevisionTime > 0f)
+			{
+				m_longestGap = Mathf.Max(m_longestGap, Time.time - m_lastRevisionTime);
+			}
+			m_lastRevision = (long)zdo.DataRevision;
+			m_lastRevisionTime = Time.time;
+			m_updates++;
+		}
+		m_worstError = Mathf.Max(m_worstError, Vector3.Distance(transform.position, zdo.GetPosition()));
+		if ((m_syncLogTimer += Time.deltaTime) < 2f)
+		{
+			return;
+		}
+		SnakeWoodPlugin.Log.LogInfo($"Sync {m_v.Name} {zdo.m_uid.ID}: {(m_nview.IsOwner() ? "owner" : "watching")}, " +
+			$"{m_updates / m_syncLogTimer:0.#} updates/s, longest gap {m_longestGap * 1000f:0} ms, " +
+			$"worst offset from latest update {m_worstError:0.00} m, speed {m_body.linearVelocity.magnitude:0.#} m/s, kinematic {m_body.isKinematic}");
+		m_syncLogTimer = 0f;
+		m_updates = 0;
+		m_longestGap = 0f;
+		m_worstError = 0f;
 	}
 
 	// ---- Damage cues ------------------------------------------------------------------------------
@@ -848,7 +913,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_lookDir = m_frame.forward;
 		m_boost = false;
 		m_brake = false;
-		m_crouchBrake = false;
+		m_crouchHeld = false;
 		m_hopQueued = false;
 	}
 
@@ -946,7 +1011,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		CarryPassenger();
 		if (!m_nview.IsOwner())
 		{
+			FollowOwner();
 			return;
+		}
+		if (m_sync != null)
+		{
+			m_sync.m_isKinematicBody = false;
 		}
 		float dt = Time.fixedDeltaTime;
 		m_validUserTimer -= dt;
@@ -983,11 +1053,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			driving = false;
 		}
-		float load = driving ? Mathf.Min(1f, m_load) : 0f;
+		float performance = driving ? Performance(m_load) : 1f;
 		// Out of fuel or overloaded, the log still carries you, but only just: low, slow,
 		// no boost or hops.
 		bool outOfFuel = driving && !BurnFuel(dt);
-		bool sputtering = driving && (outOfFuel || m_load > 1f);
+		bool sputtering = driving && outOfFuel;
 		if (sputtering)
 		{
 			m_boost = false;
@@ -1004,15 +1074,19 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Vertical. An empty log rests on water like a real one; over deep water a ridden log sinks
 		// to skim the surface. Otherwise a damped spring holds the hover height. Well above that
 		// (after a hop or off a cliff) it's in the air and falls under its own gravity instead.
-		float heightFactor = 1f - SnakeWoodPlugin.LoadHeightPenalty.Value * load;
-		float handling = 1f - SnakeWoodPlugin.LoadHandlingPenalty.Value * load;
+		// Hover sinks more gently than the rest, until overloading drags it right down.
+		float heightFactor = Mathf.Sqrt(performance);
+		float handling = performance;
+		bool lowering = m_crouchHeld && SnakeWoodPlugin.Crouch.Value == CrouchAction.Lower;
 		float climb = m_v.MaxClimbCfg.Value;
-		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f : sputtering ? 0.3f : Mathf.Max(0.3f, m_v.HoverHeightCfg.Value * heightFactor);
+		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f
+			: sputtering || lowering ? 0.25f
+			: Mathf.Max(0.25f, m_v.HoverHeightCfg.Value * heightFactor);
 
 		// Nose pitch follows where the rider looks (up or down). Nose up rides higher the faster you
 		// go, to clear rising ground and bumps; nose down sits lower and dives faster off ledges.
 		float pitchInput = 0f;
-		if (driving && SnakeWoodPlugin.PitchControl.Value)
+		if (driving && SnakeWoodPlugin.PitchControl.Value && !lowering)
 		{
 			Vector3 look = m_lookDir.sqrMagnitude > 0.001f ? m_lookDir.normalized : Vector3.zero;
 			// A dead zone around the camera's usual slight downward look keeps normal riding level.
@@ -1044,7 +1118,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (m_hopQueued)
 		{
 			m_hopQueued = false;
-			TryHop(ref vel, inAir, airGravity, heightFactor);
+			TryHop(ref vel, inAir, airGravity, performance);
 		}
 
 		// Steering.
@@ -1074,12 +1148,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
 		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f)
-			* (1f - SnakeWoodPlugin.LoadSpeedPenalty.Value * load);
+			* performance * (lowering ? 0.35f : 1f);
 		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
 		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
 		float targetForward = throttle >= 0f ? throttle * topSpeed : throttle * baseSpeed * 0.4f;
 		float targetSide = strafe * baseSpeed * 0.5f;
-		bool braking = m_brake || m_crouchBrake;
+		bool braking = m_brake || (m_crouchHeld && SnakeWoodPlugin.Crouch.Value == CrouchAction.Brake);
 		if (braking)
 		{
 			targetForward = 0f;

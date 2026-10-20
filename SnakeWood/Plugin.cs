@@ -14,6 +14,12 @@ public enum SteeringMode
 	Keys,
 }
 
+public enum CrouchAction
+{
+	Lower,
+	Brake,
+}
+
 public enum CombatStance
 {
 	Stand,
@@ -64,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.12.0";
+	internal const string PluginVersion = "1.13.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -127,10 +133,10 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<KeyboardShortcut> TakeFuelKey = null!;
 	internal static ConfigEntry<bool> NoMetal = null!;
 	internal static ConfigEntry<int> FishQuality = null!;
-	internal static ConfigEntry<float> LightLoad = null!;
-	internal static ConfigEntry<float> LoadSpeedPenalty = null!;
-	internal static ConfigEntry<float> LoadHeightPenalty = null!;
-	internal static ConfigEntry<float> LoadHandlingPenalty = null!;
+	internal static ConfigEntry<float> LoadAtCapacity = null!;
+	internal static ConfigEntry<float> OverloadFalloff = null!;
+	internal static ConfigEntry<CrouchAction> Crouch = null!;
+	internal static ConfigEntry<bool> SyncDebug = null!;
 	internal static ConfigEntry<float> NoiseAtRest = null!;
 	internal static ConfigEntry<float> NoiseAtSpeed = null!;
 	internal static ConfigEntry<bool> WearEnabled = null!;
@@ -144,7 +150,9 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static bool ResetSpeeds;
 	// Same for the wood logs' recipes, raised in balance version 3.
 	internal static bool ResetRecipes;
-	private const int CurrentBalanceVersion = 3;
+	// And the load capacities, lowered in balance version 4 when they became the soft limit.
+	internal static bool ResetLoads;
+	private const int CurrentBalanceVersion = 4;
 	internal static ConfigEntry<bool> RamFriendlies = null!;
 
 	private void Awake()
@@ -163,6 +171,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Attack, use bows and block while riding. Off: attacking gets you off the log, like on the Lox.");
 		Disguise = Config.Bind("1 - Riding", "Vanilla Disguise", true,
 			"Saves hover logs as a vanilla fallen-tree log, so players without the mod see a tree log floating along with the rider (they can't ride or chop it). Modded players still see the real log. Applies to logs as they load.");
+		Crouch = Config.Bind("1 - Riding", "Crouch Action", CrouchAction.Lower,
+			"What holding Crouch (Ctrl) does while riding. Lower: the log sinks right down and creeps along, for squeezing under things and into portals. Brake: stops hard.");
 		Stance = Config.Bind("1 - Riding", "Combat Stance", CombatStance.Stand,
 			"Stand: the rider stands up on the log to attack, draw a bow or block, then sits back down. Seated (experimental): stays seated while fighting; if attacks don't animate or land this way, switch back to Stand.");
 		PitchControl = Config.Bind("1 - Riding", "Pitch With Look", true,
@@ -205,14 +215,10 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"On: each log only shows up in the build menu once its Required Boss has been defeated, on top of its crafting station.");
 		FishQuality = Config.Bind("3 - Balance", "Fish Quality Required", 5,
 			new ConfigDescription("Lowest level (quality) the fish in a fish log's recipe can be. Fish are caught at levels 1 to 5; 5 is the rarest. 1 takes any fish.", new AcceptableValueRange<int>(1, 10)));
-		LightLoad = Config.Bind("3 - Balance", "Load Free Share", 0.35f,
-			new ConfigDescription("Share of a log's Load Capacity you can carry with no effect. Above it, top speed, hover height and handling drop off until the log is full; over capacity it won't lift off.", new AcceptableValueRange<float>(0f, 1f)));
-		LoadSpeedPenalty = Config.Bind("3 - Balance", "Load Speed Penalty", 0.45f,
-			new ConfigDescription("How much top speed a full log loses (0.45 = 45% slower). 0 turns this off.", new AcceptableValueRange<float>(0f, 0.95f)));
-		LoadHeightPenalty = Config.Bind("3 - Balance", "Load Height Penalty", 0.5f,
-			new ConfigDescription("How much hover and hop height a full log loses. 0 turns this off.", new AcceptableValueRange<float>(0f, 0.95f)));
-		LoadHandlingPenalty = Config.Bind("3 - Balance", "Load Handling Penalty", 0.4f,
-			new ConfigDescription("How much acceleration and turning a full log loses. 0 turns this off.", new AcceptableValueRange<float>(0f, 0.95f)));
+		LoadAtCapacity = Config.Bind("3 - Balance", "Performance At Load Capacity", 0.7f,
+			new ConfigDescription("How well a log flies carrying exactly its Load Capacity, as a share of empty: top speed, acceleration, turning and hop height, with hover height dropping more gently. Lighter loads ease back towards full performance in a straight line. 1 makes weight not matter up to capacity.", new AcceptableValueRange<float>(0.1f, 1f)));
+		OverloadFalloff = Config.Bind("3 - Balance", "Overload Falloff", 1.2f,
+			new ConfigDescription("Performance lost for every 100% over Load Capacity (on top of the above), so overloading bites much harder: at the defaults, 50% over capacity leaves 10%. It never stops a log entirely.", new AcceptableValueRange<float>(0f, 5f)));
 		NoiseAtRest = Config.Bind("3 - Balance", "Noise At Rest", 8f,
 			new ConfigDescription("How far away, in metres, creatures can hear a log idling, before each log's own Noise multiplier. 0 makes logs silent.", new AcceptableValueRange<float>(0f, 100f)));
 		NoiseAtSpeed = Config.Bind("3 - Balance", "Noise At Top Speed", 35f,
@@ -225,6 +231,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Multiplies the wear from ramming things (a twentieth of the ram's damage).", new AcceptableValueRange<float>(0f, 10f)));
 		RepairPerItem = Config.Bind("5 - Wear", "Repair Per Item", 10f,
 			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
+		SyncDebug = Config.Bind("9 - Debug", "Sync Debug", false,
+			"Logs, every two seconds for each log near you, how often its network updates arrive, the longest gap between them, and how far the log you see is from the latest update. Turn on for both the rider and a watcher when hunting multiplayer desync, then share both LogOutput.log files.");
 		RamBuildings = Config.Bind("2 - Ramming", "Ram Damages Buildings", false,
 			"Ramming logs (Core Wood, Ashwood, Ancient Bark) also damage build pieces they hit. Off by default so a bad landing can't knock a hole in your base.");
 		RamFriendlies = Config.Bind("2 - Ramming", "Ram Damages Players And Tames", false,
@@ -234,15 +242,16 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Used by the mod to update old settings after a rebalance. Leave it alone.");
 		ResetSpeeds = balanceVersion.Value < 2;
 		ResetRecipes = balanceVersion.Value < 3;
+		ResetLoads = balanceVersion.Value < 4;
 		foreach (HoverLogVariant variant in HoverLogVariant.All)
 		{
 			variant.BindConfig(Config);
 		}
 		if (balanceVersion.Value < CurrentBalanceVersion)
 		{
-			ResetSpeeds = ResetRecipes = false;
+			ResetSpeeds = ResetRecipes = ResetLoads = false;
 			balanceVersion.Value = CurrentBalanceVersion;
-			Log.LogInfo("Settings changed by a rebalance (log speeds, wood log recipes) reset to this version's defaults.");
+			Log.LogInfo("Settings changed by a rebalance (log speeds, wood log recipes, load capacities) reset to this version's defaults.");
 		}
 
 		Config.Bind("1 - Riding", "Reload Config From Disk", false,
