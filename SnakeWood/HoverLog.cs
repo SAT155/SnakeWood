@@ -129,6 +129,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_nview.Register<bool>("SnakeWood_RequestResponse", RPC_RequestResponse);
 		m_nview.Register<int>("SnakeWood_AddFuel", RPC_AddFuel);
 		m_nview.Register<float>("SnakeWood_Repair", RPC_Repair);
+		m_nview.Register<Vector3, bool>("SnakeWood_Hit", RPC_Hit);
 	}
 
 	public HoverLogVariant Variant => m_v;
@@ -234,7 +235,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		?? m_v.RepairItemCfg.Value;
 
 	// Owner only (whoever is riding owns the log).
-	private void AddWear(float amount)
+	private void AddWear(float amount, Vector3? point = null)
 	{
 		if (!WearEnabled || amount <= 0f || !m_nview.IsValid() || !m_nview.IsOwner())
 		{
@@ -246,7 +247,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		float wear = Mathf.Min(m_v.DurabilityCfg.Value, GetWear() + amount);
 		m_nview.GetZDO().Set(s_wearKey, wear);
-		if (wear >= m_v.DurabilityCfg.Value)
+		bool wrecked = wear >= m_v.DurabilityCfg.Value;
+		if (amount >= 1f || wrecked)
+		{
+			m_nview.InvokeRPC(ZNetView.Everybody, "SnakeWood_Hit", point ?? transform.position, wrecked);
+		}
+		if (wrecked)
 		{
 			m_nview.GetZDO().Set(s_wreckedKey, true);
 			ThrowRider($"Your log is wrecked! Bring {RepairsNeeded()} {RepairName()} to repair it");
@@ -498,7 +504,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return;
 		}
-		Vector3 pos = player.transform.position + player.transform.rotation * new Vector3(1.8f, 0.6f, 0.5f);
+		HoverLogVariant? variant = HoverLogVariant.Get(zdo.GetString(HoverLogDisguise.VariantHash));
+		Vector3 pos = ClearSpotNear(player, variant?.Length ?? 3f);
 		zdo.SetOwner(ZDOMan.GetSessionID());
 		zdo.SetPosition(pos);
 		if (ZNetScene.instance.FindInstance(zdo) is ZNetView instance && instance && instance.GetComponent<HoverLog>() is HoverLog log)
@@ -507,6 +514,39 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			log.m_body.position = pos;
 			log.transform.position = pos;
 		}
+	}
+
+	// Somewhere beside the player with room for the whole log, so it doesn't end up half inside
+	// the wall next to the portal: tries a ring of spots at growing distances, each lowered onto
+	// the ground, and keeps the first where a log-sized box hits nothing. Falls back to above the
+	// player's head.
+	private static Vector3 ClearSpotNear(Player player, float length)
+	{
+		int solid = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle");
+		Vector3 origin = player.transform.position;
+		Quaternion facing = Quaternion.Euler(0f, player.transform.eulerAngles.y, 0f);
+		Vector3 halfExtents = new(0.6f, 0.5f, length * 0.6f);
+		foreach (float distance in new[] { 2f, 3f, 4.5f, 6f })
+		{
+			foreach (float angle in new[] { 90f, -90f, 180f, 0f, 135f, -135f, 45f, -45f })
+			{
+				Vector3 spot = origin + Quaternion.Euler(0f, angle, 0f) * facing * Vector3.forward * distance;
+				if (Physics.Raycast(spot + Vector3.up * 3f, Vector3.down, out RaycastHit ground, 8f, solid, QueryTriggerInteraction.Ignore))
+				{
+					spot.y = ground.point.y + 0.9f;
+				}
+				else
+				{
+					spot.y = origin.y + 0.9f;
+				}
+				if (!Physics.CheckBox(spot, halfExtents, facing, solid, QueryTriggerInteraction.Ignore)
+					&& !Physics.Linecast(origin + Vector3.up, spot, solid, QueryTriggerInteraction.Ignore))
+				{
+					return spot;
+				}
+			}
+		}
+		return origin + Vector3.up * 2.5f;
 	}
 
 	internal void EndRiderPassThrough()
@@ -722,6 +762,43 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_crouchBrake = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 		CheckTakeFuelKey();
 		UpdateWreckLook();
+		UpdateShake();
+	}
+
+	// ---- Damage cues ------------------------------------------------------------------------------
+
+	// Taking wear plays the cart's hit effect (wood splinters and a knock) and shakes the log, like
+	// a cart taking damage; wrecking it plays the cart's break effect. Everyone nearby sees it.
+	private static EffectList? s_hitEffect;
+	private static EffectList? s_breakEffect;
+	private float m_shakeUntil;
+
+	private static void FindCartEffects()
+	{
+		if (s_hitEffect == null && ZNetScene.instance?.GetPrefab("Cart")?.GetComponent<WearNTear>() is WearNTear cart)
+		{
+			s_hitEffect = cart.m_hitEffect;
+			s_breakEffect = cart.m_destroyedEffect;
+		}
+	}
+
+	private void RPC_Hit(long sender, Vector3 point, bool wrecked)
+	{
+		FindCartEffects();
+		(wrecked ? s_breakEffect : s_hitEffect)?.Create(point, Quaternion.identity);
+		m_shakeUntil = Time.time + (wrecked ? 0.6f : 0.3f);
+	}
+
+	private void UpdateShake()
+	{
+		if (Time.time < m_shakeUntil)
+		{
+			m_frame.localPosition = Random.insideUnitSphere * 0.05f;
+		}
+		else if (m_frame.localPosition != Vector3.zero)
+		{
+			m_frame.localPosition = Vector3.zero;
+		}
 	}
 
 	private void CheckTakeFuelKey()
@@ -1291,7 +1368,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		impulse.y = 0f;
 		float hit = impulse.magnitude / m_body.mass;
 		// Bumps wear a little; real crashes a lot.
-		AddWear(Mathf.Max(0f, hit - 3f) * 3f * SnakeWoodPlugin.CrashWear.Value);
+		AddWear(Mathf.Max(0f, hit - 3f) * 3f * SnakeWoodPlugin.CrashWear.Value,
+			collision.contactCount > 0 ? collision.GetContact(0).point : null);
 		float crashSpeed = m_v.CrashSpeedCfg.Value;
 		if (crashSpeed > 0f && hit >= crashSpeed)
 		{
@@ -1356,7 +1434,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		hit.m_dir = dir.sqrMagnitude > 0.01f ? dir.normalized : m_frame.forward;
 		hit.SetAttacker(rider);
 		destructible.Damage(hit);
-		AddWear(amount * 0.05f * SnakeWoodPlugin.RamWear.Value);
+		AddWear(amount * 0.05f * SnakeWoodPlugin.RamWear.Value, hit.m_point);
 	}
 
 	private void OnDestroy()

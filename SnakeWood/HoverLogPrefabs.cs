@@ -856,3 +856,28 @@ internal static class FetchLogAfterPortalPatch
 		}
 	}
 }
+
+// Taking a log down (or clearing a wreck) only needs a workbench nearby, whatever station it was
+// built at: the check vanilla makes against the piece's own station is pointed at the workbench.
+[HarmonyPatch(typeof(Player), nameof(Player.CheckCanRemovePiece))]
+internal static class RemoveLogAtWorkbenchPatch
+{
+	private static void Prefix(Piece piece, out CraftingStation? __state)
+	{
+		__state = null;
+		if (piece != null && piece.GetComponent<HoverLog>() != null
+			&& ZNetScene.instance?.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>() is CraftingStation workbench)
+		{
+			__state = piece.m_craftingStation;
+			piece.m_craftingStation = workbench;
+		}
+	}
+
+	private static void Postfix(Piece piece, CraftingStation? __state)
+	{
+		if (__state != null)
+		{
+			piece.m_craftingStation = __state;
+		}
+	}
+}

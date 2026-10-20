@@ -84,8 +84,8 @@ kept).
 
 ## Portals
 
-Ride into a portal and you come out on foot with your log waiting beside you, ready to get
-back on. Anything you carry still follows the game's portal rules.
+Ride into a portal and you come out on foot with your log waiting beside you (in the nearest
+clear spot), ready to get back on. Anything you carry still follows the game's portal rules.
 
 ## Passengers
 
@@ -165,6 +165,10 @@ and from ramming. Just riding doesn't wear them. Hover over a log to see its con
   Yggdrasil Wood, Ashwood; raw fish for the fish logs), 10 wear per piece, before it adds any fuel.
   A wreck has to be repaired all the way (hover over it to see how much it needs) before it
   flies again, so bring the materials to it. You can do it over several trips.
+- Crashes and rams that wear a log knock splinters off it and shake it, like a cart taking
+  damage.
+- Any log, wrecked or not, can be taken down with the hammer next to just a workbench, whatever
+  station it was built at.
 
 ## Water
 
