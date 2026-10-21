@@ -70,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.18.0";
+	internal const string PluginVersion = "1.19.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -115,6 +115,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<bool> Disguise = null!;
 	internal static ConfigEntry<CombatStance> Stance = null!;
 	internal static ConfigEntry<bool> PitchControl = null!;
+	internal static ConfigEntry<float> FishWiggle = null!;
 	internal static ConfigEntry<float> MaxPitch = null!;
 	internal static ConfigEntry<ModelStyle> Model = null!;
 	internal static ConfigEntry<bool> Glow = null!;
@@ -187,6 +188,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Stand: the rider stands up on the log to attack, draw a bow or block, then sits back down. Seated (experimental): stays seated while fighting; if attacks don't animate or land this way, switch back to Stand.");
 		PitchControl = Config.Bind("1 - Riding", "Pitch With Look", true,
 			"Looking up tips the log's nose up so it rides higher at speed and clears rising ground; looking down dips it to ride lower and dive faster.");
+		FishWiggle = Config.Bind("1 - Riding", "Fish Swim Wiggle", 7f,
+			new ConfigDescription("Fish logs swim rather than steer: they turn toward where you look lazily, dive and climb with your look more than wood does, and their tail sways side to side by up to this many degrees at speed. 0 turns the sway off.", new AcceptableValueRange<float>(0f, 20f)));
 		MaxPitch = Config.Bind("1 - Riding", "Max Pitch", 20f,
 			new ConfigDescription("How far the nose tips up or down, in degrees.", new AcceptableValueRange<float>(0f, 45f)));
 		Model = Config.Bind("1 - Riding", "Model", ModelStyle.Mixed,

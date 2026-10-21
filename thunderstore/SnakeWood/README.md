@@ -228,7 +228,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 
 `BepInEx/config/com.snakesquad.snakewood.cfg`, or Configuration Manager (F1):
 
-- **Steering**: `Camera` (default) or `Keys`.
+- **Steering**: `Camera` (default) or `Keys`. Hover sleds always steer with A / D. Fish logs turn toward your look lazily, in wide arcs.
 - **Riding Pose** (drop-down): `Surf` (default, stand on it like a surfboard), `Straddle` (like
   the Lox), `SideSaddle` or `LieDown`.
 - **Seat Height**: raise or lower the rider on the log.
@@ -236,7 +236,8 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Crouch Action**: `Lower` (default, sink and creep) or `Brake`.
 - **Combat Stance**: `Stand` (default) or `Seated` (experimental).
 - **Vanilla Disguise**: on by default (see the top of this page).
-- **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down.
+- **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down (fish logs tilt half as far again; sleds not at all).
+- **Fish Swim Wiggle**: how far a fish log's body sways side to side at speed (0 = off).
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.
 - **Hover Glow**: the coloured light under each log.

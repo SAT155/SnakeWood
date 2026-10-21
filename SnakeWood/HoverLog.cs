@@ -107,6 +107,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private float m_yaw;
 	private float m_roll;
+	private float m_swimPhase;
 	private float m_pitch;
 	private bool m_airborne;
 	// The velocity the log was driven at this physics step, before any collision changed it.
@@ -1244,7 +1245,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// Nose pitch follows where the rider looks (up or down). Nose up rides higher the faster you
 		// go, to clear rising ground and bumps; nose down sits lower and dives faster off ledges.
 		float pitchInput = 0f;
-		if (driving && SnakeWoodPlugin.PitchControl.Value && !lowering)
+		// A sled is hauled, not flown: it doesn't pitch with your look.
+		if (driving && SnakeWoodPlugin.PitchControl.Value && !lowering && m_sled == null)
 		{
 			Vector3 look = m_lookDir.sqrMagnitude > 0.001f ? m_lookDir.normalized : Vector3.zero;
 			// A dead zone around the camera's usual slight downward look keeps normal riding level.
@@ -1275,7 +1277,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			m_airHopsUsed = 0;
 		}
 		// A near-critically damped spring: quick to rise over bumps, without bouncing after them.
-		vel.y += (inAir ? airGravity : Mathf.Clamp(error * 30f - vel.y * 10f, -60f, 60f)) * dt;
+		// A sled's spring is softer, so it glides over the bumps its team climbs.
+		float spring = m_sled != null ? 16f : 30f;
+		vel.y += (inAir ? airGravity : Mathf.Clamp(error * spring - vel.y * 2.1f * Mathf.Sqrt(spring), -60f, 60f)) * dt;
 		if (m_hopQueued)
 		{
 			m_hopQueued = false;
@@ -1288,7 +1292,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float turnSpeed = m_v.TurnSpeedCfg.Value * handling;
 		float turnInput;
 		float strafe = 0f;
-		if (SnakeWoodPlugin.Steering.Value == SteeringMode.Keys || !driving)
+		// A sled always steers with the keys (you're driving a team), so you can look around freely.
+		if (SnakeWoodPlugin.Steering.Value == SteeringMode.Keys || !driving || m_sled != null)
 		{
 			turnInput = side;
 		}
@@ -1299,7 +1304,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			float delta = look.sqrMagnitude > 0.001f
 				? Mathf.DeltaAngle(m_yaw, Quaternion.LookRotation(look).eulerAngles.y)
 				: 0f;
-			turnInput = Mathf.Clamp(delta / 30f, -1f, 1f);
+			// A fish swings round toward your look lazily, in a wide arc, where wood snaps to it.
+			turnInput = Mathf.Clamp(delta / (m_v.IsFish ? 75f : 30f), -1f, 1f);
 			strafe = side;
 		}
 		m_yaw += turnInput * turnSpeed * dt;
@@ -1340,16 +1346,28 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float targetRoll = -turnInput * Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value)) * 18f;
 		m_roll = Mathf.Lerp(m_roll, targetRoll, 4f * dt);
 		// The nose never tips further than the log can climb, from look pitch or from the ground.
-		m_pitch = Mathf.Lerp(m_pitch, pitchInput * Mathf.Min(SnakeWoodPlugin.MaxPitch.Value, climb), 4f * dt);
-		float tilt = inAir ? 0f : 1f;
+		// A fish dives and climbs with your look more than wood does, but eases into it.
+		float pitchRange = Mathf.Min(SnakeWoodPlugin.MaxPitch.Value * (m_v.IsFish ? 1.5f : 1f), climb);
+		m_pitch = Mathf.Lerp(m_pitch, pitchInput * pitchRange, (m_v.IsFish ? 2.5f : 4f) * dt);
+		// A sled glides: it only half follows the ground's tilt, slowly, while its team scrambles
+		// over the bumps in front.
+		float tilt = inAir ? 0f : m_sled != null ? 0.4f : 1f;
 		float groundAngle = Vector3.Angle(Vector3.up, groundUp);
 		if (groundAngle * tilt > climb)
 		{
 			tilt = climb / groundAngle;
 		}
 		Vector3 up = Vector3.Slerp(Vector3.up, groundUp, tilt);
-		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
-		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, 8f * dt));
+		// A fish's body sways like a tail beat, faster and wider the faster it swims.
+		float sway = 0f;
+		if (m_v.IsFish && SnakeWoodPlugin.FishWiggle.Value > 0f)
+		{
+			float swim = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value));
+			m_swimPhase += dt * (2f + 6f * swim);
+			sway = Mathf.Sin(m_swimPhase) * SnakeWoodPlugin.FishWiggle.Value * swim;
+		}
+		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, sway, m_roll + sway * 0.4f);
+		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, (m_sled != null ? 3f : 8f) * dt));
 		m_body.angularVelocity = Vector3.zero;
 
 		if (driving)
