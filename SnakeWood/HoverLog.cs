@@ -6,7 +6,7 @@ namespace SnakeWood;
 // A rideable hover log. Control follows the Lox saddle (Sadle): the rider asks the ZDO owner for
 // control, the owner records them as the user and hands them ownership, and from then on the
 // rider's own game runs the physics. Everyone else just sees the transform ZSyncTransform syncs.
-public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadController, IRemoved
+public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadController, IRemoved, IDestructible
 {
 	public string m_variant = "";
 	public Transform m_attachPoint = null!;
@@ -163,6 +163,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_nview.Register<int>("SnakeWood_AddFuel", RPC_AddFuel);
 		m_nview.Register<float>("SnakeWood_Repair", RPC_Repair);
 		m_nview.Register<Vector3, bool>("SnakeWood_Hit", RPC_Hit);
+		m_nview.Register<float, Vector3>("SnakeWood_Damage", RPC_Damage);
 	}
 
 	public HoverLogVariant Variant => m_v;
@@ -267,6 +268,24 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private string RepairName() =>
 		ObjectDB.instance?.GetItemPrefab(m_v.RepairItemCfg.Value)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name
 		?? m_v.RepairItemCfg.Value;
+
+	// Creatures that bite or gore the log wear it (on a sled, they hurt the team). Players don't:
+	// mounted swings would chew up your own ride, and a log is taken down at a workbench anyway.
+	public DestructibleType GetDestructibleType() => DestructibleType.Default;
+
+	public void Damage(HitData hit)
+	{
+		if (!m_nview.IsValid() || hit.GetAttacker() is not Character attacker || attacker.IsPlayer())
+		{
+			return;
+		}
+		m_nview.InvokeRPC("SnakeWood_Damage", hit.GetTotalDamage(), hit.m_point);
+	}
+
+	private void RPC_Damage(long sender, float amount, Vector3 point)
+	{
+		AddWear(amount, point);
+	}
 
 	// Owner only (whoever is riding owns the log).
 	private void AddWear(float amount, Vector3? point = null)

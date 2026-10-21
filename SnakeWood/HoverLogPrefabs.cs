@@ -188,8 +188,17 @@ public static class HoverLogPrefabs
 		deckObject.transform.SetParent(frame, false);
 		BoxCollider deck = deckObject.AddComponent<BoxCollider>();
 		float deckRadius = 0.225f * variant.Thickness;
-		deck.size = new Vector3(Mathf.Max(2.6f * deckRadius, 1.2f), 0.06f, 0.85f * variant.Length);
-		deck.center = new Vector3(0f, variant.Sled ? 0.24f : deckRadius + 0.12f, 0f);
+		if (variant.Sled)
+		{
+			// The whole sled, runners to harness bar, so nobody walks into its planks.
+			deck.size = new Vector3(1.5f, 0.3f, variant.Length + 0.5f);
+			deck.center = new Vector3(0f, 0.1f, 0.2f);
+		}
+		else
+		{
+			deck.size = new Vector3(Mathf.Max(2.6f * deckRadius, 1.2f), 0.06f, 0.85f * variant.Length);
+			deck.center = new Vector3(0f, deckRadius + 0.12f, 0f);
+		}
 		deckObject.layer = vehicleLayer;
 
 		ZNetView nview = prefab.AddComponent<ZNetView>();
@@ -261,7 +270,7 @@ public static class HoverLogPrefabs
 		AddVisual(hammer, "wood_pole2", frame, new Vector3(0.12f, 0.12f, variant.Length * 1.08f), new Vector3(-0.68f, -0.02f, 0.05f), "runner_left");
 		AddVisual(hammer, "wood_pole2", frame, new Vector3(0.12f, 0.12f, variant.Length * 1.08f), new Vector3(0.68f, -0.02f, 0.05f), "runner_right");
 		AddVisual(hammer, "wood_pole2", frame, new Vector3(1.8f, 0.09f, 0.09f), new Vector3(0f, 0.22f, half + 0.25f), "harness_bar");
-		AddVisual(hammer, "piece_chest_wood", frame, new Vector3(1.2f, 0.65f, 0.75f), new Vector3(0f, 0.5f, -half + 0.5f), "chest");
+		AddVisual(hammer, "piece_chest_wood", frame, new Vector3(1.2f, 0.65f, 0.75f), new Vector3(0f, 0.52f, -half + 0.5f), "chest");
 	}
 
 	// The chest you can open (the cart's storage settings, saved on the sled's own ZDO), the

@@ -155,6 +155,7 @@ public class HoverSled : MonoBehaviour
 
 	private void FixedUpdate()
 	{
+		MoveTeamBody();
 		if (!m_nview.IsValid() || !m_nview.IsOwner() || (m_regenTimer += Time.fixedDeltaTime) < 2f)
 		{
 			return;
@@ -344,10 +345,15 @@ public class HoverSled : MonoBehaviour
 
 	// Each hitched animal is shown as a copy of its own model, stripped to a picture and set running
 	// in harness. Rebuilt whenever the team changes; the run animation follows the sled's speed.
+	// The pictures don't tilt with the sled: they stand level on the ground under their harness
+	// slot (or swim, in water), and an exhausted animal staggers along instead of running.
 	private int m_shownRev = -1;
 	private readonly Animator?[] m_animators = new Animator?[Slots];
+	private readonly Transform?[] m_visuals = new Transform?[Slots];
+	private readonly float[] m_staggerTimer = new float[Slots];
 	private Vector3 m_lastPos;
 	private static GameObject? s_scratch;
+	private static int s_footMask;
 
 	private void Update()
 	{
@@ -365,12 +371,129 @@ public class HoverSled : MonoBehaviour
 		m_lastPos = transform.position;
 		for (int i = 0; i < Slots; i++)
 		{
-			if (m_animators[i] is Animator animator && animator)
+			if (m_animators[i] is not Animator animator || !animator || Get(i) is not Animal animal)
 			{
-				bool pulling = Get(i) is Animal a && a.Pulling;
-				animator.SetFloat("forward_speed", pulling ? Mathf.Min(speed, 12f) : 0f);
-				animator.SetBool("onGround", true);
+				continue;
 			}
+			bool swimming = m_visuals[i] is Transform visual && InWater(visual.position + Vector3.up * 0.3f);
+			SetParam(i, "forward_speed", animal.Pulling ? Mathf.Min(speed, 12f) : Mathf.Min(speed, 1.5f));
+			SetParam(i, "onGround", !swimming);
+			SetParam(i, "inWater", swimming);
+			if (!animal.Pulling && (m_staggerTimer[i] -= Time.deltaTime) <= 0f)
+			{
+				m_staggerTimer[i] = 2.5f;
+				SetParam(i, "stagger", null);
+			}
+		}
+	}
+
+	// Stand each animal level on whatever is under its harness slot.
+	private void LateUpdate()
+	{
+		if (s_footMask == 0)
+		{
+			s_footMask = LayerMask.GetMask("Default", "static_solid", "terrain", "piece");
+		}
+		Quaternion level = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+		for (int i = 0; i < Slots; i++)
+		{
+			if (m_visuals[i] is not Transform visual || !visual)
+			{
+				continue;
+			}
+			Vector3 slot = m_slots[i].position;
+			float y = Physics.Raycast(slot + Vector3.up * 2.5f, Vector3.down, out RaycastHit hit, 6f, s_footMask, QueryTriggerInteraction.Ignore)
+				? hit.point.y : slot.y;
+			float water = Floating.GetLiquidLevel(slot);
+			if (water > y + 0.5f)
+			{
+				y = water - 0.5f;
+			}
+			Vector3 pos = visual.position;
+			pos.x = slot.x;
+			pos.z = slot.z;
+			pos.y = Mathf.Abs(pos.y - y) > 2f ? y : Mathf.Lerp(pos.y, y, Mathf.Min(1f, 12f * Time.deltaTime));
+			visual.SetPositionAndRotation(pos, level);
+		}
+	}
+
+	private static bool InWater(Vector3 point) => Floating.GetLiquidLevel(point) > point.y;
+
+	// Only touch parameters the creature's animator has (a missing one logs a warning every call).
+	private readonly Dictionary<string, AnimatorControllerParameterType>?[] m_params = new Dictionary<string, AnimatorControllerParameterType>?[Slots];
+
+	private void SetParam(int slot, string name, object? value)
+	{
+		if (m_animators[slot] is not Animator animator || m_params[slot] is not { } known || !known.TryGetValue(name, out AnimatorControllerParameterType type))
+		{
+			return;
+		}
+		switch (value)
+		{
+			case float f when type == AnimatorControllerParameterType.Float: animator.SetFloat(name, f); break;
+			case bool b when type == AnimatorControllerParameterType.Bool: animator.SetBool(name, b); break;
+			case null when type == AnimatorControllerParameterType.Trigger: animator.SetTrigger(name); break;
+		}
+	}
+
+	// ---- The team's body ----------------------------------------------------------------------------
+
+	// The pictures have no colliders, so the team gets one box of its own: people walking up bump
+	// into it and creatures can bite it (the bites hurt the team). It's a separate kinematic body
+	// that follows the harness, so it never drags on the ground or pushes the sled itself.
+	private GameObject? m_teamBody;
+	private Rigidbody? m_teamRigidbody;
+
+	private void UpdateTeamBody()
+	{
+		bool any = m_visuals.Any(v => v != null);
+		if (any && m_teamBody == null)
+		{
+			m_teamBody = new GameObject("SnakeSled_TeamBody") { layer = gameObject.layer };
+			m_teamBody.transform.SetPositionAndRotation(transform.position, transform.rotation);
+			m_teamRigidbody = m_teamBody.AddComponent<Rigidbody>();
+			m_teamRigidbody.isKinematic = true;
+			m_teamRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+			BoxCollider box = m_teamBody.AddComponent<BoxCollider>();
+			box.size = new Vector3(1.9f, 1f, 1.8f);
+			box.center = new Vector3(0f, 0.6f, 0f);
+			foreach (Collider own in GetComponentsInChildren<Collider>(true))
+			{
+				Physics.IgnoreCollision(box, own);
+			}
+			m_teamBody.AddComponent<SledTeamHitbox>().m_log = m_log;
+		}
+		if (m_teamBody != null)
+		{
+			m_teamBody.SetActive(any);
+		}
+	}
+
+	private void MoveTeamBody()
+	{
+		if (m_teamRigidbody == null || !m_teamBody!.activeSelf)
+		{
+			return;
+		}
+		Vector3 sum = Vector3.zero;
+		for (int i = 0; i < Slots; i++)
+		{
+			Vector3 slot = m_slots[i].position;
+			if (m_visuals[i] is Transform visual && visual)
+			{
+				slot.y = visual.position.y;
+			}
+			sum += slot;
+		}
+		m_teamRigidbody.MovePosition(sum / Slots);
+		m_teamRigidbody.MoveRotation(Quaternion.Euler(0f, transform.eulerAngles.y, 0f));
+	}
+
+	private void OnDestroy()
+	{
+		if (m_teamBody != null)
+		{
+			Destroy(m_teamBody);
 		}
 	}
 
@@ -383,6 +506,8 @@ public class HoverSled : MonoBehaviour
 				Destroy(child.gameObject);
 			}
 			m_animators[i] = null;
+			m_visuals[i] = null;
+			m_params[i] = null;
 			if (Get(i) is not Animal animal || ZNetScene.instance.GetPrefab(animal.Prefab) is not GameObject prefab)
 			{
 				continue;
@@ -400,6 +525,7 @@ public class HoverSled : MonoBehaviour
 			visual.transform.localPosition = Vector3.zero;
 			visual.transform.localRotation = Quaternion.identity;
 			visual.transform.localScale = Vector3.one * (1f + 0.06f * animal.Stars);
+			m_visuals[i] = visual.transform;
 			foreach (Transform t in visual.GetComponentsInChildren<Transform>(true))
 			{
 				t.gameObject.layer = gameObject.layer;
@@ -409,8 +535,10 @@ public class HoverSled : MonoBehaviour
 				// The real creature's scripts are gone, so its animation events would have no receiver.
 				animator.fireEvents = false;
 				m_animators[i] = animator;
+				m_params[i] = animator.parameters.ToDictionary(p => p.name, p => p.type);
 			}
 		}
+		UpdateTeamBody();
 	}
 
 	// Taking the sled down: its cargo spills out and its team is let go, so nothing is lost.
@@ -485,5 +613,21 @@ public class SledSpecies
 		return SnakeWoodPlugin.HareFood.Value.Split(',')
 			.Select(n => ObjectDB.instance?.GetItemPrefab(n.Trim())?.GetComponent<ItemDrop>())
 			.Where(i => i != null).Select(i => i!);
+	}
+}
+
+// The team's box forwards bites to the sled, which hurts the team (see HoverLog.Damage).
+public class SledTeamHitbox : MonoBehaviour, IDestructible
+{
+	public HoverLog? m_log;
+
+	public DestructibleType GetDestructibleType() => DestructibleType.Default;
+
+	public void Damage(HitData hit)
+	{
+		if (m_log != null)
+		{
+			m_log.Damage(hit);
+		}
 	}
 }
