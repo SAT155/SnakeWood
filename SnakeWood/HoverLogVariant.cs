@@ -97,6 +97,18 @@ public class HoverLogVariant
 			Fx = TrailFx.Sparkles, Glow = new Color(0.6f, 0.85f, 1f),
 			RamDamage = 15f, RamFrost = 25f, RamPush = 30f,
 		},
+		// The sled: pulled by a team of real animals (HoverSled), with a chest and a passenger seat.
+		new HoverLogVariant("Sled", "Hover Sled", "A floating sled pulled by a team of two: tamed wolves, or hares harpooned and dragged into harness. Cart-sized chest, a passenger seat, and no stamina cost while it stands still.")
+		{
+			Sled = true,
+			WoodItem = "FineWood", Station = Station.Forge, StationLevel = 2, Boss = Boss.TheElder, Recipe = "FineWood:30,Resin:20,DeerHide:10,BronzeNails:30",
+			TemplateHints = new[] { "wood_floor", "wood_floor_1x1" },
+			Length = 3f, Thickness = 2.4f, Mass = 120f,
+			AimPenalty = 2f, RideStamina = 1f, MaxSpeed = 8f, Boost = 1.25f, Acceleration = 8f, TurnSpeed = 90f, Grip = 9f,
+			HoverHeight = 0.8f, HopHeight = 1.5f, FallGravity = 1.1f, CrashSpeed = 9f, DeepWaterSpeed = 0.5f,
+			MaxClimb = 30f, LoadCapacity = 200f, Durability = 200f, Noise = 1.2f,
+			Fx = TrailFx.Dust, Glow = new Color(0.9f, 0.85f, 0.7f),
+		},
 		// The fish logs. Each needs a top-level (5) fish (Fish Quality Required), so they're rare and
 		// ride well: most are made for water, and each has a trick of its own.
 		new HoverLogVariant("Fish1", "Hover Perch", "A top-level perch, enchanted. The friendliest fish to learn on: steady, light on stamina, and quick over rivers and the sea.")
@@ -261,6 +273,9 @@ public class HoverLogVariant
 	// Fish logs need a high-quality fish (see Fish Quality Required).
 	public bool IsFish => WoodItem.StartsWith("Fish");
 
+	// A team-pulled sled (HoverSled) rather than a log.
+	public bool Sled;
+
 	// The crafting station it's built at (Crafting Station), climbing with the biome its
 	// materials come from.
 	public Station Station;
@@ -349,6 +364,13 @@ public class HoverLogVariant
 			text += $"\n{Label("Needs")} {string.Join(", ", needs)}";
 		}
 
+		if (Sled)
+		{
+			text += $"\n{Label("Team")} 2 tamed wolves (strong) or harpooned hares (fast); stars make them better";
+			text += $"\n{Label("Carries")} a cart-sized chest and a passenger; the team's strength sets the load";
+			text += $"\n{Label("Rider")} {RideStaminaCfg.Value:0.#} stamina/s while moving, none standing still";
+			return text;
+		}
 		string hop = HopHeightCfg.Value > 0f ? $"hop {HopHeightCfg.Value:0.#} m" + (AirHopsCfg.Value > 0 ? $" +{AirHopsCfg.Value} air" : "") : "no hop";
 		text += $"\n{Label("Speed")} {MaxSpeedCfg.Value:0.#} m/s (x{BoostCfg.Value:0.##}), sea {DeepWaterSpeedCfg.Value * 100f:0}%, turns {TurnSpeedCfg.Value:0}°/s";
 		text += $"\n{Label("Hover")} {HoverHeightCfg.Value:0.#} m, {hop}, climbs {MaxClimbCfg.Value:0}°" + (FallGravityCfg.Value < 0.75f ? ", glides" : "");

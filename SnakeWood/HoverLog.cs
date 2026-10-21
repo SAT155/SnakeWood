@@ -81,6 +81,20 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private ZNetView m_nview = null!;
 	private Rigidbody m_body = null!;
 	private ZSyncTransform? m_sync;
+	// Set on sleds: the team decides speed, pull and what takes the knocks.
+	private HoverSled? m_sled;
+
+	// Someone is riding it (and still nearby).
+	internal bool HasRider
+	{
+		get
+		{
+			CalculateHaveValidUser();
+			return m_haveValidUser;
+		}
+	}
+
+	private float TopSpeedSetting => m_sled != null ? m_sled.TopSpeed() : m_v.MaxSpeedCfg.Value;
 	private HoverLogVariant m_v = null!;
 
 	// Rider input, written by ApplyControlls on the rider's game.
@@ -111,6 +125,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_nview = GetComponent<ZNetView>();
 		m_body = GetComponent<Rigidbody>();
 		m_sync = GetComponent<ZSyncTransform>();
+		m_sled = GetComponent<HoverSled>();
 		HoverLogVariant? variant = HoverLogVariant.Get(m_variant);
 		if (m_nview.GetZDO() == null || variant == null)
 		{
@@ -122,7 +137,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			return;
 		}
 		m_v = variant;
-		m_attachPoint.localPosition = new Vector3(0f, SnakeWoodPlugin.SeatHeight.Value, -0.2f * m_v.Length);
+		m_attachPoint.localPosition = m_v.Sled
+			? new Vector3(0f, 0.25f, 0.55f)
+			: new Vector3(0f, SnakeWoodPlugin.SeatHeight.Value, -0.2f * m_v.Length);
 		if (m_nview.IsOwner())
 		{
 			HoverLogDisguise.Apply(this, m_nview.GetZDO());
@@ -220,6 +237,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (m_nview != null && m_nview.IsValid())
 		{
 			DropFuel();
+			GetComponent<HoverSled>()?.OnRemoved();
 		}
 	}
 
@@ -253,6 +271,16 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	// Owner only (whoever is riding owns the log).
 	private void AddWear(float amount, Vector3? point = null)
 	{
+		if (m_sled != null)
+		{
+			// A sled's team takes the knocks instead.
+			if (amount >= 1f && m_nview.IsValid() && m_nview.IsOwner())
+			{
+				m_sled.Hurt(amount);
+				m_nview.InvokeRPC(ZNetView.Everybody, "SnakeWood_Hit", point ?? transform.position, false);
+			}
+			return;
+		}
 		if (!WearEnabled || amount <= 0f || !m_nview.IsValid() || !m_nview.IsOwner())
 		{
 			return;
@@ -409,7 +437,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private float m_loadTimer;
 
 	private float LoadOf(Player player) =>
-		player.GetInventory().GetTotalWeight() / Mathf.Max(1f, m_v.LoadCapacityCfg.Value);
+		(player.GetInventory().GetTotalWeight() + (m_sled != null ? m_sled.CargoWeight() : 0f)) / LoadCapacity;
+
+	private float LoadCapacity => Mathf.Max(1f, m_sled != null ? m_sled.Strength() : m_v.LoadCapacityCfg.Value);
 
 	private static float Performance(float load)
 	{
@@ -571,8 +601,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return "";
 		}
-		string fuel = "";
-		if (WearEnabled)
+		string fuel = m_sled != null ? m_sled.TeamText() : "";
+		if (WearEnabled && m_sled == null)
 		{
 			fuel += IsWrecked()
 				? $"\n<color=red>Wrecked</color>: needs {RepairsNeeded()} {RepairName()} to fly again"
@@ -582,7 +612,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			fuel += $"\n{FuelName()}: {Mathf.CeilToInt(GetFuel())}/{SnakeWoodPlugin.FuelCapacity.Value}";
 		}
-		if (WearEnabled && GetWear() > 0f)
+		if (m_sled != null && m_sled.AnyHungry(Player.m_localPlayer))
+		{
+			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Feed the team";
+		}
+		else if (WearEnabled && GetWear() > 0f)
 		{
 			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Repair ({RepairName()})";
 		}
@@ -602,13 +636,19 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return Localization.instance.Localize("<color=#888888>$piece_toofar</color>");
 		}
-		return Localization.instance.Localize(m_v.Name + fuel + "\n[<color=yellow><b>$KEY_Use</b></color>] Ride");
+		string action = m_sled != null && GetUser() != 0L && HasRider ? "Sit as passenger" : "Ride";
+		return Localization.instance.Localize(m_v.Name + fuel + $"\n[<color=yellow><b>$KEY_Use</b></color>] {action}");
 	}
 
 	public bool Interact(Humanoid character, bool hold, bool alt)
 	{
 		if (hold || !m_nview.IsValid() || character is not Player player)
 		{
+			return false;
+		}
+		if (alt && m_sled != null && m_sled.AnyHungry(player))
+		{
+			m_sled.TryFeed(player);
 			return false;
 		}
 		if (alt && WearEnabled && GetWear() > 0f)
@@ -631,6 +671,19 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return false;
 		}
+		if (m_sled != null)
+		{
+			if (GetUser() != 0L && HasRider)
+			{
+				m_sled.SeatPassenger(player);
+				return false;
+			}
+			if (!m_sled.CanPull)
+			{
+				player.Message(MessageHud.MessageType.Center, "The sled needs a team that can pull: hitch animals (or feed exhausted ones)");
+				return false;
+			}
+		}
 		if (FuelEnabled && GetFuel() <= 0f)
 		{
 			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It needs {FuelName()} to fly (Shift+E to add)"));
@@ -648,7 +701,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		if (LoadOf(player) > 1f)
 		{
-			player.Message(MessageHud.MessageType.Center, $"Overloaded: this log struggles past {m_v.LoadCapacityCfg.Value:0} weight");
+			player.Message(MessageHud.MessageType.Center, $"Overloaded: this {(m_sled != null ? "sled" : "log")} struggles past {LoadCapacity:0} weight");
 		}
 		m_nview.InvokeRPC("SnakeWood_RequestControl", player.GetZDOID().UserID);
 		m_controlRequestedAt = Time.time;
@@ -756,6 +809,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		m_crouchHeld = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
 		CheckTakeFuelKey();
+		CheckHitchKey();
 		UpdateWreckLook();
 		UpdateShake();
 		LogSync();
@@ -923,6 +977,18 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			m_frame.localPosition = Vector3.zero;
 		}
+	}
+
+	private void CheckHitchKey()
+	{
+		Player player = Player.m_localPlayer;
+		if (m_sled == null || player == null || !m_nview.IsValid() || !SnakeWoodPlugin.HitchKey.Value.IsDown()
+			|| !player.TakeInput() || player.GetHoverObject() is not GameObject hovered
+			|| hovered.GetComponentInParent<HoverLog>() != this || !InUseDistance(player))
+		{
+			return;
+		}
+		m_sled.HitchOrUnhitch(player);
 	}
 
 	private void CheckTakeFuelKey()
@@ -1220,7 +1286,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Quaternion yawRot = Quaternion.Euler(0f, m_yaw, 0f);
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
-		float baseSpeed = m_v.MaxSpeedCfg.Value * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f)
+		float baseSpeed = TopSpeedSetting * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f)
 			* performance * (lowering ? 0.35f : 1f);
 		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
 		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
@@ -1232,7 +1298,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			targetForward = 0f;
 			targetSide = 0f;
 		}
-		float accel = m_v.AccelerationCfg.Value * handling;
+		float accel = (m_sled != null ? m_sled.Acceleration() : m_v.AccelerationCfg.Value) * handling;
 		float brake = accel * (braking ? 3f : 1.5f) * (deepWater ? 2f : 1f);
 		float forwardSpeed = Vector3.Dot(vel, forward);
 		float sideSpeed = Vector3.Dot(vel, right);
@@ -1349,6 +1415,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float drain = m_v.RideStaminaCfg.Value;
 		if (player == null || drain <= 0f)
 		{
+			return true;
+		}
+		if (m_sled != null && Speed < 0.5f)
+		{
+			// Sitting still on a sled is restful: no drain, so stamina recovers.
 			return true;
 		}
 		if (player.GetStamina() <= 0f)

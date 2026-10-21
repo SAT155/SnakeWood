@@ -29,6 +29,7 @@ internal static class HoverLogDisguise
 		["YggdrasilWood"] = new[] { "ygga", "yggdrasil" },
 		["Blackwood"] = new[] { "ash" },
 		["Frostwood"] = new[] { "frost", "fir" },
+		["Sled"] = new[] { "beech", "birch" },
 		["Fish2"] = new[] { "beech" },
 	};
 	private static readonly Dictionary<string, (int hash, Vector3 offset)> s_disguises = new();

@@ -70,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.14.0";
+	internal const string PluginVersion = "1.15.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -137,6 +137,14 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> OverloadFalloff = null!;
 	internal static ConfigEntry<CrouchAction> Crouch = null!;
 	internal static ConfigEntry<bool> SyncDebug = null!;
+	internal static ConfigEntry<KeyboardShortcut> HitchKey = null!;
+	internal static ConfigEntry<string> SledAnimals = null!;
+	internal static ConfigEntry<string> HareFood = null!;
+	internal static ConfigEntry<float> StarSpeedBonus = null!;
+	internal static ConfigEntry<float> StarStrengthBonus = null!;
+	internal static ConfigEntry<float> TeamDamage = null!;
+	internal static ConfigEntry<float> FeedHeal = null!;
+	internal static ConfigEntry<float> TeamRegen = null!;
 	internal static ConfigEntry<float> NoiseAtRest = null!;
 	internal static ConfigEntry<float> NoiseAtSpeed = null!;
 	internal static ConfigEntry<bool> WearEnabled = null!;
@@ -233,6 +241,22 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Multiplies the wear from ramming things (a twentieth of the ram's damage).", new AcceptableValueRange<float>(0f, 10f)));
 		RepairPerItem = Config.Bind("5 - Wear", "Repair Per Item", 10f,
 			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
+		HitchKey = Config.Bind("6 - Sled", "Hitch Key", new KeyboardShortcut(KeyCode.H),
+			"Press while looking at a sled (nobody on it) to hitch the nearest animal that can pull it: a tamed wolf within 6 m, or a hare dragged within 3 m (harpoon it in). With none near, unhitches the last animal and lets it go.");
+		SledAnimals = Config.Bind("6 - Sled", "Team Animals", "Wolf:8.5:180,Hare:10.5:60",
+			"Which creatures can pull a sled, as Prefab:Speed:Strength. Speed (m/s) is the animal's share of the sled's top speed (the team's average; a lone animal manages 80%). Strength adds to how much weight the sled pulls (your carry weight plus its cargo) before slowing, like Load Capacity on the logs. Tamable creatures must be tamed first.");
+		HareFood = Config.Bind("6 - Sled", "Food For Untamable Animals", "Carrot,Turnip,Blueberries,Raspberry,Cloudberry",
+			"What hares (and other animals that have no tamed diet) eat when you feed them. Tamed animals eat what they eat in the game.");
+		StarSpeedBonus = Config.Bind("6 - Sled", "Speed Per Star", 0.08f,
+			new ConfigDescription("Extra speed each star gives an animal (0.08 = 8%).", new AcceptableValueRange<float>(0f, 1f)));
+		StarStrengthBonus = Config.Bind("6 - Sled", "Strength Per Star", 0.35f,
+			new ConfigDescription("Extra pulling strength each star gives an animal.", new AcceptableValueRange<float>(0f, 3f)));
+		TeamDamage = Config.Bind("6 - Sled", "Team Damage", 0.5f,
+			new ConfigDescription("Multiplies the knocks (crashes, rams) the team takes, shared between the animals pulling. An animal at 0 is exhausted and stops pulling until fed; it never dies in harness.", new AcceptableValueRange<float>(0f, 5f)));
+		FeedHeal = Config.Bind("6 - Sled", "Feed Heal", 0.35f,
+			new ConfigDescription("Share of an animal's health each food item restores (Shift+E with its food).", new AcceptableValueRange<float>(0.01f, 1f)));
+		TeamRegen = Config.Bind("6 - Sled", "Rest Heal Per Minute", 5f,
+			new ConfigDescription("Percent of health the team recovers per minute while the sled stands still.", new AcceptableValueRange<float>(0f, 100f)));
 		SyncDebug = Config.Bind("9 - Debug", "Sync Debug", false,
 			"Logs, every two seconds for each log near you, how often its network updates arrive, the longest gap between them, and how far the log you see is from the latest update. Turn on for both the rider and a watcher when hunting multiplayer desync, then share both LogOutput.log files.");
 		RamBuildings = Config.Bind("2 - Ramming", "Ram Damages Buildings", false,

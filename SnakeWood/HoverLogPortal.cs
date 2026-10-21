@@ -138,7 +138,8 @@ internal static class DoorsWhileRidingPatch
 			return;
 		}
 		__instance.FindHoverObject(out GameObject hover, out Character _);
-		if (hover != null && (hover.GetComponentInParent<Door>() != null || hover.GetComponentInParent<HoverLog>() != null))
+		if (hover != null && (hover.GetComponentInParent<Door>() != null || hover.GetComponentInParent<HoverLog>() != null
+			|| hover.GetComponentInParent<Container>() != null))
 		{
 			__instance.m_hovering = hover;
 		}

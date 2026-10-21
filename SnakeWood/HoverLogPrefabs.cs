@@ -144,15 +144,22 @@ public static class HoverLogPrefabs
 		// Set per log at runtime (HoverLog.SetDisguiseOffset); the ghost and plain logs use none.
 		frame.localRotation = Quaternion.identity;
 
-		GameObject model = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, frame, false);
-		model.name = "visual";
-		StripToVisual(model);
-		LayFlat(model, frame, variant);
-		if (variant.Tint != Color.white && style == ModelStyle.BuildPiece)
+		if (variant.Sled)
 		{
-			Tint(model, variant.Tint);
+			BuildSledBody(variant, frame, hammer);
 		}
-		if (style == ModelStyle.Mixed)
+		else
+		{
+			GameObject model = Object.Instantiate(style == ModelStyle.BuildPiece ? template! : rawWood!, frame, false);
+			model.name = "visual";
+			StripToVisual(model);
+			LayFlat(model, frame, variant);
+			if (variant.Tint != Color.white && style == ModelStyle.BuildPiece)
+			{
+				Tint(model, variant.Tint);
+			}
+		}
+		if (style == ModelStyle.Mixed && !variant.Sled)
 		{
 			// The build piece shrunk into a little saddle on top of the raw log.
 			GameObject saddle = Object.Instantiate(template!, frame, false);
@@ -182,7 +189,7 @@ public static class HoverLogPrefabs
 		BoxCollider deck = deckObject.AddComponent<BoxCollider>();
 		float deckRadius = 0.225f * variant.Thickness;
 		deck.size = new Vector3(Mathf.Max(2.6f * deckRadius, 1.2f), 0.06f, 0.85f * variant.Length);
-		deck.center = new Vector3(0f, deckRadius + 0.12f, 0f);
+		deck.center = new Vector3(0f, variant.Sled ? 0.24f : deckRadius + 0.12f, 0f);
 		deckObject.layer = vehicleLayer;
 
 		ZNetView nview = prefab.AddComponent<ZNetView>();
@@ -220,8 +227,90 @@ public static class HoverLogPrefabs
 		log.m_variant = variant.Key;
 		log.m_attachPoint = seat.transform;
 		log.m_frame = frame;
+		if (variant.Sled)
+		{
+			AddSledParts(prefab, frame, variant, hammer, nview);
+		}
 
 		return prefab;
+	}
+
+	// ---- Sled parts -------------------------------------------------------------------------------
+
+	private static GameObject? HammerPiece(PieceTable hammer, string name) =>
+		hammer.m_pieces.FirstOrDefault(p => p != null && p.name == name);
+
+	private static void AddVisual(PieceTable hammer, string piece, Transform frame, Vector3 size, Vector3 center, string name)
+	{
+		if (HammerPiece(hammer, piece) is not GameObject source)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"Sled: no {piece} piece to borrow for its {name}.");
+			return;
+		}
+		GameObject visual = Object.Instantiate(source, frame, false);
+		visual.name = name;
+		StripToVisual(visual);
+		FitToBox(visual, frame, size, center);
+	}
+
+	// Planks on two runners, a harness bar at the front and a chest at the back.
+	private static void BuildSledBody(HoverLogVariant variant, Transform frame, PieceTable hammer)
+	{
+		float half = variant.Length / 2f;
+		AddVisual(hammer, "wood_floor", frame, new Vector3(1.5f, 0.1f, variant.Length * 0.92f), new Vector3(0f, 0.12f, 0f), "deck_planks");
+		AddVisual(hammer, "wood_pole2", frame, new Vector3(0.12f, 0.12f, variant.Length * 1.08f), new Vector3(-0.68f, -0.02f, 0.05f), "runner_left");
+		AddVisual(hammer, "wood_pole2", frame, new Vector3(0.12f, 0.12f, variant.Length * 1.08f), new Vector3(0.68f, -0.02f, 0.05f), "runner_right");
+		AddVisual(hammer, "wood_pole2", frame, new Vector3(1.8f, 0.09f, 0.09f), new Vector3(0f, 0.22f, half + 0.25f), "harness_bar");
+		AddVisual(hammer, "piece_chest_wood", frame, new Vector3(1.2f, 0.65f, 0.75f), new Vector3(0f, 0.5f, -half + 0.5f), "chest");
+	}
+
+	// The chest you can open (the cart's storage settings, saved on the sled's own ZDO), the
+	// passenger seat and the two harness slots.
+	private static void AddSledParts(GameObject prefab, Transform frame, HoverLogVariant variant, PieceTable hammer, ZNetView nview)
+	{
+		float half = variant.Length / 2f;
+		HoverSled sled = prefab.AddComponent<HoverSled>();
+
+		GameObject storage = new("storage");
+		storage.transform.SetParent(frame, false);
+		storage.transform.localPosition = new Vector3(0f, 0.5f, -half + 0.5f);
+		storage.layer = prefab.layer;
+		BoxCollider box = storage.AddComponent<BoxCollider>();
+		box.size = new Vector3(1.2f, 0.65f, 0.75f);
+		Container container = storage.AddComponent<Container>();
+		Container? cart = HammerPiece(hammer, "Cart")?.GetComponentInChildren<Container>(true);
+		if (cart != null)
+		{
+			// Same size, look and sounds as the cart's chest.
+			foreach (System.Reflection.FieldInfo field in typeof(Container).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+			{
+				field.SetValue(container, field.GetValue(cart));
+			}
+		}
+		else
+		{
+			container.m_width = 6;
+			container.m_height = 3;
+		}
+		container.m_name = "Hover Sled";
+		container.m_rootObjectOverride = nview;
+		container.m_privacy = Container.PrivacySetting.Public;
+		container.m_checkGuardStone = false;
+		container.m_autoDestroyEmpty = false;
+		sled.m_storage = container;
+
+		GameObject passenger = new("passenger");
+		passenger.transform.SetParent(frame, false);
+		passenger.transform.localPosition = new Vector3(0f, 0.25f, -0.25f);
+		sled.m_passengerSeat = passenger.transform;
+
+		for (int i = 0; i < HoverSled.Slots; i++)
+		{
+			GameObject slot = new("harness" + i);
+			slot.transform.SetParent(frame, false);
+			slot.transform.localPosition = new Vector3(i == 0 ? -0.55f : 0.55f, -0.6f, half + 1.2f);
+			sled.m_slots[i] = slot.transform;
+		}
 	}
 
 	// The vanilla pole/beam built from the same wood (the longest one), so each log looks like its
@@ -257,7 +346,7 @@ public static class HoverLogPrefabs
 	}
 
 	// Keeps just the meshes; drops the piece's game logic and its worn/broken alternates.
-	private static void StripToVisual(GameObject visual)
+	internal static void StripToVisual(GameObject visual)
 	{
 		WearNTear? wear = visual.GetComponent<WearNTear>();
 		if (wear != null)

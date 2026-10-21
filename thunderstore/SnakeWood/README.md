@@ -44,6 +44,29 @@ server admin can change them.
 | Ashwood Hover Log | 60 Ashwood, 30 Resin, 3 Bell Fragments | The fastest, just. Trails embers, and its ram sets things on fire. |
 | Timberwood Hover Log | 60 Timberwood, 30 Resin, 3 Frostcores, 10 Ice | The Deep North log: as fast as Ashwood, climbs steep snow and ice, floats high, glides, one mid-air hop, trails frost, and its ram chills and slows. |
 
+### Hover Sled
+
+A floating sled pulled by **real animals**: 30 Fine Wood, 20 Resin, 10 Deer Hide and 30 Bronze
+Nails at a level 2 Forge.
+
+- **Hitching (H while looking at the sled, nobody on it):** brings the nearest **tamed wolf**
+  within 6 m into harness, or a **hare** dragged right up to the sled (within 3 m: harpoon it and
+  pull it in). Two animals per sled, any mix. Pressing H with no animal near unhitches the last
+  one and lets it go, with its stars, health and name intact.
+- **The team is the engine.** Each animal adds speed (wolves 8.5 m/s, hares 10.5) and pulling
+  strength (wolves 180, hares 60); every star adds 8% speed and 35% strength. Wolves haul, hares
+  run. One animal alone manages 80% of the pace. Strength is the load it pulls before slowing:
+  your carry weight plus the chest's contents, on the same soft curve as the logs.
+- **Tough animals.** Crashes knock the team instead of wearing the sled. An animal knocked to 0 is
+  **exhausted** and stops pulling; it never dies in harness. **Shift+E** with food feeds them
+  (wolves eat what tamed wolves eat; hares eat carrots, turnips and berries), each item healing a
+  third of their health. They also recover slowly while the sled stands still.
+- **Cart-sized chest** at the back, open to anyone (the driver too, from the seat). Its weight
+  counts as load.
+- **Passenger seat:** while someone drives, E sits you in the passenger seat.
+- **Restful:** riding costs stamina only while moving; standing still it recovers.
+- Taking the sled down spills its cargo and releases its team.
+
 ### Fish logs
 
 Every kind of fish can be ridden too, but only a **level 5 fish** will do (the rarest catch;
@@ -224,6 +247,9 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   **Overload Falloff** 1.2), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
   **Take Out Fuel Key** (R).
+- **Sled** (section 6): **Hitch Key** (H), **Team Animals** (`Wolf:8.5:180,Hare:10.5:60` as
+  Prefab:Speed:Strength — add other creatures here), **Food For Untamable Animals**, **Speed Per
+  Star**, **Strength Per Star**, **Team Damage**, **Feed Heal**, **Rest Heal Per Minute**.
 - **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, and **Repair Per Item**.
 - **Ram Damages Buildings / Players And Tames**: both off by default.
 - One section per log: **Buildable**, **Recipe**, **Crafting Station**, **Crafting Station Level**, **Required Boss**, **Aim Penalty**, **Riding Stamina Per Second**, **Top Speed**,
