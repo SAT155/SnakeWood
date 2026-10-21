@@ -145,3 +145,20 @@ internal static class DoorsWhileRidingPatch
 		}
 	}
 }
+
+// Some container mods (AzuCraftyBoxes) assume any container with m_rootObjectOverride belongs to a
+// cart and call Vagon.InUse() on GetComponent<Vagon>() without a null check. A sled's chest uses an
+// override but has no Vagon, so they'd throw every frame. A null "cart" simply isn't in use.
+[HarmonyPatch(typeof(Vagon), nameof(Vagon.InUse))]
+internal static class NullCartNotInUsePatch
+{
+	private static System.Exception? Finalizer(System.Exception? __exception, Vagon? __instance, ref bool __result)
+	{
+		if (__exception is System.NullReferenceException && __instance == null)
+		{
+			__result = false;
+			return null;
+		}
+		return __exception;
+	}
+}
