@@ -1200,7 +1200,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 		Vector3 pos = m_body.position;
 		Vector3 vel = m_body.linearVelocity;
-		GetSurface(pos, out float surfaceY, out Vector3 surfaceNormal, out bool overWater, out float waterDepth);
+		GetSurface(pos, out float surfaceY, out _, out bool overWater, out float waterDepth);
 		bool deepWater = overWater && waterDepth > SnakeWoodPlugin.DeepWaterDepth.Value;
 
 		if (driving && !UpdateRiderStamina(dt))
@@ -1261,7 +1261,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			hoverHeight = Mathf.Max(0.3f, hoverHeight * (1f + pitchInput * 0.4f));
 		}
-		float error = surfaceY + hoverHeight - pos.y;
+		float speedNow = new Vector3(vel.x, 0f, vel.z).magnitude;
+		FitToGround(pos, surfaceY, Quaternion.Euler(0f, m_yaw, 0f), speedNow, climb, out float groundY, out Vector3 groundUp);
+		float error = groundY + hoverHeight - pos.y;
 		float airGravity = Physics.gravity.y * m_v.FallGravityCfg.Value * (1f + Mathf.Max(0f, -pitchInput) * 1.5f);
 		if (m_airborne && (vel.y <= 0f && error > -0.2f))
 		{
@@ -1272,7 +1274,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			m_airHopsUsed = 0;
 		}
-		vel.y += (inAir ? airGravity : Mathf.Clamp(error * 14f - vel.y * 6f, -40f, 40f)) * dt;
+		// A near-critically damped spring: quick to rise over bumps, without bouncing after them.
+		vel.y += (inAir ? airGravity : Mathf.Clamp(error * 30f - vel.y * 10f, -60f, 60f)) * dt;
 		if (m_hopQueued)
 		{
 			m_hopQueued = false;
@@ -1338,13 +1341,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_roll = Mathf.Lerp(m_roll, targetRoll, 4f * dt);
 		// The nose never tips further than the log can climb, from look pitch or from the ground.
 		m_pitch = Mathf.Lerp(m_pitch, pitchInput * Mathf.Min(SnakeWoodPlugin.MaxPitch.Value, climb), 4f * dt);
-		float tilt = inAir ? 0f : 0.6f;
-		float groundAngle = Vector3.Angle(Vector3.up, surfaceNormal);
+		float tilt = inAir ? 0f : 1f;
+		float groundAngle = Vector3.Angle(Vector3.up, groundUp);
 		if (groundAngle * tilt > climb)
 		{
 			tilt = climb / groundAngle;
 		}
-		Vector3 up = Vector3.Slerp(Vector3.up, surfaceNormal, tilt);
+		Vector3 up = Vector3.Slerp(Vector3.up, groundUp, tilt);
 		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
 		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
@@ -1486,6 +1489,77 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		player.AttachStop();
 		player.m_body.linearVelocity = velocity * 0.7f + Vector3.up * 3f;
 		player.Message(MessageHud.MessageType.Center, message);
+	}
+
+	// The line the log should ride along: the ground is sampled under both ends, both sides and a
+	// little ahead (more at speed), and the log is fitted to the slope between its ends and just
+	// clear of every sample, so its nose doesn't dig into rising ground and it rises before a bump
+	// instead of after it. Samples that jump more than the log could climb (walls, ledges) are left
+	// to the crash and climb checks.
+	private void FitToGround(Vector3 pos, float centreY, Quaternion heading, float speed, float climb, out float baseY, out Vector3 up)
+	{
+		baseY = centreY;
+		up = Vector3.up;
+		if (float.IsNegativeInfinity(centreY))
+		{
+			return;
+		}
+		float half = 0.45f * m_v.Length * Mathf.Max(1f, m_frame.localScale.z);
+		float halfWidth = m_sled != null ? 0.7f : Mathf.Max(0.3f, 0.225f * m_v.Thickness * Mathf.Max(1f, m_frame.localScale.x));
+		float maxSlope = Mathf.Tan(Mathf.Min(climb + 10f, 80f) * Mathf.Deg2Rad);
+		Vector3 forward = heading * Vector3.forward;
+		Vector3 right = heading * Vector3.right;
+		float Sample(float along, float across)
+		{
+			float y = GroundAt(pos + forward * along + right * across, pos.y + 1.5f);
+			float reach = Mathf.Abs(along) + Mathf.Abs(across);
+			return float.IsNegativeInfinity(y) || Mathf.Abs(y - centreY) > reach * maxSlope + 0.3f ? centreY : y;
+		}
+		float back = Sample(-half, 0f);
+		float front = Sample(half, 0f);
+		float left = Sample(0f, -halfWidth);
+		float rightY = Sample(0f, halfWidth);
+		float aheadDist = half + Mathf.Min(3f, speed * 0.15f);
+		float ahead = Sample(aheadDist, 0f);
+
+		float climbSlope = Mathf.Tan(climb * Mathf.Deg2Rad);
+		float slope = Mathf.Clamp((front - back) / (2f * half), -climbSlope, climbSlope);
+		float sideSlope = Mathf.Clamp((rightY - left) / (2f * halfWidth), -climbSlope, climbSlope) * 0.7f;
+		baseY = Mathf.Max(centreY,
+			back + slope * half, front - slope * half,
+			left + sideSlope * halfWidth, rightY - sideSlope * halfWidth,
+			ahead - slope * aheadDist - 0.15f);
+		Vector3 alongSlope = (forward + Vector3.up * slope).normalized;
+		Vector3 acrossSlope = (right + Vector3.up * sideSlope).normalized;
+		up = Vector3.Cross(alongSlope, acrossSlope).normalized;
+	}
+
+	// The highest of ground, build pieces and water at one spot, from a ray cast down from fromY.
+	private float GroundAt(Vector3 point, float fromY)
+	{
+		point.y = fromY;
+		float height = float.NegativeInfinity;
+		int count = Physics.RaycastNonAlloc(point, Vector3.down, s_hits, 60f, s_groundMask, QueryTriggerInteraction.Ignore);
+		float best = float.MaxValue;
+		for (int i = 0; i < count; i++)
+		{
+			RaycastHit hit = s_hits[i];
+			if (hit.collider.attachedRigidbody == m_body || hit.distance >= best)
+			{
+				continue;
+			}
+			best = hit.distance;
+			height = hit.point.y;
+		}
+		if (ZoneSystem.instance is ZoneSystem zones)
+		{
+			if (float.IsNegativeInfinity(height))
+			{
+				height = zones.GetGroundHeight(point);
+			}
+			height = Mathf.Max(height, zones.m_waterLevel);
+		}
+		return height;
 	}
 
 	// Height and normal of whatever's under the log (ground, build pieces or the water surface),
