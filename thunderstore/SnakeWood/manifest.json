@@ -1,7 +1,7 @@
 {
   "name": "SnakeWood",
   "author": "SAT",
-  "version_number": "1.22.0",
+  "version_number": "1.22.1",
   "website_url": "https://github.com/SAT155/SnakeWood",
   "description": "Build a Hover Log with the hammer and ride it like a hover bike: it floats over land and water, with throttle, boost, hop and banked turns.",
   "dependencies": [

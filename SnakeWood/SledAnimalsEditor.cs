@@ -50,41 +50,33 @@ internal static class SledAnimalsEditor
 			entry.BoxedValue = value = edited;
 		}
 
+		// Suggest names for the first entry whose name isn't a known creature (the one being typed),
+		// wherever it is in the list and whether or not its stats are filled in yet.
 		string[] entries = value.Split(',');
-		string current = entries[entries.Length - 1];
-		string typed = current.Split(':')[0].Trim();
 		List<string> names = Creatures().ToList();
-		if (typed.Length > 0 && !current.Contains(':'))
+		int editing = Array.FindIndex(entries, e => e.Split(':')[0].Trim() is string n && n.Length > 0 && !names.Contains(n));
+		if (editing >= 0)
 		{
+			string[] parts = entries[editing].Split(':');
+			string typed = parts[0].Trim();
 			List<string> matches = names
 				.Where(n => n.IndexOf(typed, StringComparison.OrdinalIgnoreCase) >= 0)
 				.OrderBy(n => n.StartsWith(typed, StringComparison.OrdinalIgnoreCase) ? 0 : 1).ThenBy(n => n.Length)
-				.Take(6).ToList();
-			if (matches.Count > 0)
+				.Take(8).ToList();
+			GUILayout.BeginHorizontal();
+			GUILayout.Label(matches.Count > 0 ? $"\"{typed}\" →" : $"<color=#ff8866>No creature matches \"{typed}\"</color>", GUILayout.ExpandWidth(false));
+			foreach (string match in matches)
 			{
-				GUILayout.BeginHorizontal();
-				foreach (string match in matches)
+				if (GUILayout.Button(match, GUILayout.ExpandWidth(false)))
 				{
-					if (GUILayout.Button(match, GUILayout.ExpandWidth(false)))
-					{
-						entries[entries.Length - 1] = match + NewStats;
-						entry.BoxedValue = string.Join(",", entries);
-						GUI.FocusControl(null);
-					}
+					// Keep stats already typed; a bare name gets starter stats.
+					parts[0] = match;
+					entries[editing] = parts.Length > 1 ? string.Join(":", parts) : match + NewStats;
+					entry.BoxedValue = string.Join(",", entries);
+					GUI.FocusControl(null);
 				}
-				GUILayout.EndHorizontal();
 			}
-		}
-
-		// Names the game doesn't know (only checkable in a world).
-		if (s_creatures != null)
-		{
-			string[] unknown = entries.Select(e => e.Split(':')[0].Trim())
-				.Where(n => n.Length > 0 && !names.Contains(n)).ToArray();
-			if (unknown.Length > 0 && !(unknown.Length == 1 && unknown[0] == typed && !current.Contains(':')))
-			{
-				GUILayout.Label($"<color=#ff8866>Not a creature: {string.Join(", ", unknown)}</color>");
-			}
+			GUILayout.EndHorizontal();
 		}
 		GUILayout.Label("<color=#aaaaaa>Prefab:Speed:Strength:Land:Water, comma separated</color>");
 		GUILayout.EndVertical();

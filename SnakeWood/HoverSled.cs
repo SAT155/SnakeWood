@@ -219,38 +219,45 @@ public class HoverSled : MonoBehaviour
 
 	// ---- Hitching ---------------------------------------------------------------------------------
 
-	public void HitchOrUnhitch(Player player)
+	public void Hitch(Player player)
 	{
 		if (m_log.HasRider)
 		{
 			player.Message(MessageHud.MessageType.Center, "Get everyone off the sled first");
 			return;
 		}
+		int free = Enumerable.Range(0, Slots).FirstOrDefault(i => Get(i) == null, -1);
+		if (free < 0)
+		{
+			player.Message(MessageHud.MessageType.Center, $"The team is full ([{SnakeWoodPlugin.UnhitchKey.Value}] to unhitch one)");
+			return;
+		}
+		if (FindCandidate() is not Character creature)
+		{
+			player.Message(MessageHud.MessageType.Center,
+				"Bring a tamed wolf close, or harpoon a hare and drag it right up to the sled");
+			return;
+		}
 		m_nview.ClaimOwnership();
-		int free = -1, last = -1;
-		for (int i = 0; i < Slots; i++)
+		Hitch(free, creature, player);
+	}
+
+	// Lets the last animal hitched go.
+	public void Unhitch(Player player)
+	{
+		if (m_log.HasRider)
 		{
-			if (Get(i) == null)
-			{
-				free = free < 0 ? i : free;
-			}
-			else
-			{
-				last = i;
-			}
-		}
-		if (free >= 0 && FindCandidate() is Character creature)
-		{
-			Hitch(free, creature, player);
+			player.Message(MessageHud.MessageType.Center, "Get everyone off the sled first");
 			return;
 		}
-		if (last >= 0)
+		int last = Enumerable.Range(0, Slots).LastOrDefault(i => Get(i) != null, -1);
+		if (last < 0)
 		{
-			Unhitch(last, player);
+			player.Message(MessageHud.MessageType.Center, "Nothing is hitched");
 			return;
 		}
-		player.Message(MessageHud.MessageType.Center,
-			"Bring a tamed wolf close, or harpoon a hare and drag it right up to the sled");
+		m_nview.ClaimOwnership();
+		Unhitch(last, player);
 	}
 
 	// The nearest creature that can be put in harness: tamable ones only once tamed (within 6 m),
@@ -340,7 +347,7 @@ public class HoverSled : MonoBehaviour
 		{
 			text = "\n<color=#888888>No team: hitch tamed wolves or harpooned hares</color>";
 		}
-		return text + $"\n[<color=yellow><b>{SnakeWoodPlugin.HitchKey.Value}</b></color>] Hitch / unhitch";
+		return text + $"\n[<color=yellow><b>{SnakeWoodPlugin.HitchKey.Value}</b></color>] Hitch  [<color=yellow><b>{SnakeWoodPlugin.UnhitchKey.Value}</b></color>] Unhitch";
 	}
 
 	// ---- The team you see --------------------------------------------------------------------------
@@ -399,7 +406,7 @@ public class HoverSled : MonoBehaviour
 		{
 			s_footMask = LayerMask.GetMask("Default", "static_solid", "terrain", "piece");
 		}
-		Quaternion level = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+		Quaternion level = Heading();
 		for (int i = 0; i < Slots; i++)
 		{
 			if (m_visuals[i] is not Transform visual || !visual)
@@ -430,10 +437,14 @@ public class HoverSled : MonoBehaviour
 	// instead of swinging sideways as the sled tilts over the ground.
 	private Vector3 SlotPosition(int slot)
 	{
-		Vector3 local = transform.InverseTransformPoint(m_slots[slot].position);
-		Vector3 scale = transform.lossyScale;
-		return transform.position + Quaternion.Euler(0f, transform.eulerAngles.y, 0f) * Vector3.Scale(local, scale);
+		Transform frame = m_log.m_frame;
+		Vector3 local = Vector3.Scale(frame.InverseTransformPoint(m_slots[slot].position), frame.lossyScale);
+		return frame.position + Heading() * local;
 	}
+
+	// The sled's heading, level. Read from the frame: the root is turned for the vanilla-log
+	// disguise, so its own angles say nothing useful about where the sled points.
+	private Quaternion Heading() => Quaternion.Euler(0f, m_log.FrameYaw(), 0f);
 
 	private static bool InWater(Vector3 point) => Floating.GetLiquidLevel(point) > point.y;
 
@@ -504,7 +515,7 @@ public class HoverSled : MonoBehaviour
 			sum += slot;
 		}
 		m_teamRigidbody.MovePosition(sum / Slots);
-		m_teamRigidbody.MoveRotation(Quaternion.Euler(0f, transform.eulerAngles.y, 0f));
+		m_teamRigidbody.MoveRotation(Heading());
 	}
 
 	private void OnDestroy()

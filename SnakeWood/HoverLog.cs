@@ -918,6 +918,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_freeLook = IsLocallyDriven() && SnakeWoodPlugin.FreeLookKey.Value.IsPressed();
 		CheckTakeFuelKey();
 		CheckHitchKey();
+		CheckUnhitchKey();
 		UpdateWreckLook();
 		UpdateShake();
 		UpdateCombatFacing();
@@ -1154,7 +1155,19 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return;
 		}
-		m_sled.HitchOrUnhitch(player);
+		m_sled.Hitch(player);
+	}
+
+	private void CheckUnhitchKey()
+	{
+		Player player = Player.m_localPlayer;
+		if (m_sled == null || player == null || !m_nview.IsValid() || !SnakeWoodPlugin.UnhitchKey.Value.IsDown()
+			|| !player.TakeInput() || player.GetHoverObject() is not GameObject hovered
+			|| hovered.GetComponentInParent<HoverLog>() != this || !InUseDistance(player))
+		{
+			return;
+		}
+		m_sled.Unhitch(player);
 	}
 
 	private void CheckTakeFuelKey()
@@ -1184,7 +1197,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	// Vanilla turns the rider to face this component's forward, so it's the frame, not the root.
 	public Component GetControlledComponent() => m_frame;
 
-	private float FrameYaw()
+	internal float FrameYaw()
 	{
 		Vector3 forward = m_frame.forward;
 		forward.y = 0f;

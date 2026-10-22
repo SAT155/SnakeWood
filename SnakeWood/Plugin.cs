@@ -70,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.22.0";
+	internal const string PluginVersion = "1.22.1";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -143,6 +143,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<bool> SyncDebug = null!;
 	internal static ConfigEntry<KeyboardShortcut> HitchKey = null!;
 	internal static ConfigEntry<string> SledAnimals = null!;
+	internal static ConfigEntry<KeyboardShortcut> UnhitchKey = null!;
 	internal static ConfigEntry<string> HareFood = null!;
 	internal static ConfigEntry<float> StarSpeedBonus = null!;
 	internal static ConfigEntry<float> StarStrengthBonus = null!;
@@ -254,7 +255,9 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		RepairPerItem = Config.Bind("5 - Wear", "Repair Per Item", 10f,
 			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
 		HitchKey = Config.Bind("6 - Sled", "Hitch Key", new KeyboardShortcut(KeyCode.H),
-			"Press while looking at a sled (nobody on it) to hitch the nearest animal that can pull it: a tamed wolf within 6 m, or a hare dragged within 3 m (harpoon it in). With none near, unhitches the last animal and lets it go.");
+			"Press while looking at a sled (nobody on it) to hitch the nearest animal that can pull it: a tamed wolf within 6 m, or a hare dragged within 3 m (harpoon it in).");
+		UnhitchKey = Config.Bind("6 - Sled", "Unhitch Key", new KeyboardShortcut(KeyCode.U),
+			"Press while looking at a sled (nobody on it) to unhitch the last animal hitched and let it go.");
 		SledAnimals = Config.Bind("6 - Sled", "Team Animals", "Wolf:8.5:180:1:0.6,Hare:10.5:60:1.1:0.4",
 			new ConfigDescription("Which creatures can pull a sled, as Prefab:Speed:Strength:Land:Water. Speed (m/s) is the animal's share of the sled's top speed (the team's average; a lone animal manages 80%). Strength adds to how much weight the sled pulls (your carry weight plus its cargo) before slowing, like Load Capacity on the logs. Land and Water multiply its speed on land and over water (1 = no change, 0.6 = 40% slower, 1.2 = 20% faster); leave them off for 1. Tamable creatures must be tamed first. The editor suggests creature names as you type.",
 				null, new ConfigurationManagerAttributes { CustomDrawer = SledAnimalsEditor.Draw }));

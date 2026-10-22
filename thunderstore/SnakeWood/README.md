@@ -51,8 +51,8 @@ Nails at a level 2 Forge.
 
 - **Hitching (H while looking at the sled, nobody on it):** brings the nearest **tamed wolf**
   within 6 m into harness, or a **hare** dragged right up to the sled (within 3 m: harpoon it and
-  pull it in). Two animals per sled, any mix. Pressing H with no animal near unhitches the last
-  one and lets it go, with its stars, health and name intact.
+  pull it in). Two animals per sled, any mix. **U** unhitches the last one and lets it go, with
+  its stars, health and name intact.
 - **The team is the engine.** Each animal adds speed (wolves 8.5 m/s, hares 10.5) and pulling
   strength (wolves 180, hares 60); every star adds 8% speed and 35% strength. Wolves haul, hares
   run. One animal alone manages 80% of the pace. Strength is the load it pulls before slowing:
@@ -255,7 +255,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   **Overload Falloff** 1.2), and **Noise At Rest** / **Noise At Top Speed**.
 - **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off),
   **Take Out Fuel Key** (R) and **Lifetime Fuel Item** (SurtlingCore).
-- **Sled** (section 6): **Hitch Key** (H), **Team Animals** (`Wolf:8.5:180:1:0.6,Hare:10.5:60:1.1:0.4` as
+- **Sled** (section 6): **Hitch Key** (H), **Unhitch Key** (U), **Team Animals** (`Wolf:8.5:180:1:0.6,Hare:10.5:60:1.1:0.4` as
   Prefab:Speed:Strength:Land:Water, where Land and Water multiply the speed; add other creatures
   here, and the Configuration Manager suggests names as you type), **Food For Untamable Animals**, **Speed Per
   Star**, **Strength Per Star**, **Team Damage**, **Feed Heal**, **Rest Heal Per Minute**.
