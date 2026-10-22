@@ -110,6 +110,9 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private float m_swimPhase;
 	private float m_pitch;
 	private bool m_airborne;
+	private bool m_wasInAir;
+	private float m_cushion;
+	private float m_cushionLength = 1f;
 	// The velocity the log was driven at this physics step, before any collision changed it.
 	private Vector3 m_driveVelocity;
 	private int m_airHopsUsed;
@@ -1279,7 +1282,23 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		// A near-critically damped spring: quick to rise over bumps, without bouncing after them.
 		// A sled's spring is softer, so it glides over the bumps its team climbs.
 		float spring = m_sled != null ? 16f : 30f;
-		vel.y += (inAir ? airGravity : Mathf.Clamp(error * spring - vel.y * 2.1f * Mathf.Sqrt(spring), -60f, 60f)) * dt;
+		// Landing from a hop or a drop sinks into a soft cushion that firms up over most of a
+		// second, instead of the full spring stopping the fall dead.
+		if (m_wasInAir && !inAir && vel.y < -1.5f)
+		{
+			m_cushion = Mathf.Clamp(-vel.y * 0.08f, 0.35f, 0.8f);
+			m_cushionLength = m_cushion;
+		}
+		m_wasInAir = inAir;
+		float maxLift = 60f;
+		if (m_cushion > 0f)
+		{
+			m_cushion -= dt;
+			float firm = 1f - Mathf.Clamp01(m_cushion / m_cushionLength);
+			spring = Mathf.Lerp(6f, spring, firm * firm);
+			maxLift = Mathf.Lerp(18f, 60f, firm);
+		}
+		vel.y += (inAir ? airGravity : Mathf.Clamp(error * spring - vel.y * 2f * Mathf.Sqrt(spring), -60f, maxLift)) * dt;
 		if (m_hopQueued)
 		{
 			m_hopQueued = false;
