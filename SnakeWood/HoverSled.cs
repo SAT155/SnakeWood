@@ -414,8 +414,12 @@ public class HoverSled : MonoBehaviour
 				continue;
 			}
 			Vector3 slot = SlotPosition(i);
-			float y = Physics.Raycast(slot + Vector3.up * 2.5f, Vector3.down, out RaycastHit hit, 6f, s_footMask, QueryTriggerInteraction.Ignore)
-				? hit.point.y : slot.y;
+			// From well above the slot (and the sled) down a long way, so a sled hovering high or
+			// tipped never leaves the ray short of the ground; terrain height if it still misses.
+			Vector3 from = new(slot.x, Mathf.Max(slot.y, transform.position.y) + 3f, slot.z);
+			float y = Physics.Raycast(from, Vector3.down, out RaycastHit hit, 20f, s_footMask, QueryTriggerInteraction.Ignore)
+				? hit.point.y
+				: ZoneSystem.instance != null ? ZoneSystem.instance.GetGroundHeight(slot) : slot.y;
 			float water = Floating.GetLiquidLevel(slot);
 			if (water > y + 0.5f)
 			{
