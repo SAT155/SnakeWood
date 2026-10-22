@@ -70,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.21.1";
+	internal const string PluginVersion = "1.22.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -133,6 +133,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> EitrPerSecond = null!;
 	internal static ConfigEntry<float> EitrStaminaFactor = null!;
 	internal static ConfigEntry<KeyboardShortcut> TakeFuelKey = null!;
+	internal static ConfigEntry<string> CoreFuelItem = null!;
+	internal static ConfigEntry<bool> DrainWhenStill = null!;
 	internal static ConfigEntry<bool> NoMetal = null!;
 	internal static ConfigEntry<int> FishQuality = null!;
 	internal static ConfigEntry<float> LoadAtCapacity = null!;
@@ -225,6 +227,10 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("While eitr is helping, riding stamina drain is multiplied by this.", new AcceptableValueRange<float>(0f, 1f)));
 		TakeFuelKey = Config.Bind("4 - Fuel", "Take Out Fuel Key", new KeyboardShortcut(KeyCode.R),
 			"Press while looking at a log to take the fuel out of it (into your inventory, or onto the ground if there's no room).");
+		CoreFuelItem = Config.Bind("4 - Fuel", "Lifetime Fuel Item", "SurtlingCore",
+			"Logs with Lifetime Fuel on (Core Wood and later, and the fish) take one of these (the game's item name) with Shift+E and never need fuel again. It drops back out when the log is taken down.");
+		DrainWhenStill = Config.Bind("3 - Balance", "Stamina Drain When Still", false,
+			"Off: sitting still on a log costs no stamina, so it recovers. On: balancing costs stamina the whole ride, moving or not (sleds are always restful).");
 		NoMetal = Config.Bind("3 - Balance", "No Ore Or Metal", false,
 			"Logs refuse to carry anything you couldn't take through a portal (ore, metal bars, eggs...): you can't get on carrying it, and picking it up mid-ride throws you off.");
 		BossGate = Config.Bind("3 - Balance", "Require Boss Kills", false,
@@ -249,8 +255,13 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Wear each repair item fixes.", new AcceptableValueRange<float>(1f, 1000f)));
 		HitchKey = Config.Bind("6 - Sled", "Hitch Key", new KeyboardShortcut(KeyCode.H),
 			"Press while looking at a sled (nobody on it) to hitch the nearest animal that can pull it: a tamed wolf within 6 m, or a hare dragged within 3 m (harpoon it in). With none near, unhitches the last animal and lets it go.");
-		SledAnimals = Config.Bind("6 - Sled", "Team Animals", "Wolf:8.5:180,Hare:10.5:60",
-			"Which creatures can pull a sled, as Prefab:Speed:Strength. Speed (m/s) is the animal's share of the sled's top speed (the team's average; a lone animal manages 80%). Strength adds to how much weight the sled pulls (your carry weight plus its cargo) before slowing, like Load Capacity on the logs. Tamable creatures must be tamed first.");
+		SledAnimals = Config.Bind("6 - Sled", "Team Animals", "Wolf:8.5:180:1:0.6,Hare:10.5:60:1.1:0.4",
+			new ConfigDescription("Which creatures can pull a sled, as Prefab:Speed:Strength:Land:Water. Speed (m/s) is the animal's share of the sled's top speed (the team's average; a lone animal manages 80%). Strength adds to how much weight the sled pulls (your carry weight plus its cargo) before slowing, like Load Capacity on the logs. Land and Water multiply its speed on land and over water (1 = no change, 0.6 = 40% slower, 1.2 = 20% faster); leave them off for 1. Tamable creatures must be tamed first. The editor suggests creature names as you type.",
+				null, new ConfigurationManagerAttributes { CustomDrawer = SledAnimalsEditor.Draw }));
+		if (SledAnimals.Value == "Wolf:8.5:180,Hare:10.5:60")
+		{
+			SledAnimals.Value = (string)SledAnimals.DefaultValue;
+		}
 		HareFood = Config.Bind("6 - Sled", "Food For Untamable Animals", "Carrot,Turnip,Blueberries,Raspberry,Cloudberry",
 			"What hares (and other animals that have no tamed diet) eat when you feed them. Tamed animals eat what they eat in the game.");
 		StarSpeedBonus = Config.Bind("6 - Sled", "Speed Per Star", 0.08f,

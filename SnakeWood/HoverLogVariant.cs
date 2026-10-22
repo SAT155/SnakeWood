@@ -276,6 +276,9 @@ public class HoverLogVariant
 	// A team-pulled sled (HoverSled) rather than a log.
 	public bool Sled;
 
+	// Core Wood and later, and the fish, can take a Surtling core as fuel for good.
+	public bool CoreFuel => IsFish || WoodItem is "RoundLog" or "ElderBark" or "YggdrasilWood" or "Blackwood" or "Frostwood";
+
 	// The crafting station it's built at (Crafting Station), climbing with the biome its
 	// materials come from.
 	public Station Station;
@@ -321,6 +324,7 @@ public class HoverLogVariant
 	public ConfigEntry<float> LoadCapacityCfg = null!;
 	public ConfigEntry<float> DurabilityCfg = null!;
 	public ConfigEntry<string> RepairItemCfg = null!;
+	public ConfigEntry<bool> CoreFuelCfg = null!;
 	public ConfigEntry<float> NoiseCfg = null!;
 	public ConfigEntry<float> RamDamageCfg = null!;
 	public ConfigEntry<float> PoisonCloudCfg = null!;
@@ -446,6 +450,8 @@ public class HoverLogVariant
 			new ConfigDescription("How much wear (crashes, rams, riding) it takes before it's too battered to fly. See 5 - Wear.", new AcceptableValueRange<float>(1f, 5000f)));
 		RepairItemCfg = config.Bind(section, "Repair Item", RepairItem ?? WoodItem,
 			"What repairs it (the game's item name): Shift+E on a worn log uses these before adding fuel. Each fixes Repair Per Item wear (see 5 - Wear).");
+		CoreFuelCfg = config.Bind(section, "Lifetime Fuel", CoreFuel && !Sled,
+			"On: one Lifetime Fuel Item (a Surtling core, see 4 - Fuel) fuels it for good.");
 		NoiseCfg = config.Bind(section, "Noise", Noise,
 			new ConfigDescription("Multiplies how far away creatures hear you riding it (see Noise settings under 3 - Balance).", new AcceptableValueRange<float>(0f, 5f)));
 		if (SnakeWoodPlugin.ResetV5 && Key == "RoundLog")

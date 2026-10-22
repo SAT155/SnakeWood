@@ -139,6 +139,9 @@ Every log burns **resin**. A new log starts empty.
 - Riding burns about 1 resin a minute. A parked log burns nothing.
 - An empty log won't lift off. If one runs dry mid-ride it sputters along low and slow, with no
   boost or hops, until you refuel.
+- **Core Wood and later logs, and the fish,** can instead take one **Surtling core** (Shift+E,
+  or use it from the hotbar): it fuels the log for good, and drops back out when you take the
+  log down (`Lifetime Fuel Item`, and `Lifetime Fuel` per log).
 
 ## Controls
 
@@ -166,8 +169,9 @@ crash limit, aim, deep-water speed, climb angle, load capacity, noise, durabilit
 
 ## Staying on
 
-- **Balance takes stamina.** Riding drains a little stamina the whole time, and stamina doesn't
-  regenerate meanwhile. Fine Wood and Ashwood are hardest to hold on to and Core Wood easiest.
+- **Balance takes stamina.** Riding drains a little stamina while you're moving, and stamina
+  doesn't regenerate meanwhile; sitting still it recovers (`Stamina Drain When Still` turns the
+  drain on for standing still too). Fine Wood and Ashwood are hardest to hold on to and Core Wood easiest.
   Run out and you fall off, except from a hover sled or a fish log: those crawl along until a
   quarter of your stamina is back.
 - **Eitr helps.** If you have eitr (Mistlands food), riding draws a slow trickle of it
@@ -200,7 +204,8 @@ and from ramming. Just riding doesn't wear them. Hover over a log to see its con
 - A log that wears right out is **wrecked**: you're thrown off, and it drops where it is, dark
   and lifeless, and stays put. Nobody can ride or push it, and nothing is lost.
 - **Shift+E** repairs it with **its own wood** (Wood, Fine Wood, Core Wood, Ancient Bark,
-  Yggdrasil Wood, Ashwood; raw fish for the fish logs), 10 wear per piece, before it adds any fuel.
+  Yggdrasil Wood, Ashwood; raw fish for the fish logs), 10 wear per piece. Shift+E repairs first only if you carry the repair item; otherwise it
+  goes on to fuel.
   A wreck has to be repaired all the way (hover over it to see how much it needs) before it
   flies again, so bring the materials to it. You can do it over several trips.
 - Crashes and rams that wear a log knock splinters off it and shake it, like a cart taking
@@ -248,10 +253,11 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   **Aim Penalty Per Speed**, **Eitr Per Second** and **Stamina Drain With Eitr**.
   Also **Require Boss Kills** (off), **Fish Quality Required** (5), **No Ore Or Metal** (off), the load settings (**Performance At Load Capacity** 0.7,
   **Overload Falloff** 1.2), and **Noise At Rest** / **Noise At Top Speed**.
-- **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off) and
-  **Take Out Fuel Key** (R).
-- **Sled** (section 6): **Hitch Key** (H), **Team Animals** (`Wolf:8.5:180,Hare:10.5:60` as
-  Prefab:Speed:Strength — add other creatures here), **Food For Untamable Animals**, **Speed Per
+- **Fuel**: **Fuel Item** (Resin), **Fuel Capacity**, **Fuel Per Minute** (0 turns fuel off),
+  **Take Out Fuel Key** (R) and **Lifetime Fuel Item** (SurtlingCore).
+- **Sled** (section 6): **Hitch Key** (H), **Team Animals** (`Wolf:8.5:180:1:0.6,Hare:10.5:60:1.1:0.4` as
+  Prefab:Speed:Strength:Land:Water, where Land and Water multiply the speed; add other creatures
+  here, and the Configuration Manager suggests names as you type), **Food For Untamable Animals**, **Speed Per
   Star**, **Strength Per Star**, **Team Damage**, **Feed Heal**, **Rest Heal Per Minute**.
 - **Wear**: **Wear** (on), **Crash Wear**, **Ram Wear**, and **Repair Per Item**.
 - **Ram Damages Buildings / Players And Tames**: both off by default.

@@ -108,10 +108,12 @@ public class HoverSled : MonoBehaviour
 
 	public bool CanPull => Team().Any(a => a.Pulling);
 
-	public float TopSpeed()
+	public float TopSpeed(bool onWater = false)
 	{
 		List<float> speeds = Team().Where(a => a.Pulling)
-			.Select(a => (Species(a.Prefab)?.Speed ?? 6f) * (1f + SnakeWoodPlugin.StarSpeedBonus.Value * a.Stars)).ToList();
+			.Select(a => Species(a.Prefab) is SledSpecies sp
+				? sp.Speed * (onWater ? sp.Water : sp.Land) * (1f + SnakeWoodPlugin.StarSpeedBonus.Value * a.Stars)
+				: 6f).ToList();
 		if (speeds.Count == 0)
 		{
 			return 0f;
@@ -612,6 +614,8 @@ public class SledSpecies
 	public string Prefab = "";
 	public float Speed;
 	public float Strength;
+	public float Land = 1f;
+	public float Water = 1f;
 
 	private static string s_parsed = "";
 	private static readonly Dictionary<string, SledSpecies> s_species = new();
@@ -626,10 +630,14 @@ public class SledSpecies
 			foreach (string entry in config.Split(','))
 			{
 				string[] parts = entry.Split(':');
-				if (parts.Length == 3 && float.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float speed)
-					&& float.TryParse(parts[2].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float strength))
+				float Num(int i, float fallback) => parts.Length > i
+					&& float.TryParse(parts[i].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v) ? v : fallback;
+				if (parts.Length >= 3 && parts[0].Trim().Length > 0)
 				{
-					s_species[parts[0].Trim()] = new SledSpecies { Prefab = parts[0].Trim(), Speed = speed, Strength = strength };
+					s_species[parts[0].Trim()] = new SledSpecies
+					{
+						Prefab = parts[0].Trim(), Speed = Num(1, 6f), Strength = Num(2, 50f), Land = Num(3, 1f), Water = Num(4, 1f),
+					};
 				}
 			}
 		}

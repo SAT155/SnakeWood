@@ -94,7 +94,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 	}
 
-	private float TopSpeedSetting => m_sled != null ? m_sled.TopSpeed() : m_v.MaxSpeedCfg.Value;
+	private float TopSpeedAt(bool onWater) => m_sled != null ? m_sled.TopSpeed(onWater) : m_v.MaxSpeedCfg.Value;
 	private HoverLogVariant m_v = null!;
 
 	// Rider input, written by ApplyControlls on the rider's game.
@@ -176,6 +176,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_nview.Register<int>("SnakeWood_AddFuel", RPC_AddFuel);
 		m_nview.Register<float>("SnakeWood_Repair", RPC_Repair);
 		m_nview.Register<Vector3, bool>("SnakeWood_Hit", RPC_Hit);
+		m_nview.Register("SnakeWood_AddCore", RPC_AddCore);
 		m_nview.Register<float, Vector3>("SnakeWood_Damage", RPC_Damage);
 	}
 
@@ -193,6 +194,71 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		ObjectDB.instance?.GetItemPrefab(SnakeWoodPlugin.FuelItem.Value)?.GetComponent<ItemDrop>()?.m_itemData;
 
 	private static string FuelName() => FuelItemData()?.m_shared.m_name ?? SnakeWoodPlugin.FuelItem.Value;
+
+	// A Surtling core (Lifetime Fuel Item) fitted to a log that takes one fuels it for good.
+	private static readonly int s_coreKey = "SnakeWood_core".GetStableHashCode();
+
+	private bool HasCore() => m_nview.IsValid() && m_nview.GetZDO().GetBool(s_coreKey);
+
+	private bool NeedsFuel => FuelEnabled && !HasCore();
+
+	private bool TakesCore => FuelEnabled && m_v.CoreFuelCfg.Value && !HasCore();
+
+	private static ItemDrop.ItemData? CoreItemData() =>
+		ObjectDB.instance?.GetItemPrefab(SnakeWoodPlugin.CoreFuelItem.Value)?.GetComponent<ItemDrop>()?.m_itemData;
+
+	private static string CoreName() => CoreItemData()?.m_shared.m_name ?? SnakeWoodPlugin.CoreFuelItem.Value;
+
+	private bool AddCoreFrom(Player player)
+	{
+		string name = CoreName();
+		if (!TakesCore || player.GetInventory().CountItems(name) <= 0)
+		{
+			return false;
+		}
+		player.GetInventory().RemoveItem(name, 1);
+		m_nview.InvokeRPC("SnakeWood_AddCore");
+		player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"Fitted a {name}: it never needs fuel again"));
+		return true;
+	}
+
+	private void RPC_AddCore(long sender)
+	{
+		if (m_nview.IsOwner())
+		{
+			m_nview.GetZDO().Set(s_coreKey, true);
+		}
+	}
+
+	// What Shift+E does right now. Feeding a hungry team comes first, then repairing (only if you
+	// carry the repair item, so a worn log can still be fuelled), then fitting a core, then fuel.
+	private enum ShiftAction { None, Feed, Repair, Core, Fuel }
+
+	private ShiftAction NextShiftAction(Player? player)
+	{
+		Inventory? inventory = player?.GetInventory();
+		bool Has(string name) => inventory != null && inventory.CountItems(name) > 0;
+		bool worn = WearEnabled && GetWear() > 0f;
+		if (m_sled != null && player != null && m_sled.AnyHungry(player))
+		{
+			return ShiftAction.Feed;
+		}
+		if (worn && Has(RepairName()))
+		{
+			return ShiftAction.Repair;
+		}
+		if (TakesCore && Has(CoreName()))
+		{
+			return ShiftAction.Core;
+		}
+		bool room = GetFuel() < SnakeWoodPlugin.FuelCapacity.Value - 0.5f;
+		if (NeedsFuel && room && Has(FuelName()))
+		{
+			return ShiftAction.Fuel;
+		}
+		// Nothing to hand: say what it would take.
+		return worn ? ShiftAction.Repair : NeedsFuel ? ShiftAction.Fuel : ShiftAction.None;
+	}
 
 	// Moves as much fuel as fits from the player's inventory into the log.
 	private bool AddFuelFrom(Player player, int max)
@@ -257,6 +323,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private void DropFuel()
 	{
+		if (HasCore() && ObjectDB.instance?.GetItemPrefab(SnakeWoodPlugin.CoreFuelItem.Value)?.GetComponent<ItemDrop>() is ItemDrop core)
+		{
+			m_nview.GetZDO().Set(s_coreKey, false);
+			ItemDrop.DropItem(core.m_itemData, 1, transform.position + Vector3.up * 0.5f, Quaternion.identity);
+		}
 		int amount = Mathf.FloorToInt(GetFuel());
 		ItemDrop.ItemData? fuel = FuelItemData();
 		if (amount > 0 && fuel != null)
@@ -511,7 +582,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	// Burns fuel while ridden; false once the tank is dry.
 	private bool BurnFuel(float dt)
 	{
-		if (!FuelEnabled)
+		if (!NeedsFuel)
 		{
 			return true;
 		}
@@ -640,21 +711,29 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 				? $"\n<color=red>Wrecked</color>: needs {RepairsNeeded()} {RepairName()} to fly again"
 				: $"\nCondition: {Condition() * 100f:0}%";
 		}
-		if (FuelEnabled)
+		if (HasCore())
 		{
-			fuel += $"\n{FuelName()}: {Mathf.CeilToInt(GetFuel())}/{SnakeWoodPlugin.FuelCapacity.Value}";
-		}
-		if (m_sled != null && m_sled.AnyHungry(Player.m_localPlayer))
-		{
-			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Feed the team";
-		}
-		else if (WearEnabled && GetWear() > 0f)
-		{
-			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Repair ({RepairName()})";
+			fuel += $"\nFuelled for good ({CoreName()})";
 		}
 		else if (FuelEnabled)
 		{
-			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Add {FuelName()}";
+			fuel += $"\n{FuelName()}: {Mathf.CeilToInt(GetFuel())}/{SnakeWoodPlugin.FuelCapacity.Value}";
+			if (TakesCore)
+			{
+				fuel += $" <color=#aaaaaa>(or a {CoreName()} for good)</color>";
+			}
+		}
+		string shift = NextShiftAction(Player.m_localPlayer) switch
+		{
+			ShiftAction.Feed => "Feed the team",
+			ShiftAction.Repair => $"Repair ({RepairName()})",
+			ShiftAction.Core => $"Fit {CoreName()} (fuel for good)",
+			ShiftAction.Fuel => $"Add {FuelName()}",
+			_ => "",
+		};
+		if (shift.Length > 0)
+		{
+			fuel += $"\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] {shift}";
 		}
 		if (FuelEnabled && GetFuel() >= 1f)
 		{
@@ -678,20 +757,15 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return false;
 		}
-		if (alt && m_sled != null && m_sled.AnyHungry(player))
+		if (alt)
 		{
-			m_sled.TryFeed(player);
-			return false;
-		}
-		if (alt && WearEnabled && GetWear() > 0f)
-		{
-			RepairFrom(player);
-			return false;
-		}
-		if (alt && FuelEnabled)
-		{
-			AddFuelFrom(player, int.MaxValue);
-			return false;
+			switch (NextShiftAction(player))
+			{
+				case ShiftAction.Feed: m_sled!.TryFeed(player); return false;
+				case ShiftAction.Repair: RepairFrom(player); return false;
+				case ShiftAction.Core: AddCoreFrom(player); return false;
+				case ShiftAction.Fuel: AddFuelFrom(player, int.MaxValue); return false;
+			}
 		}
 		// Looking at your own log while riding it and pressing Use gets you off, like looking away does.
 		if (ReferenceEquals(player.GetDoodadController(), this))
@@ -716,7 +790,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 				return false;
 			}
 		}
-		if (FuelEnabled && GetFuel() <= 0f)
+		if (NeedsFuel && GetFuel() <= 0f)
 		{
 			player.Message(MessageHud.MessageType.Center, Localization.instance.Localize($"It needs {FuelName()} to fly (Shift+E to add)"));
 			return false;
@@ -762,7 +836,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	// Using the fuel item on the log from the hotbar adds one.
 	public bool UseItem(Humanoid user, ItemDrop.ItemData item) =>
-		FuelEnabled && user is Player player && item.m_shared.m_name == FuelName() && AddFuelFrom(player, 1);
+		user is Player player && (item.m_shared.m_name == CoreName() ? AddCoreFrom(player)
+			: NeedsFuel && item.m_shared.m_name == FuelName() && AddFuelFrom(player, 1));
 
 	public float GetHoverOffset() => 0f;
 
@@ -1425,7 +1500,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
 		bool spent = driving && m_exhausted;
-		float baseSpeed = TopSpeedSetting * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering || spent ? 0.3f : 1f)
+		float baseSpeed = TopSpeedAt(overWater) * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering || spent ? 0.3f : 1f)
 			* performance * (lowering ? 0.35f : 1f);
 		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
 		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
@@ -1576,9 +1651,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			}
 			m_exhausted = false;
 		}
-		if (m_sled != null && Speed < 0.5f)
+		if ((m_sled != null || !SnakeWoodPlugin.DrainWhenStill.Value) && Speed < 0.5f)
 		{
-			// Sitting still on a sled is restful: no drain, so stamina recovers.
+			// Sitting still is restful: no drain, so stamina recovers (always on a sled; on logs unless
+			// Stamina Drain When Still is on).
 			return true;
 		}
 		if (player.GetStamina() <= 0f)
