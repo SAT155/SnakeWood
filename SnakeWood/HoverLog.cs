@@ -1296,7 +1296,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 
 		// Going under the water's surface knocks you off; the log bobs back up on its own.
-		if (driving && overWater && m_attachPoint.position.y < surfaceY - 0.3f)
+		if (driving && overWater && m_v.IsFish && m_attachPoint.position.y < surfaceY + 0.05f)
+		{
+			Player.m_localPlayer?.GetSEMan().AddStatusEffect(SEMan.s_statusEffectWet, true, 0, 0f, -1);
+		}
+		if (driving && overWater && m_attachPoint.position.y < surfaceY - (m_v.IsFish ? 0.9f : 0.3f))
 		{
 			ThrowRider("You went under and lost your grip");
 			driving = false;
@@ -1313,11 +1317,15 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f
 			: sputtering || lowering ? 0.25f
 			: Mathf.Max(0.25f, m_v.HoverHeightCfg.Value * heightFactor);
-		if (m_v.IsFish && overWater)
+		bool fishSwimming = m_v.IsFish && overWater;
+		if (fishSwimming)
 		{
-			// A fish swims in the water, not over it: it rides half under, its back (and the
-			// rider) above the surface.
-			hoverHeight = -0.2f;
+			// A fish swims in the water, not over it. Sitting still it settles low and you sit in
+			// the water (and get wet); at speed it rises until you skim just over the surface with
+			// the fish swimming underneath, like riding a shark along the top.
+			float seat = SnakeWoodPlugin.SeatHeight.Value + m_seatLift;
+			float swim = Mathf.Clamp01(new Vector3(vel.x, 0f, vel.z).magnitude / Mathf.Max(1f, 0.6f * m_v.MaxSpeedCfg.Value));
+			hoverHeight = Mathf.Lerp(-0.3f, 0.05f, swim) - seat;
 		}
 
 		// Nose pitch follows where the rider looks (up or down). Nose up rides higher the faster you
@@ -1336,6 +1344,11 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		if (pitchInput > 0f)
 		{
 			hoverHeight += Mathf.Min(3f, pitchInput * speedAhead * 0.25f);
+		}
+		else if (pitchInput < 0f && fishSwimming)
+		{
+			// Nose down, a fish dives a little deeper.
+			hoverHeight += pitchInput * 0.3f;
 		}
 		else if (pitchInput < 0f)
 		{

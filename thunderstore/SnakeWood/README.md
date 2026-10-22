@@ -238,7 +238,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Combat Stance**: `Stand` (default) or `Seated` (experimental).
 - **Vanilla Disguise**: on by default (see the top of this page).
 - **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down (fish logs tilt half as far again; sleds not at all).
-- **Fish Swim Wiggle**: how far a fish log's model sways its tail and bobs (the rider and camera stay steady; 0 = off). Fish keep their own proportions and ride half under the water.
+- **Fish Swim Wiggle**: how far a fish log's model sways its tail and bobs (the rider and camera stay steady; 0 = off). Fish keep their own proportions and swim in the water: sitting still you sit in it (and get wet); at speed you skim just over the surface with the fish underneath.
 - **Free Look Key** (Left Alt): with camera steering, hold to look around without turning. Standing still you can always look around freely.
 - **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
   (the build piece laid flat, as in 1.0). Needs a restart.
