@@ -108,7 +108,14 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private float m_yaw;
 	private float m_roll;
 	private float m_swimPhase;
+	public float m_seatLift;
+	private Transform? m_fishModel;
+	private Transform? m_fishSaddle;
+	private Vector3 m_fishModelPos, m_fishSaddlePos;
+	private Quaternion m_fishModelRot;
+	private Vector3 m_lastSwimPos;
 	private bool m_exhausted;
+	private bool m_freeLook;
 	private Vector3 m_smoothUp = Vector3.up;
 	private float m_pitch;
 	private bool m_airborne;
@@ -145,7 +152,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		m_v = variant;
 		m_attachPoint.localPosition = m_v.Sled
 			? new Vector3(0f, 0.25f, 0.55f)
-			: new Vector3(0f, SnakeWoodPlugin.SeatHeight.Value, -0.2f * m_v.Length);
+			: new Vector3(0f, SnakeWoodPlugin.SeatHeight.Value + m_seatLift, -0.2f * m_v.Length);
 		if (m_nview.IsOwner())
 		{
 			HoverLogDisguise.Apply(this, m_nview.GetZDO());
@@ -566,7 +573,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Quaternion heading = Quaternion.Euler(0f, yaw, 0f);
 		// The seat sits behind the middle, so the middle goes a little ahead of the rider.
 		Vector3 pos = rider.transform.position + heading * new Vector3(0f, 0f, 0.2f * m_v.Length * m_frame.localScale.z)
-			- Vector3.up * SnakeWoodPlugin.SeatHeight.Value;
+			- Vector3.up * (SnakeWoodPlugin.SeatHeight.Value + m_seatLift);
 		Quaternion rotation = heading * m_disguiseOffset;
 		m_body.linearVelocity = Vector3.zero;
 		m_body.angularVelocity = Vector3.zero;
@@ -833,12 +840,51 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			SetDisguiseOffset(HoverLogDisguise.StoredOffset(m_nview.GetZDO()));
 		}
 		m_crouchHeld = IsLocallyDriven() && (ZInput.GetButton("Crouch") || ZInput.GetButton("JoyCrouch"));
+		m_freeLook = IsLocallyDriven() && SnakeWoodPlugin.FreeLookKey.Value.IsPressed();
 		CheckTakeFuelKey();
 		CheckHitchKey();
 		UpdateWreckLook();
 		UpdateShake();
 		UpdateCombatFacing();
+		UpdateFishSwim();
 		LogSync();
+	}
+
+	// A fish log's model (and its saddle) bobs gently up and down and its tail sways, faster the
+	// faster it swims. Only the model moves: the rider and camera stay steady.
+	private void UpdateFishSwim()
+	{
+		if (m_v == null || !m_v.IsFish)
+		{
+			return;
+		}
+		if (m_fishModel == null)
+		{
+			m_fishModel = m_frame.Find("visual");
+			m_fishSaddle = m_frame.Find("saddle");
+			if (m_fishModel == null)
+			{
+				return;
+			}
+			m_fishModelPos = m_fishModel.localPosition;
+			m_fishModelRot = m_fishModel.localRotation;
+			m_fishSaddlePos = m_fishSaddle != null ? m_fishSaddle.localPosition : Vector3.zero;
+			m_lastSwimPos = transform.position;
+		}
+		float dt = Time.deltaTime;
+		float speed = dt > 0f ? Vector3.Distance(transform.position, m_lastSwimPos) / dt : 0f;
+		m_lastSwimPos = transform.position;
+		float swim = Mathf.Clamp01(speed / Mathf.Max(1f, m_v.MaxSpeedCfg.Value));
+		m_swimPhase += dt * (1.2f + 5f * swim);
+		float amount = SnakeWoodPlugin.FishWiggle.Value / 7f;
+		float bob = Mathf.Sin(m_swimPhase) * 0.05f * amount;
+		float sway = Mathf.Sin(m_swimPhase * 0.5f) * SnakeWoodPlugin.FishWiggle.Value * (0.3f + 0.7f * swim);
+		m_fishModel.localPosition = m_fishModelPos + Vector3.up * bob;
+		m_fishModel.localRotation = Quaternion.Euler(Mathf.Cos(m_swimPhase) * 1.5f * amount, sway, 0f) * m_fishModelRot;
+		if (m_fishSaddle != null)
+		{
+			m_fishSaddle.localPosition = m_fishSaddlePos + Vector3.up * bob;
+		}
 	}
 
 	// Melee swings go where the rider's body faces, and on a log that's the log's heading. While
@@ -1267,6 +1313,12 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		float hoverHeight = overWater && (!driving || deepWater) ? 0.15f
 			: sputtering || lowering ? 0.25f
 			: Mathf.Max(0.25f, m_v.HoverHeightCfg.Value * heightFactor);
+		if (m_v.IsFish && overWater)
+		{
+			// A fish swims in the water, not over it: it rides half under, its back (and the
+			// rider) above the surface.
+			hoverHeight = -0.2f;
+		}
 
 		// Nose pitch follows where the rider looks (up or down). Nose up rides higher the faster you
 		// go, to clear rising ground and bumps; nose down sits lower and dives faster off ledges.
@@ -1287,7 +1339,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		else if (pitchInput < 0f)
 		{
-			hoverHeight = Mathf.Max(0.3f, hoverHeight * (1f + pitchInput * 0.4f));
+			hoverHeight = Mathf.Max(Mathf.Min(0.3f, hoverHeight), hoverHeight * (1f + pitchInput * 0.4f));
 		}
 		float speedNow = new Vector3(vel.x, 0f, vel.z).magnitude;
 		FitToGround(pos, surfaceY, Quaternion.Euler(0f, m_yaw, 0f), speedNow, climb, out float groundY, out Vector3 groundUp);
@@ -1343,7 +1395,10 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			Vector3 look = m_lookDir;
 			look.y = 0f;
-			float delta = look.sqrMagnitude > 0.001f
+			// Free look, as when sitting in vanilla: standing still, or holding the Free Look key,
+			// you can look around without turning the log.
+			bool freeLook = (throttle == 0f && Speed < 1f) || m_freeLook;
+			float delta = !freeLook && look.sqrMagnitude > 0.001f
 				? Mathf.DeltaAngle(m_yaw, Quaternion.LookRotation(look).eulerAngles.y)
 				: 0f;
 			// A fish swings round toward your look lazily, in a wide arc, where wood snaps to it.
@@ -1408,15 +1463,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			m_smoothUp = Vector3.Slerp(m_smoothUp, up, 2.5f * dt);
 			up = m_smoothUp;
 		}
-		// A fish's body sways like a tail beat, faster and wider the faster it swims.
-		float sway = 0f;
-		if (m_v.IsFish && SnakeWoodPlugin.FishWiggle.Value > 0f)
-		{
-			float swim = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / Mathf.Max(1f, m_v.MaxSpeedCfg.Value));
-			m_swimPhase += dt * (2f + 6f * swim);
-			sway = Mathf.Sin(m_swimPhase) * SnakeWoodPlugin.FishWiggle.Value * swim;
-		}
-		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, sway, m_roll + sway * 0.4f);
+		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, 0f, m_roll);
 		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
 

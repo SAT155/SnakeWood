@@ -70,7 +70,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.20.0";
+	internal const string PluginVersion = "1.21.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -116,6 +116,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<CombatStance> Stance = null!;
 	internal static ConfigEntry<bool> PitchControl = null!;
 	internal static ConfigEntry<float> FishWiggle = null!;
+	internal static ConfigEntry<KeyboardShortcut> FreeLookKey = null!;
 	internal static ConfigEntry<float> MaxPitch = null!;
 	internal static ConfigEntry<ModelStyle> Model = null!;
 	internal static ConfigEntry<bool> Glow = null!;
@@ -189,7 +190,9 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		PitchControl = Config.Bind("1 - Riding", "Pitch With Look", true,
 			"Looking up tips the log's nose up so it rides higher at speed and clears rising ground; looking down dips it to ride lower and dive faster.");
 		FishWiggle = Config.Bind("1 - Riding", "Fish Swim Wiggle", 7f,
-			new ConfigDescription("Fish logs swim rather than steer: they turn toward where you look lazily, dive and climb with your look more than wood does, and their tail sways side to side by up to this many degrees at speed. 0 turns the sway off.", new AcceptableValueRange<float>(0f, 20f)));
+			new ConfigDescription("Fish logs swim rather than steer: they turn toward where you look lazily and dive and climb with your look more than wood does. Their model bobs gently and its tail sways by up to this many degrees (the rider and camera stay steady). 0 turns the sway and bob off.", new AcceptableValueRange<float>(0f, 20f)));
+		FreeLookKey = Config.Bind("1 - Riding", "Free Look Key", new KeyboardShortcut(KeyCode.LeftAlt),
+			"With camera steering, hold this to look around without turning the log. Standing still, you can always look around freely.");
 		MaxPitch = Config.Bind("1 - Riding", "Max Pitch", 20f,
 			new ConfigDescription("How far the nose tips up or down, in degrees.", new AcceptableValueRange<float>(0f, 45f)));
 		Model = Config.Bind("1 - Riding", "Model", ModelStyle.Mixed,

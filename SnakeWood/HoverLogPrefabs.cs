@@ -144,6 +144,7 @@ public static class HoverLogPrefabs
 		// Set per log at runtime (HoverLog.SetDisguiseOffset); the ghost and plain logs use none.
 		frame.localRotation = Quaternion.identity;
 
+		float fishLift = 0f;
 		if (variant.Sled)
 		{
 			BuildSledBody(variant, frame, hammer);
@@ -154,6 +155,10 @@ public static class HoverLogPrefabs
 			model.name = "visual";
 			StripToVisual(model);
 			LayFlat(model, frame, variant);
+			if (variant.IsFish && style != ModelStyle.BuildPiece)
+			{
+				fishLift = KeepFishShape(model, frame, variant);
+			}
 			if (variant.Tint != Color.white && style == ModelStyle.BuildPiece)
 			{
 				Tint(model, variant.Tint);
@@ -168,7 +173,7 @@ public static class HoverLogPrefabs
 			float radius = 0.225f * variant.Thickness;
 			FitToBox(saddle, frame,
 				new Vector3(2.4f * radius, 0.12f, 0.35f * variant.Length),
-				new Vector3(0f, radius + 0.04f, -0.12f * variant.Length));
+				new Vector3(0f, radius + 0.04f + fishLift, -0.12f * variant.Length));
 		}
 		foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
 		{
@@ -197,7 +202,7 @@ public static class HoverLogPrefabs
 		else
 		{
 			deck.size = new Vector3(Mathf.Max(2.6f * deckRadius, 1.2f), 0.06f, 0.85f * variant.Length);
-			deck.center = new Vector3(0f, deckRadius + 0.12f, 0f);
+			deck.center = new Vector3(0f, deckRadius + 0.12f + fishLift, 0f);
 		}
 		deckObject.layer = vehicleLayer;
 
@@ -236,6 +241,7 @@ public static class HoverLogPrefabs
 		log.m_variant = variant.Key;
 		log.m_attachPoint = seat.transform;
 		log.m_frame = frame;
+		log.m_seatLift = fishLift;
 		if (variant.Sled)
 		{
 			AddSledParts(prefab, frame, variant, hammer, nview);
@@ -411,6 +417,33 @@ public static class HoverLogPrefabs
 		{
 			Object.DestroyImmediate(collider);
 		}
+	}
+
+	// A fish keeps its own proportions instead of being stretched into a log: LayFlat's length is
+	// kept and the fish's height and width are scaled by the same amount (height capped so a tall
+	// fish stays rideable). Its belly rests where the log's would, so it rises above the hover
+	// capsule; returns how far its back sits above a log's, for the saddle, deck and seat.
+	private static float KeepFishShape(GameObject visual, Transform root, HoverLogVariant variant)
+	{
+		Bounds bounds = Bounds(visual.transform, root);
+		Quaternion rotation = visual.transform.localRotation;
+		// Undo LayFlat's girth squeeze: the same scale on every axis as along its length.
+		Vector3 local = visual.transform.localScale;
+		Vector3 alongZ = Quaternion.Inverse(rotation) * Vector3.forward;
+		float lengthScale = Mathf.Abs(Vector3.Dot(local, new Vector3(Mathf.Abs(alongZ.x), Mathf.Abs(alongZ.y), Mathf.Abs(alongZ.z))));
+		visual.transform.localScale = Vector3.one * lengthScale;
+		bounds = Bounds(visual.transform, root);
+		const float maxHeight = 1.1f;
+		if (bounds.size.y > maxHeight)
+		{
+			Vector3 up = Quaternion.Inverse(rotation) * Vector3.up;
+			Vector3 squash = Vector3.one - new Vector3(Mathf.Abs(up.x), Mathf.Abs(up.y), Mathf.Abs(up.z)) * (1f - maxHeight / bounds.size.y);
+			visual.transform.localScale = Vector3.Scale(visual.transform.localScale, squash);
+			bounds = Bounds(visual.transform, root);
+		}
+		float radius = 0.225f * variant.Thickness;
+		visual.transform.localPosition += new Vector3(-bounds.center.x, -radius - bounds.min.y, -bounds.center.z);
+		return Mathf.Max(0f, bounds.size.y - 2f * radius);
 	}
 
 	// Turns the template so its longest side runs along the log's forward axis, then scales it to
