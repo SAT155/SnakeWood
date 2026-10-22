@@ -226,7 +226,7 @@ public class HoverSled : MonoBehaviour
 			player.Message(MessageHud.MessageType.Center, "Get everyone off the sled first");
 			return;
 		}
-		int free = Enumerable.Range(0, Slots).FirstOrDefault(i => Get(i) == null, -1);
+		int free = Enumerable.Range(0, Slots).Where(i => Get(i) == null).DefaultIfEmpty(-1).First();
 		if (free < 0)
 		{
 			player.Message(MessageHud.MessageType.Center, $"The team is full ([{SnakeWoodPlugin.UnhitchKey.Value}] to unhitch one)");
@@ -250,7 +250,7 @@ public class HoverSled : MonoBehaviour
 			player.Message(MessageHud.MessageType.Center, "Get everyone off the sled first");
 			return;
 		}
-		int last = Enumerable.Range(0, Slots).LastOrDefault(i => Get(i) != null, -1);
+		int last = Enumerable.Range(0, Slots).Where(i => Get(i) != null).DefaultIfEmpty(-1).Last();
 		if (last < 0)
 		{
 			player.Message(MessageHud.MessageType.Center, "Nothing is hitched");

@@ -8,10 +8,12 @@ namespace SnakeWood;
 
 // Picked up by name by BepInEx's Configuration Manager (F1), which reads these fields from any
 // tag of this type name. Only the ones we use are declared.
+#pragma warning disable CS0649
 internal sealed class ConfigurationManagerAttributes
 {
 	public Action<ConfigEntryBase>? CustomDrawer;
 }
+#pragma warning restore CS0649
 
 // The Team Animals box in the Configuration Manager: a text field that suggests creature prefab
 // names as you type the name part of the entry you're on, flags names the game doesn't know, and
