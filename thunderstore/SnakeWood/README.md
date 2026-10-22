@@ -168,7 +168,8 @@ crash limit, aim, deep-water speed, climb angle, load capacity, noise, durabilit
 
 - **Balance takes stamina.** Riding drains a little stamina the whole time, and stamina doesn't
   regenerate meanwhile. Fine Wood and Ashwood are hardest to hold on to and Core Wood easiest.
-  Run out and you fall off.
+  Run out and you fall off, except from a hover sled or a fish log: those crawl along until a
+  quarter of your stamina is back.
 - **Eitr helps.** If you have eitr (Mistlands food), riding draws a slow trickle of it
   (0.5/s) and your balance stamina drain drops to a quarter.
 - **Crashes throw you.** Slam into a tree, rock or wall hard enough and you're thrown off, carrying

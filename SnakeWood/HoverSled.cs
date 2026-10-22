@@ -351,6 +351,9 @@ public class HoverSled : MonoBehaviour
 	private readonly Animator?[] m_animators = new Animator?[Slots];
 	private readonly Transform?[] m_visuals = new Transform?[Slots];
 	private readonly float[] m_staggerTimer = new float[Slots];
+	// Each creature's own swimming wake, from its Character, and the live copies of it.
+	private readonly EffectList?[] m_wake = new EffectList?[Slots];
+	private readonly GameObject[]?[] m_wakeInstances = new GameObject[]?[Slots];
 	private Vector3 m_lastPos;
 	private static GameObject? s_scratch;
 	private static int s_footMask;
@@ -401,7 +404,7 @@ public class HoverSled : MonoBehaviour
 			{
 				continue;
 			}
-			Vector3 slot = m_slots[i].position;
+			Vector3 slot = SlotPosition(i);
 			float y = Physics.Raycast(slot + Vector3.up * 2.5f, Vector3.down, out RaycastHit hit, 6f, s_footMask, QueryTriggerInteraction.Ignore)
 				? hit.point.y : slot.y;
 			float water = Floating.GetLiquidLevel(slot);
@@ -414,7 +417,20 @@ public class HoverSled : MonoBehaviour
 			pos.z = slot.z;
 			pos.y = Mathf.Abs(pos.y - y) > 2f ? y : Mathf.Lerp(pos.y, y, Mathf.Min(1f, 12f * Time.deltaTime));
 			visual.SetPositionAndRotation(pos, level);
+			if (m_wake[i] is EffectList wake)
+			{
+				Character.SetupContinuousEffect(visual, new Vector3(pos.x, water, pos.z), water > y, wake, ref m_wakeInstances[i]);
+			}
 		}
+	}
+
+	// Where a harness slot is with the sled's lean taken out: the team stays square to the heading
+	// instead of swinging sideways as the sled tilts over the ground.
+	private Vector3 SlotPosition(int slot)
+	{
+		Vector3 local = transform.InverseTransformPoint(m_slots[slot].position);
+		Vector3 scale = transform.lossyScale;
+		return transform.position + Quaternion.Euler(0f, transform.eulerAngles.y, 0f) * Vector3.Scale(local, scale);
 	}
 
 	private static bool InWater(Vector3 point) => Floating.GetLiquidLevel(point) > point.y;
@@ -478,7 +494,7 @@ public class HoverSled : MonoBehaviour
 		Vector3 sum = Vector3.zero;
 		for (int i = 0; i < Slots; i++)
 		{
-			Vector3 slot = m_slots[i].position;
+			Vector3 slot = SlotPosition(i);
 			if (m_visuals[i] is Transform visual && visual)
 			{
 				slot.y = visual.position.y;
@@ -491,6 +507,16 @@ public class HoverSled : MonoBehaviour
 
 	private void OnDestroy()
 	{
+		foreach (GameObject[]? instances in m_wakeInstances)
+		{
+			foreach (GameObject wake in instances ?? System.Array.Empty<GameObject>())
+			{
+				if (wake != null)
+				{
+					Destroy(wake);
+				}
+			}
+		}
 		if (m_teamBody != null)
 		{
 			Destroy(m_teamBody);
@@ -506,6 +532,12 @@ public class HoverSled : MonoBehaviour
 				Destroy(child.gameObject);
 			}
 			m_animators[i] = null;
+			if (m_wake[i] is EffectList oldWake && m_visuals[i] is Transform oldVisual && oldVisual)
+			{
+				Character.SetupContinuousEffect(oldVisual, oldVisual.position, false, oldWake, ref m_wakeInstances[i]);
+			}
+			m_wake[i] = null;
+			m_wakeInstances[i] = null;
 			m_visuals[i] = null;
 			m_params[i] = null;
 			if (Get(i) is not Animal animal || ZNetScene.instance.GetPrefab(animal.Prefab) is not GameObject prefab)
@@ -519,6 +551,7 @@ public class HoverSled : MonoBehaviour
 				s_scratch.SetActive(false);
 				DontDestroyOnLoad(s_scratch);
 			}
+			m_wake[i] = prefab.GetComponent<Character>()?.m_waterEffects is EffectList wake && wake.HasEffects() ? wake : null;
 			GameObject visual = Instantiate(prefab, s_scratch.transform, false);
 			HoverLogPrefabs.StripToVisual(visual);
 			visual.transform.SetParent(m_slots[i], false);

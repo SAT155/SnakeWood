@@ -266,7 +266,13 @@ public static class HoverLogPrefabs
 	private static void BuildSledBody(HoverLogVariant variant, Transform frame, PieceTable hammer)
 	{
 		float half = variant.Length / 2f;
-		AddVisual(hammer, "wood_floor", frame, new Vector3(1.5f, 0.1f, variant.Length * 0.92f), new Vector3(0f, 0.12f, 0f), "deck_planks");
+		// Five planks cut from the same pole as the runners. (The floor tile used before flickered
+		// on a moving sled.)
+		for (int i = 0; i < 5; i++)
+		{
+			AddVisual(hammer, "wood_pole2", frame, new Vector3(0.28f, 0.08f, variant.Length * 0.92f),
+				new Vector3((i - 2) * 0.3f, 0.12f, 0f), "deck_plank" + i);
+		}
 		AddVisual(hammer, "wood_pole2", frame, new Vector3(0.12f, 0.12f, variant.Length * 1.08f), new Vector3(-0.68f, -0.02f, 0.05f), "runner_left");
 		AddVisual(hammer, "wood_pole2", frame, new Vector3(0.12f, 0.12f, variant.Length * 1.08f), new Vector3(0.68f, -0.02f, 0.05f), "runner_right");
 		AddVisual(hammer, "wood_pole2", frame, new Vector3(1.8f, 0.09f, 0.09f), new Vector3(0f, 0.22f, half + 0.25f), "harness_bar");
@@ -301,6 +307,11 @@ public static class HoverLogPrefabs
 			container.m_width = 6;
 			container.m_height = 3;
 		}
+		// The cart's chest also points at the cart itself and its lid objects; on the sled those
+		// would be the cart prefab's (opening checks whether that "cart" is in use, and throws).
+		container.m_wagon = null;
+		container.m_open = null;
+		container.m_closed = null;
 		container.m_name = "Hover Sled";
 		container.m_rootObjectOverride = nview;
 		container.m_privacy = Container.PrivacySetting.Public;
@@ -627,6 +638,8 @@ internal static class RidingControlsPatch
 	// fighting (attacking, drawing a bow, blocking) and sits back down a moment after.
 	private const float CombatStanceLinger = 1f;
 	private static float s_combatUntil;
+
+	internal static bool InCombat => Time.time < s_combatUntil;
 	private static bool s_standing;
 
 	private static void Prefix(Player __instance, ref bool jump, ref bool crouch, ref bool attack, ref bool attackHold,

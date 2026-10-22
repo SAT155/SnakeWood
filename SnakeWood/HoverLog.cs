@@ -108,6 +108,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	private float m_yaw;
 	private float m_roll;
 	private float m_swimPhase;
+	private bool m_exhausted;
+	private Vector3 m_smoothUp = Vector3.up;
 	private float m_pitch;
 	private bool m_airborne;
 	private bool m_wasInAir;
@@ -835,7 +837,27 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		CheckHitchKey();
 		UpdateWreckLook();
 		UpdateShake();
+		UpdateCombatFacing();
 		LogSync();
+	}
+
+	// Melee swings go where the rider's body faces, and on a log that's the log's heading. While
+	// fighting, the rider turns on the seat to face where they look (a sled, steered with the keys,
+	// would otherwise only ever hit straight ahead), then turns back to the front.
+	private void UpdateCombatFacing()
+	{
+		Player player = Player.m_localPlayer;
+		bool fighting = IsLocallyDriven() && RidingControlsPatch.InCombat;
+		Quaternion target = Quaternion.identity;
+		if (fighting)
+		{
+			Vector3 look = Vector3.ProjectOnPlane(player.GetLookDir(), m_frame.up);
+			if (look.sqrMagnitude > 0.001f)
+			{
+				target = Quaternion.Inverse(m_frame.rotation) * Quaternion.LookRotation(look, m_frame.up);
+			}
+		}
+		m_attachPoint.localRotation = Quaternion.Slerp(m_attachPoint.localRotation, target, (fighting ? 18f : 5f) * Time.deltaTime);
 	}
 
 	// ---- Getting unstuck --------------------------------------------------------------------------
@@ -1057,6 +1079,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 
 	private void ResetControls()
 	{
+		m_exhausted = false;
 		m_moveInput = Vector3.zero;
 		m_lookDir = m_frame.forward;
 		m_boost = false;
@@ -1333,7 +1356,8 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Quaternion yawRot = Quaternion.Euler(0f, m_yaw, 0f);
 		Vector3 forward = yawRot * Vector3.forward;
 		Vector3 right = yawRot * Vector3.right;
-		float baseSpeed = TopSpeedSetting * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering ? 0.3f : 1f)
+		bool spent = driving && m_exhausted;
+		float baseSpeed = TopSpeedSetting * (deepWater ? m_v.DeepWaterSpeedCfg.Value : 1f) * (sputtering || spent ? 0.3f : 1f)
 			* performance * (lowering ? 0.35f : 1f);
 		bool boosting = m_boost && throttle > 0f && driving && UseBoostStamina(dt);
 		float topSpeed = baseSpeed * (boosting ? m_v.BoostCfg.Value : 1f);
@@ -1377,6 +1401,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			tilt = climb / groundAngle;
 		}
 		Vector3 up = Vector3.Slerp(Vector3.up, groundUp, tilt);
+		if (m_sled != null)
+		{
+			// A sled's tilt eases in slowly (it glides), but it turns as fast as any log, so its
+			// team never runs sideways while it slews round.
+			m_smoothUp = Vector3.Slerp(m_smoothUp, up, 2.5f * dt);
+			up = m_smoothUp;
+		}
 		// A fish's body sways like a tail beat, faster and wider the faster it swims.
 		float sway = 0f;
 		if (m_v.IsFish && SnakeWoodPlugin.FishWiggle.Value > 0f)
@@ -1386,7 +1417,7 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 			sway = Mathf.Sin(m_swimPhase) * SnakeWoodPlugin.FishWiggle.Value * swim;
 		}
 		Quaternion target = Quaternion.FromToRotation(Vector3.up, up) * yawRot * Quaternion.Euler(-m_pitch, sway, m_roll + sway * 0.4f);
-		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, (m_sled != null ? 3f : 8f) * dt));
+		m_body.MoveRotation(Quaternion.Slerp(m_body.rotation, target * m_disguiseOffset, 8f * dt));
 		m_body.angularVelocity = Vector3.zero;
 
 		if (driving)
@@ -1476,6 +1507,15 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		{
 			return true;
 		}
+		if (m_exhausted)
+		{
+			// Spent: no more drain until a quarter of your stamina is back.
+			if (player.GetStamina() < 0.25f * player.GetMaxStamina())
+			{
+				return true;
+			}
+			m_exhausted = false;
+		}
 		if (m_sled != null && Speed < 0.5f)
 		{
 			// Sitting still on a sled is restful: no drain, so stamina recovers.
@@ -1483,6 +1523,14 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		if (player.GetStamina() <= 0f)
 		{
+			if (m_sled != null || m_v.IsFish)
+			{
+				// You can sit in a sled or cling to a fish when spent: it just crawls along until
+				// you've got your breath back.
+				m_exhausted = true;
+				player.Message(MessageHud.MessageType.Center, "Too tired: crawling along until you catch your breath");
+				return true;
+			}
 			ThrowRider("You're too tired to hold on");
 			return false;
 		}
