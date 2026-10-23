@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.0 |
-| **Last updated** | 2026-10-20 13:26 UTC |
+| **Version** | 1.1 |
+| **Last updated** | 2026-10-23 04:18 UTC |
 | **Updated by** | Claude Code, SnakeWood session (`claude/exciting-mendel-fudt8s`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -46,7 +46,7 @@ server** with a handful of friends; some players run mods, some don't.
 
 | Repo | What it is | Notes |
 | --- | --- | --- |
-| **SnakeWood** | Original mod: ride logs (and fish) like hover bikes. ~2.5k lines. | Client+server mod, vanilla disguise for unmodded players. This doc lives here. |
+| **SnakeWood** | Original mod: ride logs (and fish) like hover bikes, plus animal-pulled hover sleds. ~4k lines. | Client+server mod, vanilla disguise for unmodded players. This doc lives here. |
 | **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only. Fixes terrain-edit multiplayer sync (claims `TerrainComp` ZDO ownership before editing), long-ramp zone gaps, ±8 m limit warnings, blueprints. Fork changes marked `// Fork` or in `TerrainSync.cs`. Has ServerSync folder, icon tool. |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix. Origin of the "Reload Config From Disk" button. |
 | **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
@@ -212,6 +212,26 @@ cost a CI round-trip).
   Particle materials: search prefabs' `ParticleSystemRenderer.sharedMaterial` by name ("smoke",
   "spark"), copy `textureSheetAnimation` tiles if it's a sprite sheet.
 - Icons: draw/recolour a PNG with a small Python tool (`tools/make_icon.py`), embed, `Sprite.Create`.
+- **Custom config editors**: the same `ConfigurationManagerAttributes { CustomDrawer = ... }` trick
+  gives any entry its own IMGUI editor (pass it as the tag in
+  `new ConfigDescription(text, null, attrs)`). SnakeWood's `SledAnimalsEditor` draws a
+  `GUILayout.TextField` plus `GUILayout.Button` name suggestions (creature prefabs from
+  `ZNetScene.instance.m_prefabs` with a `Character`, or a fallback list before a world loads),
+  and writes back through `entry.BoxedValue`. Wrap the attributes class in
+  `#pragma warning disable CS0649` (CM assigns its fields by reflection).
+- **Separate keys for opposite actions** (hitch vs unhitch): one toggle key that does
+  different things by context confused the user. `KeyboardShortcut` config entries, checked with
+  `.IsDown()` in `Update` while the player hovers the object and `player.TakeInput()`.
+- **One hotkey, several actions** (Shift+E = feed / repair / fit core / add fuel): pick the action
+  in one function from what the player actually *carries*, and use the same function for the
+  hover text, so the prompt always matches what the press does. Falling through only on
+  "applicable" (e.g. worn) rather than "possible" left players unable to refuel.
+- **C# target is netstandard2.1**: no `FirstOrDefault(predicate, default)` /
+  `LastOrDefault(predicate, default)` overloads (CS1501). Use `.Where(..).DefaultIfEmpty(x).First()`.
+- **Compatibility with other mods' assumptions**: AzuCraftyBoxes assumes any `Container` with
+  `m_rootObjectOverride` belongs to a cart and calls `Vagon.InUse()`. A finalizer on
+  `Vagon.InUse` that swallows the NRE for a null instance, plus not giving your container a
+  Vagon reference, keeps it quiet.
 
 ---
 
@@ -285,10 +305,61 @@ cost a CI round-trip).
 - Moving the player (or something that moves the player) into an **unloaded** area makes
   `ZNetScene` unload the local player ("Local player destroyed" in the log → black screen).
 
+**Containers** *(verified)*
+
+- `Container` fields: `m_width/m_height`, `m_bkg`, `m_open`/`m_closed` (lid GameObjects toggled by
+  `SetInUse`), `m_openEffects/m_closeEffects`, `m_rootObjectOverride` (the ZNetView whose ZDO
+  stores the inventory, e.g. the cart's), `m_wagon` (Vagon), `m_privacy`, `m_checkGuardStone`,
+  `m_autoDestroyEmpty`, `m_defaultItems`.
+- `RPC_RequestOpen/Stack/TakeAll` refuse if `IsInUse() || (m_wagon && m_wagon.InUse())`.
+- **Don't copy a vanilla Container's fields wholesale** (e.g. the Cart's, to get its size and
+  sounds): `m_wagon`, `m_open`, `m_closed` then point at the *prefab's* objects. The prefab
+  Vagon's `InUse()` throws → chest won't open; `SetInUse` would toggle the prefab's lid. Copy
+  size/background/effects only, or null those three after copying.
+
+**Combat facing** *(verified)*
+
+- `Attack.GetMeleeAttackDir`: horizontal direction = `m_character.transform.forward`, vertical
+  from `GetAimDir`. So melee goes where the **body** faces, not the camera. An attached rider faces
+  the attach point (`UpdateAttach` copies its rotation): to swing where you look while mounted,
+  rotate the attach point toward the flattened look direction while in combat. Bows already aim
+  with the look direction.
+
+**Creatures as pictures** (SnakeWood's sled team)
+
+- To show a creature without a live creature: `Instantiate(prefab)` under an **inactive** holder
+  (so Awake never runs), strip every MonoBehaviour (ZNetView last), Rigidbodies and Colliders,
+  then reparent. Set `animator.fireEvents = false` (animation events have no receiver left).
+- Drive the animator yourself: `forward_speed` (float), `onGround`, `inWater` (bools),
+  `stagger` (trigger). Not every creature has every parameter, and `Set*` on a missing one logs
+  a warning **every call**; cache `animator.parameters` into a dictionary and check first.
+- A creature's swim wake: `Character.m_waterEffects` (EffectList) shown with the public static
+  `Character.SetupContinuousEffect(transform, point, enabled, effects, ref GameObject[] instances)`.
+  Call it with `enabled=false` before destroying the picture. *(verified signature)*
+- Footstep effects live in `FootStep.m_effects` (`StepEffect`: `m_material` GroundMaterial flags,
+  `m_motionType`, `m_effectPrefabs`); `GetGroundMaterial` returns `Water` when `InWater()`.
+- `Character.IsSwimming()` is `m_swimTimer < 0.5`.
+- Pictures need a collider to be solid: a **separate kinematic Rigidbody** GameObject (not a child
+  of the vehicle's body, or it becomes part of its compound collider and drags on terrain) that
+  `MovePosition`s after the pictures each FixedUpdate, with `Physics.IgnoreCollision` against the
+  vehicle's own colliders. Give it an `IDestructible` that forwards hits.
+- Unmodded clients can't see such pictures. Making them visible would mean keeping the real
+  creature in the world (owner holds it, AI off). The user declined that for now.
+
+**Vehicles taking damage**
+
+- Monster attacks find targets with `GetComponentInParent<IDestructible>()` on the collider they
+  hit. Implement `IDestructible` (`Damage(HitData)`, `GetDestructibleType()`) on the vehicle, and
+  ignore `hit.GetAttacker()` that `IsPlayer()` (mounted swings would otherwise hit your own ride).
+  Forward the damage to the owner by RPC.
+
+**Status effects**: `player.GetSEMan().AddStatusEffect(SEMan.s_statusEffectWet, true, 0, 0f, -1)`
+(5 args in this game version; `s_statusEffectBurning` etc. alike) *(verified compiles)*.
+
 **Physics / misc**
 
-- Water level: `ZoneSystem.instance.m_waterLevel`; ground: `GetGroundHeight`, `GetSolidHeight`,
-  `FindFloor`. Layers: `Default, static_solid, Default_small, piece, terrain, vehicle, character`.
+- Water level: `ZoneSystem.instance.m_waterLevel` (sea) or `Floating.GetLiquidLevel(pos)` (any
+  water volume); ground: `GetGroundHeight`, `GetSolidHeight`, `FindFloor`. Layers: `Default, static_solid, Default_small, piece, terrain, vehicle, character`.
 - `Heightmap.Biome` includes `DeepNorth` (0x40).
 - Damage: `HitData` (`m_damage.m_blunt/m_chop/m_pickaxe/m_fire/m_frost/m_poison`,
   `m_toolTier`, `m_pushForce`, `SetAttacker`), `IDestructible.Damage(hit)`.
@@ -298,8 +369,38 @@ cost a CI round-trip).
   Tetra), TrophyDeer, AncientSeed, WitheredBone, DragonEgg, GoblinTotem, DvergrKeyFragment,
   BellFragment, FrostCore, FrozenFuel (Liquid Frost), Ice, FrozenKingDrop, SerpentScale,
   FreezeGland, TrollHide, DeerHide, Guck, Sap.
+- **Disguised roots**: if an object's root is rotated for a disguise (SnakeWood turns the root so a
+  vanilla upright log lies flat), never read `transform.eulerAngles` or
+  `InverseTransformPoint` from the root for headings. Use the un-rotated child ("frame"): the
+  root's Euler yaw is meaningless near 90° pitch (gimbal lock), and the sled's team ended up off
+  to the side and floating.
+- Ground probes for things beside a vehicle: cast from well above **both** the probe point and the
+  vehicle, long enough for any hover height, with `ZoneSystem.GetGroundHeight` as the fallback. A
+  short ray that misses leaves the thing floating.
+- Thin, coplanar or nearly coplanar visual pieces z-fight ("flickering lighting"). Lift touching
+  parts a couple of cm apart. The `wood_floor` piece scaled thin also seemed to flicker on a
+  moving object; replaced with pole planks *(cause unverified)*.
 - Vanilla tree logs (`TreeLog`) used as disguises: `*_log_half` variants
   (FirTree/PineTree/beech/Birch/Oak/yggashoot/AshlandsTreeLogHalf…), sizes logged by SnakeWood.
+
+**Hover / vehicle feel** (SnakeWood; tuned in-game with the user)
+
+- **Terrain following**: sampling the ground at one point under the centre makes long, low
+  vehicles dig their nose into slopes. Sample under both ends, both sides and a point ahead
+  (further at speed); fit the slope between the ends (clamped to the climb limit); keep the base
+  clear of every sample; tilt fully to that fitted plane. Ignore samples that jump more than the
+  vehicle could climb (walls, ledges).
+- **Height spring**: near-critically damped (`accel = k·error − 2√k·vel`) instead of a soft
+  underdamped one stops the bobbing. After landing from the air, start soft and firm up over
+  0.35–0.8 s (longer for harder landings) with the upward push capped, or landings feel like
+  hitting a wall.
+- **Gliding sled**: smooth the tilt (up vector) separately and slowly, but turn at full rate. A
+  slowly slerped *whole* rotation makes the body lag the heading, so the pulling team runs
+  sideways.
+- **Motion comfort**: never wobble the rider/camera (the fish tail-sway on the body caused
+  motion sickness). Animate only the model's child transforms (bob, sway).
+- **Free look** like vanilla sitting: with camera steering, don't turn while standing still, or
+  while a Free Look key is held.
 
 ---
 
@@ -313,17 +414,27 @@ cost a CI round-trip).
   longest gap and visual offset every 2 s — have rider and watcher both enable it and compare.
 - Read vanilla log lines in their logs as breadcrumbs: `Teleportation TRIGGER`, `Teleporting X`,
   `Stop doodad controlls`, `Local player destroyed`, `Ignoring N colliders` (AttachStart).
-- Other mods spam errors (ValheimPlus `Tameable_Awake_Patch` NREs) — don't chase them.
+- Other mods spam errors (ValheimPlus `Tameable_Awake_Patch` NREs) — don't chase them. But when
+  the stack trace runs through *your* objects (AzuCraftyBoxes → `Vagon.InUse` on the sled's
+  chest), it's yours: the other mod is reacting to something your object looks like.
+- A trace containing `(wrapper dynamic-method) X.DMD<X::Method>` means the method is Harmony-
+  patched (by you or another mod); the exception may still come from the original body.
+- When a CI build fails, read only the failed job (`get_job_logs` with `failed_only`, ~40 tail
+  lines): the `error CS####` lines are all you need. A failed build doesn't release, so the user
+  keeps testing the previous version; say so if they report a bug you've "already fixed".
 
 ---
 
-## 7. SnakeWood specifics (as of v1.14)
+## 7. SnakeWood specifics (as of v1.22)
 
-Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (18 variants: 7 woods incl.
-Timberwood, 12 fish — data + per-log config + tooltip), `HoverLog.cs` (riding, physics, fuel,
-wear/wreck, load, noise, ramming, poison cloud, passengers, sync, unstick),
-`HoverLogPrefabs.cs` (prefab building, most Harmony patches), `HoverLogDisguise.cs` (vanilla
-TreeLog disguise), `HoverLogFx.cs` (glow, trails), `HoverLogPortal.cs` (mounted portals, doors).
+Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
+Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
+physics, fuel/core, wear/wreck, load, noise, ramming, damage, poison cloud, passengers, sync,
+unstick, fish swim, combat facing), `HoverSled.cs` (team storage, hitching, feeding, team
+pictures and body, passenger seat, `SledSpecies`, `SledTeamHitbox`), `HoverLogPrefabs.cs`
+(prefab building incl. sled body and fish shape, most Harmony patches), `HoverLogDisguise.cs`
+(vanilla TreeLog disguise), `HoverLogFx.cs` (glow, trails), `HoverLogPortal.cs` (mounted portals,
+doors and containers while riding, `Vagon.InUse` finalizer), `SledAnimalsEditor.cs` (CM editor).
 
 Design decisions the user made (keep them):
 
@@ -332,17 +443,42 @@ Design decisions the user made (keep them):
   never a hard refusal. Slope = max climb angle per log (also caps nose pitch).
 - Costs: lots of material + boss summon items + **crafting station levels**; boss-kill gating is
   optional (off). Fish logs need **level-5 fish** and are deliberately strong.
-- Wear only from crashes/rams; worn out → **wreck** pinned in place until fully repaired with
-  its own wood (raw fish for fish logs). Never lose materials by default. Removal needs only a
-  workbench.
-- Fuel: resin; R takes it back out; deconstruct returns it.
+- Wear only from crashes/rams and creature hits; worn out → **wreck** pinned in place until
+  fully repaired with its own wood (raw fish for fish logs). Never lose materials by default.
+  Removal needs only a workbench.
+- Fuel: resin; R takes it back out; deconstruct returns it. **Core Wood and later + all fish**
+  can take one **Surtling core** = fuelled for life (per-log `Lifetime Fuel`), returned on
+  removal. Shift+E order: feed team → repair (only if carrying the repair item) → fit core → fuel.
+- Stamina: drains only while moving (`Stamina Drain When Still` restores the old always-drain).
+  Running dry throws you off a wood log, but on a **sled or fish** you crawl at 30% with no drain
+  until 25% stamina is back.
 - Ore/metal restriction exists but is **off**; portals allowed; rider stays mounted through them.
 - Defaults the user picked: Surf pose, Crouch lowers the log, Mounted Combat on, Vanilla Disguise on.
+- Keys: R take out fuel, H hitch, U unhitch, Left Alt free look.
 - Tooltips must stay short (Valheim auto-shrinks long tooltip text until unreadable).
 
-Known open items: in-game verification of v1.14 (mounted portals, unstick, doors, Core mining
-balance); FrozenKing boss key; possible Deep North fish; a race timer HUD was suggested (no
-placed assets needed).
+**Hover Sled** (variant `Sled`): pulled by **real hitched animals**. A hitched creature is
+destroyed and stored in the sled's ZDO (`SnakeSled_{slot}_prefab/level/hp/max/name`, plus
+`SnakeSled_rev` to trigger visual rebuilds); unhitching respawns it tamed with the same stars,
+health and name. Tamed wolves within 6 m; hares (untamable) must be harpooned and dragged within
+3 m. Team Animals config: `Prefab:Speed:Strength:Land:Water` (Land/Water speed multipliers,
+optional). Stars add speed and strength. Animals are durable: at 0 health they're **exhausted**
+(stagger animation, stop pulling), never dead. Healed by feeding (Shift+E) and resting. Crashes,
+rams and bites hurt the team instead of wearing the sled. Steering is always keys (A/D), no
+look-pitch, slow tilt ("glides"), restful when still. Cart-sized chest open to anyone, a
+passenger seat. The team pictures stand level on the ground under their slots and swim in
+water. **Unmodded players can't see the team** (accepted by the user).
+
+**Fish logs feel different from wood**: lazy wide turns toward the look, more look-pitch eased in,
+the model bobs and sways its tail (rider/camera steady), real fish proportions (uniform scale,
+height ≤ 1.1 m, seat raised to the back). Over water a fish's depth follows speed: at rest the
+seat sits 0.3 m under (rider gets Wet), and by 60% of top speed the rider skims just above the
+surface. The user is happy with this ("perfect for now"). Disguise for unmodded players stays a
+**tree log**: a vanilla fish disguise is possible but an unmodded owner could pick it up (and
+delete the log), so the user chose not to.
+
+Known open items: in-game verification of v1.22 (unhitch key, floating-team fix, editor
+suggestions, landings); FrozenKing boss key; a race timer HUD was suggested.
 
 ---
 
@@ -354,6 +490,15 @@ placed assets needed).
 - They care about: unmodded friends still seeing something sensible, multiplayer robustness,
   balance that feels natural (curves, not hard walls), and everything being configurable.
 - Report with the release link, what changed, and a short in-game test list.
+- They often send a screenshot with a one-line note, or a log paste with no text. Look at
+  everything in the screenshot (collider sizes, floating creatures, z-fighting, config values
+  that look wrong) and fix or mention it.
+- Short notes can be ambiguous ("Have a stamina drain while stationary" was a complaint about
+  one). Pick the likelier reading, implement it with a config toggle for the other, and say which
+  reading you took.
+- For big rework with trade-offs (e.g. making the team visible to unmodded players, a fish
+  disguise with pickup risk), explain the cost and ask before building. They're happy to say no.
+- Motion comfort matters to them: no camera bob or sway on the rider.
 
 ---
 
@@ -362,3 +507,4 @@ placed assets needed).
 | Version | Date (UTC) | By | Changes |
 | --- | --- | --- | --- |
 | 1.0 | 2026-10-20 13:26 | Claude Code, SnakeWood session | First version: ecosystem, cloud environment, CI and Decompile workflow, BepInEx/Harmony patterns, game systems cheat-sheet, debugging, SnakeWood v1.14 specifics, working with the user. |
+| 1.1 | 2026-10-23 04:18 | Claude Code, SnakeWood session | Added: custom CM editors, hotkey/action patterns, netstandard2.1 LINQ gap, mod-compat (AzuCraftyBoxes/Vagon); Container, melee facing, creature-picture, swim-wake, IDestructible-vehicle, status-effect notes; disguised-root and ground-probe gotchas, z-fighting; hover feel (terrain fit, damped spring, landing cushion, glide, motion comfort, free look); debugging (Harmony DMD traces, failed CI logs); SnakeWood v1.22 specifics (Hover Sled, fish feel, core fuel, stamina rules, keys, disguise decisions); more on working with the user. |
