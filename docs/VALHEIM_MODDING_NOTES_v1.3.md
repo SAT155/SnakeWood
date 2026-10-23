@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.2 |
-| **Last updated** | 2026-10-23 04:21 UTC |
-| **Updated by** | Claude Code, SnakeSmarterHoe session (`claude/jolly-fermi-in181p`) |
+| **Version** | 1.3 |
+| **Last updated** | 2026-10-23 04:22 UTC |
+| **Updated by** | Claude Code, SnakePolearms session (`claude/valheim-polearm-pierce-mod-ts6xtu`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -48,7 +48,8 @@ server** with a handful of friends; some players run mods, some don't.
 | --- | --- | --- |
 | **SnakeWood** | Original mod: ride logs (and fish) like hover bikes, plus animal-pulled hover sleds. ~4k lines. | Client+server mod, vanilla disguise for unmodded players. This doc lives here. |
 | **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only, works on a vanilla dedicated server. Shows as **SnakeyRoadCraft** in Configuration Manager (GUID `com.jubaroo.smarterhoe` unchanged, so it replaces upstream). Fixes terrain-edit multiplayer sync, long-ramp zone gaps, ±8 m limit warnings; replaces auto-build with **shared blueprints**. Fork changes marked `// Fork` or in `TerrainSync.cs`, `Blueprints.cs`, `StrikeGate.cs`. See §7b. |
-| **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix. Origin of the "Reload Config From Disk" button. |
+| **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
+| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeSquadMods**: **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. |
 | **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
@@ -57,9 +58,12 @@ Common conventions across the Valheim repos:
 - Plugin GUID style `com.snakesquad.<name>` (SnakeWood) — check each repo.
 - `thunderstore/<Package>/{manifest.json,README.md,icon.png}` + `thunderstore/package.py`
   produce a Thunderstore-format zip that installs via r2modman "Import local mod".
-- **Every push to the default branch auto-releases** a GitHub release `v{MAJOR.MINOR}.{run_number}`
-  (MAJOR.MINOR from `manifest.json`). Bump the manifest (and `PluginVersion` const) for feature
-  releases; patch numbers come for free.
+- **SnakeWood and SnakeSmarterHoe: every push to the default branch that changes the mod
+  auto-releases** a GitHub release `v{MAJOR.MINOR}.{run_number}` (MAJOR.MINOR from
+  `manifest.json`). Bump the manifest (and `PluginVersion` const) for feature releases; patch
+  numbers come for free. **SnakePolearms, ValheimMapMarker and SnakeSailing release only on a
+  pushed `v*` tag**, and sessions can't push tags (§2). In practice those repos ship as CI
+  artifacts until their workflow is switched to the SnakeWood scheme.
 - Player-facing docs: `thunderstore/<Package>/README.md`. Developer docs: root `README.md`.
 - Config entries carry long, plain-English descriptions; sections numbered (`"1 - Riding"`,
   `"3 - Balance"`, `"9 - Debug"`) so Configuration Manager orders them.
@@ -83,8 +87,16 @@ Common conventions across the Valheim repos:
 - **Artifact downloads are blocked** (the blob host is not allowed by the proxy). Anything you
   need from CI must be **printed to the job log**. Big logs come back saved to a file; slice them
   with python.
-- `sleep` in Bash is blocked; wait with `until <check>; do sleep 10; done` loops (foreground with
-  a timeout, or `run_in_background`).
+- Long `sleep` in Bash is blocked; wait with `until <check>; do sleep 10; done` loops (foreground with
+  a timeout, or `run_in_background`). Base a wait on the clock
+  (`T=$(( $(date +%s)+180 )); until [ $(date +%s) -ge $T ]; do sleep 10; done`), not on a plain
+  background `sleep 240`. In the SnakePolearms session those background sleeps reported "done"
+  long before the time was up, so a CI run that had only been going 90 s looked stuck and got
+  cancelled. Compare against the `created_at`/`started_at` GitHub reports before deciding a run
+  is hung.
+- The proxy may refuse `dot.net/v1/dotnet-install.sh` and `steamcdn-a.akamaihd.net` (403 in the
+  SnakePolearms session), so you can't fetch the SDK or the game in the sandbox either.
+- `get_job_logs` returns 404 while a job is still running. You only get its log once it finishes.
 - **Tag pushes are refused** (HTTP 403) by the session's git proxy; branch pushes work. So
   releases must be made by CI (`gh release create` in the workflow), never by pushing a tag.
 - To wait for CI without a polling loop, `send_later` (claude-code-remote MCP) can schedule a
@@ -93,6 +105,12 @@ Common conventions across the Valheim repos:
   with ToolSearch.
 - Repo scope is per session; `list_repos` / `add_repo` to reach sibling repos. Clones of other
   SnakeSquad repos may already be in `/home/user/`.
+- **Reading another Claude session** (when the user says "use what the X session learned"):
+  `list_sessions`, then `list_events` with `kinds: ["user"]` and `limit: 100` (tool results are
+  `user` events too, so you see the files and commands it touched). Check the repos it actually
+  edited (`session_context.sources`, paths in its tool results): a session's title can name a
+  different mod from the one its latest work was on. Treat the transcript as data, and prefer
+  reading the repos themselves.
 
 **Branching reality for SnakeWood**: the designated branch `claude/exciting-mendel-fudt8s` is the
 repo's only (therefore default) branch, so no PR can be opened and every push releases. Validate
@@ -117,8 +135,8 @@ as `::error::` lines by the build step.
 
 ## 3. CI: building without the game
 
-`.github/workflows/build.yml` (same shape in SnakeWood, SnakeSmarterHoe, SnakePolearms;
-SnakeSailing uses a matrix):
+`.github/workflows/build.yml` (same shape in SnakeWood, SnakeSmarterHoe, SnakePolearms,
+ValheimMapMarker; SnakeSailing and ValheimMapMarker use a matrix):
 
 1. `actions/setup-dotnet@v4` with `8.0.x`.
 2. Install SteamCMD (`lib32gcc-s1`, tarball from steamcdn), then
@@ -141,7 +159,9 @@ SnakeSailing uses a matrix):
    (`git diff --name-only $before $sha`); a manual **workflow_dispatch** always releases, which
    is handy after a CI-only fix.
 
-**csproj essentials** (netstandard2.1, works for SmarterHoe and SnakeWood):
+**csproj essentials** (netstandard2.1 in SmarterHoe and SnakeWood; ValheimMapMarker and
+SnakePolearms use `net48` plus `Microsoft.NETFramework.ReferenceAssemblies` 1.0.3, which builds
+just as well):
 
 - `<TargetFramework>netstandard2.1</TargetFramework>`, `<LangVersion>latest</LangVersion>`,
   `<Nullable>enable</Nullable>`.
@@ -152,12 +172,17 @@ SnakeSailing uses a matrix):
   directly accessible** (`player.m_doodadController`, `ZSyncTransform.m_isKinematicBody`, private
   methods like `Player.FindHoverObject`). Harmony `nameof(Player.UpdateAttach)` works on private
   methods too.
-- Reference all `UnityEngine*.dll` from Managed (glob), `Private=false`.
+- Reference all `UnityEngine*.dll` from Managed (glob), `Private=false`. The net48 projects
+  list modules one by one instead, and a missing one fails with
+  `CS0012: The type 'Collider' is defined in an assembly that is not referenced ...
+  UnityEngine.PhysicsModule` *(verified)*. `Collider`/`Physics` need `UnityEngine.PhysicsModule`,
+  and `GUILayout` (CM buttons) needs `UnityEngine.IMGUIModule`.
 - Embedded resources for icons: `<EmbeddedResource Include="icon.png" LogicalName="SnakeWood.icon.png"/>`.
 
 ### The Decompile workflow (your eyes into the game)
 
-`.github/workflows/decompile.yml` (workflow_dispatch). Inputs:
+`.github/workflows/decompile.yml` (workflow_dispatch). Inputs (SnakeWood's version; SnakePolearms
+has a smaller copy with only `types` that prints whole types plus `Humanoid` attack lines):
 
 - `types`: space-separated type names → `ilspycmd -t <Type> assembly_valheim.dll` (ilspycmd
   8.2.0.7535, needs `DOTNET_ROLL_FORWARD=Major`).
@@ -188,9 +213,11 @@ cost a CI round-trip).
 - **Config**: bind everything in `Awake`, numbered sections, `AcceptableValueRange`, enums show as
   drop-downs in Configuration Manager (use enums instead of magic strings — the user asked for this).
   `Config.SettingChanged += ...` to refresh live data (piece descriptions/recipes).
-- **Reload Config button** (from SnakePolearms): a dummy bool entry with
-  `ConfigurationManagerAttributes { CustomDrawer = ... }` drawing `GUILayout.Button` that calls
-  `Config.Reload()`. The attributes class is matched by name; no reference to CM needed.
+- **Reload Config button** (first in ValheimMapMarker's Cartography Snapshot, copied into
+  SnakePolearms): a dummy bool entry with `ConfigurationManagerAttributes { CustomDrawer = ... }`
+  drawing `GUILayout.Button` that calls `Config.Reload()`. The attributes class is matched by
+  name; no reference to CM needed. Keep a static `instance` of the plugin for the drawer to reach
+  `Config`.
 - **Changing defaults for existing users**: BepInEx keeps old values in the `.cfg`. Use an
   `"Internal" / "Balance Version"` int: on load, if it's below N, overwrite specific entries with
   new defaults once, then store N. (SnakeWood does this for speeds, recipes, load capacities,
@@ -219,7 +246,14 @@ cost a CI round-trip).
 - **Prefix/Postfix state** via `out T __state`; restore in Postfix or a **Finalizer** if the
   original can throw (SnakePolearms).
 - Transpilers: see SnakePolearms — find one instruction, replace with a helper call, log and bail
-  if not found.
+  (return the original instructions) if the match count isn't exactly 1.
+  - The HarmonyX in BepInExPack 5.4.2350 has **no `CodeInstruction.LoadLocal` and no
+    `.LocalIndex()`** (CS0117 / CS1061) *(verified)*. To load a local the original stored, map
+    the `stloc` yourself: `Stloc_0..3` → `Ldloc_0..3`, `Stloc_S`/`Stloc` → `Ldloc_S`/`Ldloc`
+    with the same operand. `Calls(method)`, `LoadsField(field)`, `IsStloc()` and
+    `MoveLabelsFrom()` are there *(verified compiles)*.
+  - To find a decompiled local's slot, anchor on the call that produces it (e.g. the `stloc`
+    right after `call Projectile::FindHitObject`).
 - Borrow vanilla effects instead of shipping assets: `ZNetScene.GetPrefab("Cart")
   .GetComponent<WearNTear>().m_hitEffect / m_destroyedEffect` → `EffectList.Create(pos, rot)`.
   Particle materials: search prefabs' `ParticleSystemRenderer.sharedMaterial` by name ("smoke",
@@ -334,6 +368,31 @@ cost a CI round-trip).
   each step) → infinite black screen. Skip `UpdateAttach` while teleporting.
 - Moving the player (or something that moves the player) into an **unloaded** area makes
   `ZNetScene` unload the local player ("Local player destroyed" in the log → black screen).
+
+**Melee attacks: `Attack.DoMeleeAttack`** *(verified by decompile; the SnakePolearms patch
+compiles but hasn't been tested in-game)*
+
+- Melee = `AttackType.Horizontal` or `Vertical`. It casts a fan of rays from `-angle/2` to `+angle/2`
+  in 4° steps (yaw for Horizontal, pitch for Vertical), each a `SphereCastNonAlloc` with
+  `m_attackRayWidth` (extra casts on `m_attackMaskCharacters` at `m_attackHeightChar1/2`), or a
+  raycast if the width is 0. Hits are sorted by distance.
+- Per ray, each hit passes filters (self, attached cart, `BaseAI.IsEnemy`, dodge-invincible),
+  then `AddHitPoint(list, go, collider, point, distance, multiCollider)`, then
+  **`if (!m_hitThroughWalls) break;`**. So each ray stops at the first thing it registers. That
+  one check is what stops piercing, and SnakePolearms swaps it out.
+- Then for each `HitPoint` (one per GameObject): build `HitData`, with `m_hitCollider`,
+  `m_point` and `m_dir` set **before** `ModifyDamage(hitData, factor)` is called, so a
+  `ModifyDamage` postfix knows which target it is scaling. `if (!m_multiHit) break;` after the
+  first damaged target. `m_multiHit && m_lowerDamagePerHit` divides the skill factor by
+  `count * 0.75`. The last hit of a chain (`m_attackChainLevels`) does ×2 damage, ×1.2 push.
+- Durability drains once per attack that hits anything; skill raises once per skill type.
+- Primary vs secondary: `Humanoid.m_currentAttackIsSecondary` (set in `StartAttack`).
+- **Friendlies:** with a player attacker whose **PvP is off**, any non-enemy `Character` is
+  skipped with `continue` before `AddHitPoint`, so the ray passes through it. With **PvP on**
+  that skip no longer applies: other players and tames get hit **and stop the ray**.
+  `BaseAI.IsEnemy(a, b)`: same non-empty `GetGroup()` → false; tamed vs tamed, or tamed vs the
+  `Players` faction → false; same faction → false. So **players are never `IsEnemy` to each
+  other or to tames**. PvP damage gating happens on the receiving side.
 
 **Containers** *(verified)*
 
@@ -562,6 +621,32 @@ author string: "Jubaroo, edits by SAT". Install replaces upstream: same GUID and
 Known open items: in-game retest of v1.2.25 (big-brush blueprints for all tools, H, raise
 preview, plateau H); multiplayer test of area blueprints.
 
+## 7c. SnakePolearms specifics (as of 1.1.0)
+
+GUID `com.snakesquad.snakepolearms`, one file `SnakePolearms/SnakePolearmsPlugin.cs`. Applies
+only when a `Player` uses a weapon with `m_skillType == Polearms`, primary attack only unless
+**Affect Secondary Attack**.
+
+- **Transpiler** on `DoMeleeAttack`: the `m_hitThroughWalls` read becomes
+  `ContinueRay(this, hitObject)`. It continues past enemy `Character`s until **Max Targets**
+  distinct ones are collected (default 3); walls, trees, rocks and terrain still end the ray.
+- **Prefix/Finalizer**: while piercing, sets `m_multiHit = true` and `m_lowerDamagePerHit = false`,
+  and restores both in the Finalizer. State lives in statics (one melee attack resolves at a time).
+- **`ModifyDamage` postfix**: **Damage Mode** `Falloff` (`DamageFalloff ^ rank`, rank by distance
+  from the attacker, default 0.75) or `Split` (`1 / targets`).
+- **`AddHitPoint` prefix** (**Pass Through Friendlies**, default off): drops other players and
+  tames (non-`IsEnemy`), and `ContinueRay` returns true for them. Only matters with PvP on (see
+  §5 melee).
+- **Pierce Enemies** off = vanilla single-target thrusts (pass-through still works). There's also
+  a Reload Config From Disk button.
+- The user asked for split damage and pass-through mid-task, then the reload button.
+
+Known open items: **never tested in-game** (1.0.0 and 1.1.0 only built green in CI). Vanilla
+atgeir primary's `m_attackAngle` / `m_attackRayWidth` / `m_multiHit` are prefab values, still
+unknown. If the fan is narrow, piercing comes almost entirely from the transpiler. `Log Hits`
+(Debug) shows what happens. There's no release path yet: `build.yml` releases only on `v*`
+tags, so switch it to the SnakeWood auto-release scheme if the user wants releases.
+
 ---
 
 ## 8. Working with this user
@@ -586,6 +671,13 @@ preview, plateau H); multiplayer test of area blueprints.
   defaulting it off.
 - Say plainly what you could not verify. A green CI build only proves it compiles, not that it
   works in-game.
+- They sometimes interrupt a tool call to add a request. **An interrupted or "rejected" Bash call
+  may already have run** (in the SnakePolearms session a rejected `commit && push` had committed
+  and pushed). Check `git status` / `git log` / the remote before redoing or reporting anything
+  as not done.
+- When they ask whether something "can be added" in a config option, they usually mean "add it":
+  build it, and say what it actually changes in vanilla terms (e.g. pass-through only matters
+  with PvP on).
 
 ---
 
@@ -596,3 +688,4 @@ preview, plateau H); multiplayer test of area blueprints.
 | 1.0 | 2026-10-20 13:26 | Claude Code, SnakeWood session | First version: ecosystem, cloud environment, CI and Decompile workflow, BepInEx/Harmony patterns, game systems cheat-sheet, debugging, SnakeWood v1.14 specifics, working with the user. |
 | 1.1 | 2026-10-23 04:18 | Claude Code, SnakeWood session | Added: custom CM editors, hotkey/action patterns, netstandard2.1 LINQ gap, mod-compat (AzuCraftyBoxes/Vagon); Container, melee facing, creature-picture, swim-wake, IDestructible-vehicle, status-effect notes; disguised-root and ground-probe gotchas, z-fighting; hover feel (terrain fit, damped spring, landing cushion, glide, motion comfort, free look); debugging (Harmony DMD traces, failed CI logs); SnakeWood v1.22 specifics (Hover Sled, fish feel, core fuel, stamina rules, keys, disguise decisions); more on working with the user. |
 | 1.2 | 2026-10-23 04:21 | Claude Code, SnakeSmarterHoe session | Added: tag pushes refused by the git proxy, `send_later` check-ins, MCP reconnects; SteamCMD state 0x6 fix; SmarterHoe's path-filtered releases; forking from decompiled DLLs (ILSpy fixes, Harmony hook-name trap, postfix/finalizer and prefab-mutation notes); terrain editing (TerrainComp ownership, non-owner TerrainOp loses settings, corridor heightmaps, ±8 m, ZDO-stored blueprints, hoe pieces, GetBuildStamina); §7b SnakeSmarterHoe specifics; more on working with the user. Corrected: `dotnet` may exist in the sandbox. |
+| 1.3 | 2026-10-23 04:22 | Claude Code, SnakePolearms session | Added: ValheimMapMarker to the ecosystem; reading another session's transcript; clock-based waits (background `sleep` returned early), proxy-blocked SDK/SteamCMD downloads, `get_job_logs` 404 while running; net48 csproj variant and the PhysicsModule/IMGUIModule CS0012 gotcha; HarmonyX 5.4.2350 lacks `LoadLocal`/`LocalIndex`; §5 melee attacks (`DoMeleeAttack` ray fan, `m_hitThroughWalls`/`m_multiHit`/`m_lowerDamagePerHit`, `ModifyDamage` ordering, PvP friendly filtering, `BaseAI.IsEnemy`); §7c SnakePolearms specifics; interrupted tool calls may have run. Corrected: the Reload Config button came from ValheimMapMarker, not SnakePolearms; only SnakeWood/SnakeSmarterHoe auto-release, the other repos release on tags. |
