@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.1 |
-| **Last updated** | 2026-10-23 04:18 UTC |
-| **Updated by** | Claude Code, SnakeWood session (`claude/exciting-mendel-fudt8s`) |
+| **Version** | 1.2 |
+| **Last updated** | 2026-10-23 04:21 UTC |
+| **Updated by** | Claude Code, SnakeSmarterHoe session (`claude/jolly-fermi-in181p`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -47,7 +47,7 @@ server** with a handful of friends; some players run mods, some don't.
 | Repo | What it is | Notes |
 | --- | --- | --- |
 | **SnakeWood** | Original mod: ride logs (and fish) like hover bikes, plus animal-pulled hover sleds. ~4k lines. | Client+server mod, vanilla disguise for unmodded players. This doc lives here. |
-| **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only. Fixes terrain-edit multiplayer sync (claims `TerrainComp` ZDO ownership before editing), long-ramp zone gaps, ±8 m limit warnings, blueprints. Fork changes marked `// Fork` or in `TerrainSync.cs`. Has ServerSync folder, icon tool. |
+| **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only, works on a vanilla dedicated server. Shows as **SnakeyRoadCraft** in Configuration Manager (GUID `com.jubaroo.smarterhoe` unchanged, so it replaces upstream). Fixes terrain-edit multiplayer sync, long-ramp zone gaps, ±8 m limit warnings; replaces auto-build with **shared blueprints**. Fork changes marked `// Fork` or in `TerrainSync.cs`, `Blueprints.cs`, `StrikeGate.cs`. See §7b. |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix. Origin of the "Reload Config From Disk" button. |
 | **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
@@ -72,7 +72,8 @@ Common conventions across the Valheim repos:
 
 **What the sandbox has / lacks**
 
-- No `dotnet`, no Valheim install, no Steam. **You cannot compile locally.** All builds happen in
+- No Valheim install, no Steam (`dotnet` may or may not be installed; without the game DLLs it
+  can't build the mod either). **You cannot compile locally.** All builds happen in
   GitHub Actions. Write carefully, push, read the CI log, fix. (Each round-trip is ~3–6 min.)
 - No `gh` CLI; use the GitHub MCP tools (`mcp__github__*`, load via ToolSearch):
   `actions_run_trigger` (workflow_dispatch), `actions_list` (runs/jobs), `get_job_logs`
@@ -84,6 +85,12 @@ Common conventions across the Valheim repos:
   with python.
 - `sleep` in Bash is blocked; wait with `until <check>; do sleep 10; done` loops (foreground with
   a timeout, or `run_in_background`).
+- **Tag pushes are refused** (HTTP 403) by the session's git proxy; branch pushes work. So
+  releases must be made by CI (`gh release create` in the workflow), never by pushing a tag.
+- To wait for CI without a polling loop, `send_later` (claude-code-remote MCP) can schedule a
+  check-in back into the session ~5 min after a push.
+- The GitHub MCP server can disconnect mid-session; when it reconnects, load its tools again
+  with ToolSearch.
 - Repo scope is per session; `list_repos` / `add_repo` to reach sibling repos. Clones of other
   SnakeSquad repos may already be in `/home/user/`.
 
@@ -123,10 +130,16 @@ SnakeSailing uses a matrix):
      `ERROR! Failed to install app '896660' (Missing configuration)`; the retry succeeds.
    - Cache `$RUNNER_TEMP/valheim` with `actions/cache` (save immediately after download so a
      failing compile still warms it).
+   - A restored cache can be broken: SteamCMD then fails every retry with
+     `App '896660' state is 0x6 after update job`. Fix: `rm -rf "$RUNNER_TEMP/valheim"` before
+     each retry, so later attempts download clean *(verified, SnakeSmarterHoe run 21 → 24)*.
 3. Download BepInExPack from Thunderstore (`BEPINEX_VERSION` env, e.g. `5.4.2350`).
 4. `dotnet build <proj> -c Release -p:ManagedDir=... -p:BepInExDir=...`.
 5. Package with `thunderstore/package.py`, upload artifacts, and on default-branch pushes
    `gh release create v<version> <dll> <zip>` (skipped when the mod didn't change).
+   SnakeSmarterHoe releases only when the push changes `SmarterHoe/` or `thunderstore/`
+   (`git diff --name-only $before $sha`); a manual **workflow_dispatch** always releases, which
+   is handy after a CI-only fix.
 
 **csproj essentials** (netstandard2.1, works for SmarterHoe and SnakeWood):
 
@@ -232,6 +245,23 @@ cost a CI round-trip).
   `m_rootObjectOverride` belongs to a cart and calls `Vagon.InUse()`. A finalizer on
   `Vagon.InUse` that swallows the NRE for a null instance, plus not giving your container a
   Vagon reference, keeps it quiet.
+
+**Forking a mod from its decompiled DLL** (SnakeSmarterHoe):
+
+- `ilspycmd` output doesn't compile as-is. Expect to fix: explicit `..ctor` calls, `ref`/`out`
+  arguments, nullable casts, compiler-generated `<>c` classes, `op_Implicit(...)` calls, nested
+  type names, `switch` on `KeyCode` ints, and name clashes (e.g. `HarmonyLib.Patches` vs a
+  `SmarterHoe.Patches` namespace). Per-namespace `using` aliases (`using Object =
+  UnityEngine.Object; using Settings = TerrainOp.Settings;` ...) fix most ambiguity errors.
+- Expect several CI rounds of compile errors; fix all errors from each log at once.
+- SmarterHoe patches **every type** in its assembly, so a static helper named like a Harmony hook
+  (`Prepare`, `Prefix`, `Postfix`, `Finalizer`, `Cleanup`, `TargetMethod`) in *any* class is
+  treated as one. A helper called `Prepare` crashed the load with "has wrong return type"
+  *(verified)*. Give helpers other names.
+- Harmony **postfixes still run when a prefix returns false**, but not when the original or a
+  prefix throws. If a prefix changes shared state (SmarterHoe rewrites the clicked hoe piece
+  prefab's `TerrainOp.Settings` radius), restore it in a **Finalizer**, and read "vanilla"
+  values from those prefabs before any click.
 
 ---
 
@@ -402,6 +432,34 @@ cost a CI round-trip).
 - **Free look** like vanilla sitting: with camera steering, don't turn while standing still, or
   while a Free Look key is held.
 
+**Terrain editing (TerrainComp / TerrainOp)** (from SnakeSmarterHoe)
+
+- Each 64 m zone's terrain edits live on its `TerrainComp`, which has its own ZDO.
+  `TerrainComp.Save()` **does nothing unless this client owns that ZDO**. Usually the owner is
+  whoever loaded the zone first.
+- A non-owner's vanilla `TerrainOp` is sent to the owner as **only the piece's prefab hash**
+  (`TerrainOp.Settings.Serialize`), so a mod's custom radius, shape or height is lost.
+- Fix that works on a vanilla dedicated server: before editing, call vanilla
+  `TerrainComp.CheckLoad()` (to take in the previous owner's data), then `ClaimOwnership()` on
+  every zone the edit touches. Any client may claim. The edit then saves and syncs as ordinary
+  terrain data, so unmodded players see it *(verified in-game with 3 players, one unmodded)*.
+  Upstream only claimed when `ZNet.IsServer()`, which no client is on a dedicated server.
+- Long edits must collect heightmaps along the **whole path** (SnakeSmarterHoe samples every
+  4 m). Collecting only around clicked points missed zones in between and left holes at zone
+  borders. Unloaded zones can't be edited: refuse the whole edit instead of doing part of it.
+- Each vertex can move only ±8 m from natural ground. Past that, edits flatten silently, so
+  warn the player.
+- **Extra keys on the TerrainComp ZDO persist** on a vanilla server and unmodded clients ignore
+  them. SnakeSmarterHoe stores shared blueprints this way, as a byte-array key
+  `SmarterHoe_Blueprints` on every zone a blueprint touches. Writing one needs ownership of each
+  of those zones.
+- Hoe piece table (`ObjectDB.GetItemPrefab("Hoe")` → `m_buildPieces`): `mud_road` (Level
+  ground), `raise`, `path`, `paved_road`. Radii are on `TerrainOp.m_settings`
+  (`m_levelRadius`, `m_raiseRadius`, `m_smoothRadius`, `m_paintRadius`, `m_square`).
+  `Player.GetBuildStamina()` is the stamina of one hoe swing.
+- `TerrainOp` / `TerrainModifier` apply in `Awake`, synchronously, inside `Player.PlacePiece`.
+  A temporary radius override only needs to last for the `PlacePiece` call, not a time window.
+
 ---
 
 ## 6. Debugging tricks
@@ -480,6 +538,30 @@ delete the log), so the user chose not to.
 Known open items: in-game verification of v1.22 (unhitch key, floating-team fix, editor
 suggestions, landings); FrozenKing boss key; a race timer HUD was suggested.
 
+## 7b. SnakeSmarterHoe specifics (as of v1.2.25)
+
+The source is decompiled from Jubaroo's release: **private use only, never publish**. Thunderstore
+author string: "Jubaroo, edits by SAT". Install replaces upstream: same GUID and config file.
+
+- **Blueprints instead of auto-build.** No tool acts on more than one vanilla hoe strike. A
+  bigger brush (click, or **H**) saves a blueprint; anyone with the mod sees it while holding the
+  matching tool, and builds it one strike per click, paying their own stone, stamina and
+  durability. Types: ramp (waypoints + H), rectangle plateau (H at two corners), area (any other
+  tool, big brush). Progress comes from the real terrain (ramps, plateaus) or from struck 1 m
+  cells (areas). The blueprint clears itself at `BlueprintCompletePercent` (95%). Backspace
+  removes one; only its author or an admin can. Limited by `MaxBlueprintZones` (4), not by
+  brush size. `MaxBrushRadius` defaults to 8 m.
+- Every tool costs one hoe swing of stamina per strike. Freebuild only works with devcommands
+  on, and its key is unbound.
+- **Gotcha:** upstream starts a "continuous sweep" (`UndoManager.StartContinuousSweep`) on every
+  left mouse-down, not only on drags. Code that treats "sweep active" as "this is a drag step"
+  fires on plain clicks too. Use `UndoManager.SweepId` (fork addition) to tell presses apart.
+- The user reverted "brush starts at vanilla size" after trying it. The brush starts from the
+  saved BrushRadius and BrushShape settings.
+
+Known open items: in-game retest of v1.2.25 (big-brush blueprints for all tools, H, raise
+preview, plateau H); multiplayer test of area blueprints.
+
 ---
 
 ## 8. Working with this user
@@ -499,6 +581,11 @@ suggestions, landings); FrozenKing boss key; a race timer HUD was suggested.
 - For big rework with trade-offs (e.g. making the team visible to unmodded players, a fish
   disguise with pickup risk), explain the cost and ask before building. They're happy to say no.
 - Motion comfort matters to them: no camera bob or sway on the rider.
+- After a test they often reply with a numbered list matching your test steps. Answer point by
+  point, and if they say "revert", remove the feature fully (config entry included) rather than
+  defaulting it off.
+- Say plainly what you could not verify. A green CI build only proves it compiles, not that it
+  works in-game.
 
 ---
 
@@ -508,3 +595,4 @@ suggestions, landings); FrozenKing boss key; a race timer HUD was suggested.
 | --- | --- | --- | --- |
 | 1.0 | 2026-10-20 13:26 | Claude Code, SnakeWood session | First version: ecosystem, cloud environment, CI and Decompile workflow, BepInEx/Harmony patterns, game systems cheat-sheet, debugging, SnakeWood v1.14 specifics, working with the user. |
 | 1.1 | 2026-10-23 04:18 | Claude Code, SnakeWood session | Added: custom CM editors, hotkey/action patterns, netstandard2.1 LINQ gap, mod-compat (AzuCraftyBoxes/Vagon); Container, melee facing, creature-picture, swim-wake, IDestructible-vehicle, status-effect notes; disguised-root and ground-probe gotchas, z-fighting; hover feel (terrain fit, damped spring, landing cushion, glide, motion comfort, free look); debugging (Harmony DMD traces, failed CI logs); SnakeWood v1.22 specifics (Hover Sled, fish feel, core fuel, stamina rules, keys, disguise decisions); more on working with the user. |
+| 1.2 | 2026-10-23 04:21 | Claude Code, SnakeSmarterHoe session | Added: tag pushes refused by the git proxy, `send_later` check-ins, MCP reconnects; SteamCMD state 0x6 fix; SmarterHoe's path-filtered releases; forking from decompiled DLLs (ILSpy fixes, Harmony hook-name trap, postfix/finalizer and prefab-mutation notes); terrain editing (TerrainComp ownership, non-owner TerrainOp loses settings, corridor heightmaps, ±8 m, ZDO-stored blueprints, hoe pieces, GetBuildStamina); §7b SnakeSmarterHoe specifics; more on working with the user. Corrected: `dotnet` may exist in the sandbox. |
