@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.3 |
-| **Last updated** | 2026-10-23 04:22 UTC |
-| **Updated by** | Claude Code, SnakePolearms session (`claude/valheim-polearm-pierce-mod-ts6xtu`) |
+| **Version** | 1.4 |
+| **Last updated** | 2026-10-24 07:04 UTC |
+| **Updated by** | Claude Code, SnakeWood session (`claude/exciting-mendel-fudt8s`), review pass |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -29,8 +29,8 @@ build on that one.
 7. If you keep a copy in another repo, copy the whole file under the same versioned name, and
    prefer sending the update back to the canonical copy so it stays the source of truth.
 
-What one Claude Code session learned while building **SnakeWood** (hover logs) from scratch,
-plus what it picked up from the other SnakeSquad repos. Written for the next Claude instance that
+What Claude Code sessions learned building and maintaining the SnakeSquad mods (started by
+the SnakeWood session, extended by the SnakeSmarterHoe and SnakePolearms sessions). Written for the next Claude instance that
 works on a Valheim mod here. Treat it as field notes, not gospel: anything marked *(verified)* was
 checked against the decompiled game or confirmed in-game; the rest is best understanding.
 
@@ -46,8 +46,9 @@ server** with a handful of friends; some players run mods, some don't.
 
 | Repo | What it is | Notes |
 | --- | --- | --- |
-| **SnakeWood** | Original mod: ride logs (and fish) like hover bikes, plus animal-pulled hover sleds. ~4k lines. | Client+server mod, vanilla disguise for unmodded players. This doc lives here. |
+| **SnakeWood** | Original mod: ride logs (and fish) like hover bikes, plus animal-pulled hover sleds. ~5.2k lines. | Client+server mod, vanilla disguise for unmodded players. This doc lives here. |
 | **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only, works on a vanilla dedicated server. Shows as **SnakeyRoadCraft** in Configuration Manager (GUID `com.jubaroo.smarterhoe` unchanged, so it replaces upstream). Fixes terrain-edit multiplayer sync, long-ramp zone gaps, ±8 m limit warnings; replaces auto-build with **shared blueprints**. Fork changes marked `// Fork` or in `TerrainSync.cs`, `Blueprints.cs`, `StrikeGate.cs`. See §7b. |
+| **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeSquadMods**: **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. |
 | **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
@@ -58,12 +59,26 @@ Common conventions across the Valheim repos:
 - Plugin GUID style `com.snakesquad.<name>` (SnakeWood) — check each repo.
 - `thunderstore/<Package>/{manifest.json,README.md,icon.png}` + `thunderstore/package.py`
   produce a Thunderstore-format zip that installs via r2modman "Import local mod".
-- **SnakeWood and SnakeSmarterHoe: every push to the default branch that changes the mod
-  auto-releases** a GitHub release `v{MAJOR.MINOR}.{run_number}` (MAJOR.MINOR from
-  `manifest.json`). Bump the manifest (and `PluginVersion` const) for feature releases; patch
-  numbers come for free. **SnakePolearms, ValheimMapMarker and SnakeSailing release only on a
-  pushed `v*` tag**, and sessions can't push tags (§2). In practice those repos ship as CI
-  artifacts until their workflow is switched to the SnakeWood scheme.
+- **Release scheme the user wants everywhere ("the way we have been doing them"): every push to
+  the default branch that changes the mod auto-releases** a GitHub release
+  `v{MAJOR.MINOR}.{run_number}` (MAJOR.MINOR from `manifest.json`; PATCH is the run number).
+  Docs- or CI-only pushes don't release (the release job diffs `github.event.before..sha` against
+  the mod's folders); a manual workflow_dispatch always does. Bump the manifest (and the
+  `PluginVersion` const) for feature releases.
+  - Uses it: **SnakeWood**, **SnakeSmarterHoe**, **SnakeHammer** *(verified in their build.yml)*.
+  - **SnakeSailing**: switched in [SAT155/SnakeSailing#1](https://github.com/SAT155/SnakeSailing/pull/1)
+    (draft, 2026-10-24). With no manifest, MAJOR.MINOR comes from a root `VERSION` file and each
+    mod's `ModVersion` is listed in the release notes. Until merged it still releases on tags only.
+  - **SnakePolearms, ValheimMapMarker**: still release only on a pushed `v*` tag, which sessions
+    can't push (§2), so they ship as CI artifacts. Switching them needs a session with push access
+    to those repos (the SnakeWood session's `add_repo` with push was refused by the permission
+    check; ask the user).
+- **Default branches are `claude/...` branches and differ per repo** (check with
+  `git remote show origin | grep "HEAD branch"`): SnakeWood `claude/exciting-mendel-fudt8s`,
+  SnakeSailing `claude/charming-noether-raq5zn`, SnakeSmarterHoe `claude/jolly-fermi-in181p`,
+  SnakePolearms `claude/valheim-polearm-pierce-mod-ts6xtu`, SnakeHammer
+  `claude/project-thread-55fg1l`, ValheimMapMarker `main`. A session's designated branch can
+  differ from the default; then changes go in through a PR and release when it's merged.
 - Player-facing docs: `thunderstore/<Package>/README.md`. Developer docs: root `README.md`.
 - Config entries carry long, plain-English descriptions; sections numbered (`"1 - Riding"`,
   `"3 - Balance"`, `"9 - Debug"`) so Configuration Manager orders them.
@@ -104,7 +119,9 @@ Common conventions across the Valheim repos:
 - The GitHub MCP server can disconnect mid-session; when it reconnects, load its tools again
   with ToolSearch.
 - Repo scope is per session; `list_repos` / `add_repo` to reach sibling repos. Clones of other
-  SnakeSquad repos may already be in `/home/user/`.
+  SnakeSquad repos may already be in `/home/user/`. **`add_repo` with `access: "push"` can be
+  refused by the auto-mode permission check** ("Access Added As A Means"); read access went
+  through. Don't work around it: finish what you can and ask the user to grant it.
 - **Reading another Claude session** (when the user says "use what the X session learned"):
   `list_sessions`, then `list_events` with `kinds: ["user"]` and `limit: 100` (tool results are
   `user` events too, so you see the files and commands it touched). Check the repos it actually
@@ -113,7 +130,8 @@ Common conventions across the Valheim repos:
   reading the repos themselves.
 
 **Branching reality for SnakeWood**: the designated branch `claude/exciting-mendel-fudt8s` is the
-repo's only (therefore default) branch, so no PR can be opened and every push releases. Validate
+repo's only (therefore default) branch, so no PR can be opened and every push that touches
+`SnakeWood/` or `thunderstore/` releases (docs-only pushes such as this file don't). Validate
 before pushing; a broken push = a failed release run (no bad release is published, but it costs a
 cycle).
 
@@ -241,7 +259,10 @@ cost a CI round-trip).
 - **Hiding pieces until unlocked**: return false from `HaveRequirements` for every mode (including
   `IsKnown`) → not shown in the build menu. Boss keys: `defeated_eikthyr`, `defeated_gdking`,
   `defeated_bonemass`, `defeated_dragon`, `defeated_goblinking`, `defeated_queen`,
-  `defeated_fader` (Deep North boss `FrozenKing` key **unverified**); check
+  `defeated_fader` (Deep North boss `FrozenKing` key **unverified**). Only the first five are in the
+  game's `GlobalKeys` enum *(verified)*; `defeated_queen`, `defeated_fader` and any Deep North key
+  are set from boss prefab data, so the code can't confirm them (log the keys after a kill, or
+  search assets). Check
   `ZoneSystem.instance.GetGlobalKey(k) || player.HaveUniqueKey(k)`.
 - **Prefix/Postfix state** via `out T __state`; restore in Postfix or a **Finalizer** if the
   original can throw (SnakePolearms).
@@ -387,6 +408,11 @@ compiles but hasn't been tested in-game)*
   `count * 0.75`. The last hit of a chain (`m_attackChainLevels`) does ×2 damage, ×1.2 push.
 - Durability drains once per attack that hits anything; skill raises once per skill type.
 - Primary vs secondary: `Humanoid.m_currentAttackIsSecondary` (set in `StartAttack`).
+- **Direction**: `GetMeleeAttackDir` takes the horizontal direction from
+  `m_character.transform.forward` and only the vertical from `GetAimDir`, so melee goes where
+  the **body** faces, not the camera *(verified)*. An attached rider faces the attach point
+  (`UpdateAttach` copies its rotation): to swing where you look while mounted, rotate the attach
+  point toward the flattened look direction while in combat (SnakeWood). Bows aim with the look.
 - **Friendlies:** with a player attacker whose **PvP is off**, any non-enemy `Character` is
   skipped with `continue` before `AddHitPoint`, so the ray passes through it. With **PvP on**
   that skip no longer applies: other players and tames get hit **and stop the ray**.
@@ -405,14 +431,6 @@ compiles but hasn't been tested in-game)*
   sounds): `m_wagon`, `m_open`, `m_closed` then point at the *prefab's* objects. The prefab
   Vagon's `InUse()` throws → chest won't open; `SetInUse` would toggle the prefab's lid. Copy
   size/background/effects only, or null those three after copying.
-
-**Combat facing** *(verified)*
-
-- `Attack.GetMeleeAttackDir`: horizontal direction = `m_character.transform.forward`, vertical
-  from `GetAimDir`. So melee goes where the **body** faces, not the camera. An attached rider faces
-  the attach point (`UpdateAttach` copies its rotation): to swing where you look while mounted,
-  rotate the attach point toward the flattened look direction while in combat. Bows already aim
-  with the look direction.
 
 **Creatures as pictures** (SnakeWood's sled team)
 
@@ -536,13 +554,12 @@ compiles but hasn't been tested in-game)*
   chest), it's yours: the other mod is reacting to something your object looks like.
 - A trace containing `(wrapper dynamic-method) X.DMD<X::Method>` means the method is Harmony-
   patched (by you or another mod); the exception may still come from the original body.
-- When a CI build fails, read only the failed job (`get_job_logs` with `failed_only`, ~40 tail
-  lines): the `error CS####` lines are all you need. A failed build doesn't release, so the user
-  keeps testing the previous version; say so if they report a bug you've "already fixed".
+- A failed build doesn't release (read it as in §2: `failed_only`, ~40 tail lines), so the user
+  keeps testing the previous version. Say so if they report a bug you've "already fixed".
 
 ---
 
-## 7. SnakeWood specifics (as of v1.22)
+## 7. SnakeWood specifics (as of v1.22.54)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -594,8 +611,9 @@ surface. The user is happy with this ("perfect for now"). Disguise for unmodded 
 **tree log**: a vanilla fish disguise is possible but an unmodded owner could pick it up (and
 delete the log), so the user chose not to.
 
-Known open items: in-game verification of v1.22 (unhitch key, floating-team fix, editor
-suggestions, landings); FrozenKing boss key; a race timer HUD was suggested.
+Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
+suggestions, landings); FrozenKing boss key; a race timer HUD was suggested. Possibly a
+"Lifetime Fuel" core for the sled, which is off for it now.
 
 ## 7b. SnakeSmarterHoe specifics (as of v1.2.25)
 
@@ -647,6 +665,15 @@ unknown. If the fan is narrow, piercing comes almost entirely from the transpile
 (Debug) shows what happens. There's no release path yet: `build.yml` releases only on `v*`
 tags, so switch it to the SnakeWood auto-release scheme if the user wants releases.
 
+## 7d. SnakeHammer specifics
+
+Summary from its README only (no SnakeHammer session's notes yet; the next session there should
+add its own learnings). Private fork of SmartBuild 1.21.0, decompiled; never publish. Jotunn
+dependency (`ValheimModding-Jotunn-2.30.1` in the manifest); builds as netstandard2.1 with C# 11
+"like upstream". Release tags track upstream: `v1.21.<run>` (bump MAJOR.MINOR only to follow a
+newer SmartBuild). Compatibility target is Valheim Plus's placement patches. Placement debugging
+is under `Debug / LogPlacement`.
+
 ---
 
 ## 8. Working with this user
@@ -666,14 +693,17 @@ tags, so switch it to the SnakeWood auto-release scheme if the user wants releas
 - For big rework with trade-offs (e.g. making the team visible to unmodded players, a fish
   disguise with pickup risk), explain the cost and ask before building. They're happy to say no.
 - Motion comfort matters to them: no camera bob or sway on the rider.
+- Their messages are typed fast, so read for intent ("I would thing to get the releases to the
+  way we have been doing them" = switch the other repos to auto-release). When the doc you're
+  updating mentions a gap, they may ask you to fix it in the same breath.
 - After a test they often reply with a numbered list matching your test steps. Answer point by
   point, and if they say "revert", remove the feature fully (config entry included) rather than
   defaulting it off.
 - Say plainly what you could not verify. A green CI build only proves it compiles, not that it
   works in-game.
 - They sometimes interrupt a tool call to add a request. **An interrupted or "rejected" Bash call
-  may already have run** (in the SnakePolearms session a rejected `commit && push` had committed
-  and pushed). Check `git status` / `git log` / the remote before redoing or reporting anything
+  may already have run** (in the SnakePolearms session, and again in the SnakeWood session, a
+  rejected `commit && push` had committed and pushed). Check `git status` / `git log` / the remote before redoing or reporting anything
   as not done.
 - When they ask whether something "can be added" in a config option, they usually mean "add it":
   build it, and say what it actually changes in vanilla terms (e.g. pass-through only matters
@@ -689,3 +719,4 @@ tags, so switch it to the SnakeWood auto-release scheme if the user wants releas
 | 1.1 | 2026-10-23 04:18 | Claude Code, SnakeWood session | Added: custom CM editors, hotkey/action patterns, netstandard2.1 LINQ gap, mod-compat (AzuCraftyBoxes/Vagon); Container, melee facing, creature-picture, swim-wake, IDestructible-vehicle, status-effect notes; disguised-root and ground-probe gotchas, z-fighting; hover feel (terrain fit, damped spring, landing cushion, glide, motion comfort, free look); debugging (Harmony DMD traces, failed CI logs); SnakeWood v1.22 specifics (Hover Sled, fish feel, core fuel, stamina rules, keys, disguise decisions); more on working with the user. |
 | 1.2 | 2026-10-23 04:21 | Claude Code, SnakeSmarterHoe session | Added: tag pushes refused by the git proxy, `send_later` check-ins, MCP reconnects; SteamCMD state 0x6 fix; SmarterHoe's path-filtered releases; forking from decompiled DLLs (ILSpy fixes, Harmony hook-name trap, postfix/finalizer and prefab-mutation notes); terrain editing (TerrainComp ownership, non-owner TerrainOp loses settings, corridor heightmaps, ±8 m, ZDO-stored blueprints, hoe pieces, GetBuildStamina); §7b SnakeSmarterHoe specifics; more on working with the user. Corrected: `dotnet` may exist in the sandbox. |
 | 1.3 | 2026-10-23 04:22 | Claude Code, SnakePolearms session | Added: ValheimMapMarker to the ecosystem; reading another session's transcript; clock-based waits (background `sleep` returned early), proxy-blocked SDK/SteamCMD downloads, `get_job_logs` 404 while running; net48 csproj variant and the PhysicsModule/IMGUIModule CS0012 gotcha; HarmonyX 5.4.2350 lacks `LoadLocal`/`LocalIndex`; §5 melee attacks (`DoMeleeAttack` ray fan, `m_hitThroughWalls`/`m_multiHit`/`m_lowerDamagePerHit`, `ModifyDamage` ordering, PvP friendly filtering, `BaseAI.IsEnemy`); §7c SnakePolearms specifics; interrupted tool calls may have run. Corrected: the Reload Config button came from ValheimMapMarker, not SnakePolearms; only SnakeWood/SnakeSmarterHoe auto-release, the other repos release on tags. |
+| 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
