@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.5 |
-| **Last updated** | 2026-10-24 07:29 UTC |
-| **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
+| **Version** | 1.6 |
+| **Last updated** | 2026-10-24 07:40 UTC |
+| **Updated by** | Claude Code, SnakeHammer session (`claude/project-thread-55fg1l`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -131,6 +131,17 @@ Common conventions across the Valheim repos:
   SnakeSquad repos may already be in `/home/user/`. **`add_repo` with `access: "push"` can be
   refused by the auto-mode permission check** ("Access Added As A Means"); read access went
   through. Don't work around it: finish what you can and ask the user to grant it.
+- **thunderstore.io is blocked from the sandbox** (curl 403) but reachable from GitHub Actions;
+  `WebFetch` can read its package pages (README, latest version, download URL
+  `https://thunderstore.io/package/download/<team>/<name>/<version>/`). To get a third-party mod's
+  source when GitHub has none, let CI download and decompile it and **commit it back**
+  (SnakeHammer's `import-upstream.yml`: `permissions: contents: write`,
+  `ilspycmd -p -o upstream/<dll> <dll>` with `-r` for Managed and BepInEx core, then
+  `git push origin HEAD:$GITHUB_REF_NAME`), then `git pull` and read it locally.
+- `git clone` of public GitHub repos works from the sandbox (used to read Valheim Plus's source,
+  `Grantapher/ValheimPlus`).
+- `workflow_dispatch` only runs a workflow file on the default branch; in a fresh repo whose only
+  branch is the session branch, that branch is the default, so it works right away.
 - **Reading another Claude session** (when the user says "use what the X session learned"):
   `list_sessions`, then `list_events` with `kinds: ["user"]` and `limit: 100` (tool results are
   `user` events too, so you see the files and commands it touched). Check the repos it actually
@@ -204,6 +215,15 @@ just as well):
   `CS0012: The type 'Collider' is defined in an assembly that is not referenced ...
   UnityEngine.PhysicsModule` *(verified)*. `Collider`/`Physics` need `UnityEngine.PhysicsModule`,
   and `GUILayout` (CM buttons) needs `UnityEngine.IMGUIModule`.
+- **Building a decompiled mod** (SnakeHammer): ILSpy's generated csproj guessed `net48`, but the
+  mod used `MathF`, so it needs **netstandard2.1** (`CS0103 'MathF'`). Pin `<LangVersion>11.0</LangVersion>`:
+  with `latest` (C# 14 on the runner) a local named `field` in a property accessor fails with
+  **CS9273** *(verified)*. Drop the decompiled `AssemblyInfo.cs` (`RefSafetyRules`,
+  `IgnoresAccessChecksTo` are compiler/publicizer leftovers).
+- **Jotunn as a dependency**: download `ValheimModding/Jotunn/<ver>` from Thunderstore in CI. Its
+  zip uses **backslash path separators**, which `unzip` warns about and exits 1 on; extract with
+  Python `zipfile`, replacing `\` with `/` *(verified)*. Reference `Jotunn.dll` with
+  `Private=false` and list `ValheimModding-Jotunn-<ver>` in the manifest.
 - Embedded resources for icons: `<EmbeddedResource Include="icon.png" LogicalName="SnakeWood.icon.png"/>`.
 
 ### The Decompile workflow (your eyes into the game)
@@ -293,6 +313,10 @@ cost a CI round-trip).
     `MoveLabelsFrom()` are there *(verified compiles)*.
   - To find a decompiled local's slot, anchor on the call that produces it (e.g. the `stloc`
     right after `call Projectile::FindHitObject`).
+- **Postfix order between mods**: equal-priority Harmony patches run in plugin load order, which
+  you don't control. If your postfix reads state another mod's postfix changes (the placement
+  ghost's pose, say), mark it `[HarmonyPriority(Priority.Last)]` and
+  `[HarmonyAfter(new string[] { "<their GUID>" })]` *(verified compiles, SnakeHammer)*.
 - Borrow vanilla effects instead of shipping assets: `ZNetScene.GetPrefab("Cart")
   .GetComponent<WearNTear>().m_hitEffect / m_destroyedEffect` → `EffectList.Create(pos, rot)`.
   Particle materials: search prefabs' `ParticleSystemRenderer.sharedMaterial` by name ("smoke",
@@ -341,8 +365,9 @@ cost a CI round-trip).
 ## 5. Game systems cheat-sheet (verified by decompile unless noted)
 
 Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demisters, blocking and
-left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, and
-vanilla effect and sound names. Read the matching file before decompiling the same system again.
+left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage,
+vanilla effect and sound names, and building/placement (click-to-place flow, build panel
+requirement slots, Valheim Plus's placement patches). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -687,14 +712,37 @@ unknown. If the fan is narrow, piercing comes almost entirely from the transpile
 (Debug) shows what happens. There's no release path yet: `build.yml` releases only on `v*`
 tags, so switch it to the SnakeWood auto-release scheme if the user wants releases.
 
-## 7d. SnakeHammer specifics
+## 7d. SnakeHammer specifics (as of v1.21.3)
 
-Summary from its README only (no SnakeHammer session's notes yet; the next session there should
-add its own learnings). Private fork of SmartBuild 1.21.0, decompiled; never publish. Jotunn
-dependency (`ValheimModding-Jotunn-2.30.1` in the manifest); builds as netstandard2.1 with C# 11
-"like upstream". Release tags track upstream: `v1.21.<run>` (bump MAJOR.MINOR only to follow a
-newer SmartBuild). Compatibility target is Valheim Plus's placement patches. Placement debugging
-is under `Debug / LogPlacement`.
+Fork of SmartBuild 1.21.0 (codepeople), decompiled: **private use only, never publish**. Source
+in `SnakeHammer/` (namespace `SmartBuild`), changes marked `// Fork`, untouched decompile in
+`upstream/` (re-import with the manual **Import upstream** workflow). Keeps upstream's GUID
+`com.codepeople.smartbuild` and DLL name `SmartBuild.dll`, so it replaces SmartBuild and keeps
+its config and `BepInEx/config/SmartBuild/Blueprints`. Release tags `v1.21.<run>`.
+
+- How SmartBuild works: everything is on its own Smart Hammer (`SmartHammerPieceTable`). Saved
+  blueprints are Jotunn pieces `SmartBuildBP_<name>` with **empty `m_resources`**; their cost
+  comes from `HudRequirementsPatch`. The preview is drawn in an `UpdatePlacementGhost` postfix
+  (`GridPreview`); placement happens in a `TryPlacePiece` prefix (`GridPlacer`/`BlueprintPlacer`
+  coroutines, anchor = ghost pose; blueprints use yaw only via `AnchorRotation`). Hold (H) and
+  nudges (arrows, PgUp/PgDn) pin the ghost through `GridHold.Apply` in that postfix.
+- **Fork fixes** (the user: "see all ingredients", "placement never where the adjusted
+  projection was"):
+  - Full material list in the build panel description (`Display / FullCostList`), totals over
+    all copies, red when short (chest-aware probe throttled to 0.5 s, station ignored); stubs show
+    their cost while browsing the menu, without waiting for the preview to measure them.
+  - Preview postfix runs `Priority.Last` and after Valheim Plus; `PlacementAnchor` records the
+    drawn pose and puts the ghost back on it in the `TryPlacePiece` prefix. `Debug / LogPlacement`
+    (on) logs previewed anchor vs where the first piece landed, and warns when another mod moved
+    the ghost after the preview.
+- Inside SmartBuild, preview and placement share the anchor and pose math (read in full), so the
+  offset had to come from another mod moving the ghost later; Valheim Plus grid alignment
+  (possibly stuck on via Alt+Tab) or ABM are the suspects. See
+  [`docs/game/building-and-placement.md`](game/building-and-placement.md).
+
+Known open items: **not tested in-game yet**. If placement is still off, ask for the
+`LogPlacement` lines from `LogOutput.log` and the V+ `[GridAlignment]` / `[AdvancedBuildingMode]`
+/ `[FreePlacementRotation]` settings. A long material list may be clipped by the HUD text box.
 
 ## 7e. ValheimMapMarker: North Wisp (CoordMarker 1.8.0, package SnakeTography 1.6.0)
 
@@ -772,3 +820,4 @@ warp scale especially, eitr/stamina feel, what unmodded friends see).
 | 1.3 | 2026-10-23 04:22 | Claude Code, SnakePolearms session | Added: ValheimMapMarker to the ecosystem; reading another session's transcript; clock-based waits (background `sleep` returned early), proxy-blocked SDK/SteamCMD downloads, `get_job_logs` 404 while running; net48 csproj variant and the PhysicsModule/IMGUIModule CS0012 gotcha; HarmonyX 5.4.2350 lacks `LoadLocal`/`LocalIndex`; §5 melee attacks (`DoMeleeAttack` ray fan, `m_hitThroughWalls`/`m_multiHit`/`m_lowerDamagePerHit`, `ModifyDamage` ordering, PvP friendly filtering, `BaseAI.IsEnemy`); §7c SnakePolearms specifics; interrupted tool calls may have run. Corrected: the Reload Config button came from ValheimMapMarker, not SnakePolearms; only SnakeWood/SnakeSmarterHoe auto-release, the other repos release on tags. |
 | 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
 | 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
+| 1.6 | 2026-10-24 07:40 | Claude Code, SnakeHammer session | Added: §7d rewritten from the SnakeHammer session (how SmartBuild works, the fork fixes, open items); `docs/game/building-and-placement.md` (click-to-place flow, build panel slots, Valheim Plus placement patches); thunderstore blocked in the sandbox and the decompile-and-commit-back import workflow, cloning public repos, workflow_dispatch on a fresh repo; decompiled-mod build gotchas (netstandard2.1/MathF, LangVersion 11 vs `field`, AssemblyInfo leftovers), Jotunn zip backslashes; Harmony postfix ordering between mods. |

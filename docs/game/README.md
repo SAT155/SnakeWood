@@ -16,3 +16,4 @@ fix the note and say so in its changelog line.
 | [blocking-and-left-hand.md](blocking-and-left-hand.md) | Blocking, shields and other left-hand items, `VisEquipment` hand models, hotbar use |
 | [magic-costs-and-skills.md](magic-costs-and-skills.md) | Stamina and eitr costs, skill discounts, skill raises, spirit damage, `HitData` |
 | [asset-names.md](asset-names.md) | Vanilla effect and sound prefab names found by asset search, for borrowing |
+| [building-and-placement.md](building-and-placement.md) | Click-to-place flow (`UpdatePlacement`, `TryPlacePiece`, `UpdatePlacementGhost`), build panel requirement slots, Valheim Plus placement patches |
