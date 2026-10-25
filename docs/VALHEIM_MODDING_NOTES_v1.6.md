@@ -740,12 +740,13 @@ shield version (1.8.0) in-game, the weapon version (1.9.0) is untested.
   [`attacks-and-throws.md`](game/attacks-and-throws.md), [`audio-zsfx.md`](game/audio-zsfx.md).
 
 1.9.0 in testing flooded the log with `NullReferenceException` in `ZNetScene.RemoveObjects` and
-slowed the game once the wisp was used (cause not yet pinned down; see
-[`network-objects.md`](game/network-objects.md)). 1.9.1 adds a guard that clears and names the
-broken object, and makes the charged cast cost twice a sweep's stamina and no eitr (the user's
-choice).
+slowed the game after the alt attack. Cause: its mist clearers stripped a `demister_ball` copy
+with `DestroyImmediate` inside the throw's animation event, which Unity refuses, so the copy
+kept its `ZNetView` (see [`network-objects.md`](game/network-objects.md)). 1.9.1 added a guard
+that clears and names broken objects; 1.9.2 handles the release in the next `Update`. 1.9.1 also
+made the charged cast cost twice a sweep's stamina and no eitr (the user's choice).
 
-Known open items: which object broke ZNetScene (read the guard's log line); in-game test of the weapon version (attack animations from the cloned
+Known open items: in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
 ---

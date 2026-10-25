@@ -22,3 +22,12 @@ North Wisp flooded a tester's log. *(verified)* = read in the decompile.
 - Safety net used in ValheimMapMarker (`NetworkObjectGuard.cs`): a prefix on
   `ZNetScene.RemoveObjects` that drops entries whose view is null or has no ZDO (destroying a
   non-persistent ZDO we own, as vanilla would) and logs the prefab name once.
+- **Don't strip or `DestroyImmediate` inside an animation event** (or physics trigger/contact,
+  rendering callbacks, `OnValidate`): Unity refuses with "Destroying components immediately is
+  not permitted during ... animation event callbacks" *(seen in-game, 2026-10-25)*, the
+  components stay, and a stripped network-prefab copy keeps its `ZNetView`. `Attack.OnAttackTrigger`
+  (and so `ProjectileAttackTriggered`) runs from an animation event: queue the work and do it in
+  the next `Update`. Also check a stripped copy has no `ZNetView` left before waking it.
+- This was the North Wisp's bug: the charged cast's mist clearers were built at the throw's
+  release point. The guard's log line named the object only by its hash, since the copy had
+  been renamed; a hash not in `ZNetScene` points at a renamed copy like that.
