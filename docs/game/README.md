@@ -16,3 +16,5 @@ fix the note and say so in its changelog line.
 | [blocking-and-left-hand.md](blocking-and-left-hand.md) | Blocking, shields and other left-hand items, `VisEquipment` hand models, hotbar use |
 | [magic-costs-and-skills.md](magic-costs-and-skills.md) | Stamina and eitr costs, skill discounts, skill raises, spirit damage, `HitData` |
 | [asset-names.md](asset-names.md) | Vanilla effect and sound prefab names found by asset search, for borrowing |
+| [attacks-and-throws.md](attacks-and-throws.md) | How an attack runs (`StartAttack` → `Attack.Start` → `OnAttackTrigger`), thrown items without a projectile, holding the player still (`SetControls`), equip duration |
+| [audio-zsfx.md](audio-zsfx.md) | `ZSFX` volume, making sounds positional, which sounds not to borrow |

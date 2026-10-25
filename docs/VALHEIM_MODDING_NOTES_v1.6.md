@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.5 |
-| **Last updated** | 2026-10-24 07:29 UTC |
+| **Version** | 1.6 |
+| **Last updated** | 2026-10-25 04:00 UTC |
 | **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -78,8 +78,15 @@ Common conventions across the Valheim repos:
   - **SnakeSailing**: switched in [SAT155/SnakeSailing#1](https://github.com/SAT155/SnakeSailing/pull/1)
     (draft, 2026-10-24). With no manifest, MAJOR.MINOR comes from a root `VERSION` file and each
     mod's `ModVersion` is listed in the release notes. Until merged it still releases on tags only.
-  - **SnakePolearms, ValheimMapMarker**: still release only on a pushed `v*` tag, which sessions
-    can't push (§2), so they ship as CI artifacts. Switching them needs a session with push access
+  - **ValheimMapMarker**: switched in [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
+    (draft, 2026-10-25): MAJOR.MINOR from `thunderstore/SnakeTography/manifest.json`, PATCH = run
+    number via `PACKAGE_VERSION` (read by `thunderstore/package.py`); releases on default-branch
+    pushes that change a plugin folder or `thunderstore/`; a manual `workflow_dispatch` on another
+    branch makes a **pre-release** (how a session hands the user a test build to import). The
+    user wants releases with the zip attached directly: r2modman imports it with no extra
+    extract step, unlike the double-zipped CI artifact.
+  - **SnakePolearms**: still releases only on a pushed `v*` tag, which sessions can't push (§2),
+    so it ships as CI artifacts. Switching them needs a session with push access
     to those repos (the SnakeWood session's `add_repo` with push was refused by the permission
     check; ask the user).
 - **Default branches are `claude/...` branches and differ per repo** (check with
@@ -341,8 +348,9 @@ cost a CI round-trip).
 ## 5. Game systems cheat-sheet (verified by decompile unless noted)
 
 Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demisters, blocking and
-left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, and
-vanilla effect and sound names. Read the matching file before decompiling the same system again.
+left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, vanilla
+effect and sound names, attacks and throws (attack flow, projectile-less throws, holding the
+player still, equip duration), and sounds (`ZSFX` volume, positional audio). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -696,34 +704,42 @@ dependency (`ValheimModding-Jotunn-2.30.1` in the manifest); builds as netstanda
 newer SmartBuild). Compatibility target is Valheim Plus's placement patches. Placement debugging
 is under `Debug / LogPlacement`.
 
-## 7e. ValheimMapMarker: North Wisp (CoordMarker 1.8.0, package SnakeTography 1.6.0)
+## 7e. ValheimMapMarker: North Wisp (CoordMarker 1.9.0, package SnakeTography 1.7.x)
 
-From the North Wisp session, 2026-10-24, [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
-(draft; that repo still releases only on tags). Files `SnakeSquadCoordMarker/NorthWisp*.cs`.
-Built green in CI, **not tested in-game**.
+From the North Wisp session, 2026-10-24 to 25, [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
+(draft). Files `SnakeSquadCoordMarker/NorthWisp*.cs`. Built green in CI; the user tested the
+shield version (1.8.0) in-game, the weapon version (1.9.0) is untested.
 
-- A craftable copy of the Wisplight item (own shared data, Wisplight's recipe), now
-  `ItemType.Shield` held in the shield hand with the wooden shield's pose and block effect, and
-  an `attach` child built from the dropped model (the Wisplight item has none). Hotbar use just
-  equips it.
-- **Tap block**: throws a wisp north (+Z) for 5 stamina. **Hold block** for 0.8 s: the wisp
-  gathers at the left hand with glow, warp, charge sound, then a ready chime and hum; letting go
-  shoots it toward the crosshair (bow-style aim), up to 150 m, with a local mist trail; it
-  bounces up to 3 times, then bursts: spirit damage to `IsEnemy` characters in 9 m, a local
-  glow on each, a 20 m local mist clear, and the wisp lingers 4 s.
-- The charged cast pays like a staff: stamina = Bronze Atgeir sweep (read at runtime) and 5 eitr,
-  both with the 0.33 × skill-factor discount; raises Elemental Magic when the burst hits.
-- The wisp itself is the networked `demister_ball`, so unmodded players see it (in hand and in
-  flight) and it clears mist for everyone. Sounds and effects are vanilla prefab names in
-  config (*4 - North Wisp Effects*), chosen by name only.
+- A craftable copy of the Wisplight item (own shared data, Wisplight's recipe), and an `attach`
+  child built from the dropped model (the Wisplight item has none).
+- **History of the controls**, so a later session doesn't undo what the user asked for:
+  first a hotbar use, then a shield-slot item driven by block (1.8.0), then (the user's choice,
+  2026-10-25) **a one-handed throwing weapon with no ammo**: attack = north throw (cloned
+  `BombOoze` throw), **middle mouse (secondary attack) pressed once** = stand locked in place
+  while it charges, then it fires by itself (cloned `SpearFlint` throw). How: see
+  [`attacks-and-throws.md`](game/attacks-and-throws.md).
+- The north throw flies 4 m out along the look direction, loops about "disoriented" for 1.8 s,
+  then eases north (+Z) (the user's description). The charged cast aims at the crosshair, up to
+  150 m, mist trail, bounces up to 3 times, bursts: spirit damage to `IsEnemy` characters in
+  9 m, local glow on each, 20 m local mist clear.
+- Costs through the vanilla attack: throw 5 stamina; charged = Bronze Atgeir sweep stamina
+  (read at runtime) + 5 eitr, weapon skill = Elemental Magic so the game applies its discount;
+  the burst raises Elemental Magic on a hit.
+- The wisp is the networked `demister_ball`, so unmodded players see it and it clears mist for
+  everyone. Sounds and effects are vanilla prefab names in config (*4 - North Wisp Effects*).
+- User feedback on 1.8.0 that shaped 1.9.0: sounds were "too intense and busy", **no potion
+  sounds** (they signal a potion was drunk), sounds played at full volume at any distance
+  (fixed by forcing 3D, see [`audio-zsfx.md`](game/audio-zsfx.md)), and equipping took the
+  armor-style timed action (fixed with `m_equipDuration = 0`). An internal *Effects Version*
+  config resets old effect defaults once.
 - The user's direction: keep everything configurable, and prefer whatever unmodded players can
   also see or hear ("anything spoofable for the unmodded players is ideal").
-- Mechanics behind it: [`docs/game/mist-and-demisters.md`](game/mist-and-demisters.md),
-  [`blocking-and-left-hand.md`](game/blocking-and-left-hand.md),
-  [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md).
+- Mechanics behind it: [`mist-and-demisters.md`](game/mist-and-demisters.md),
+  [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md),
+  [`attacks-and-throws.md`](game/attacks-and-throws.md), [`audio-zsfx.md`](game/audio-zsfx.md).
 
-Known open items: in-game test of everything (hand model size and position, default effects,
-warp scale especially, eitr/stamina feel, what unmodded friends see).
+Known open items: in-game test of the weapon version (attack animations from the cloned
+attacks, hand model position in the right hand, standing still while charging, default sounds).
 
 ---
 
@@ -772,3 +788,4 @@ warp scale especially, eitr/stamina feel, what unmodded friends see).
 | 1.3 | 2026-10-23 04:22 | Claude Code, SnakePolearms session | Added: ValheimMapMarker to the ecosystem; reading another session's transcript; clock-based waits (background `sleep` returned early), proxy-blocked SDK/SteamCMD downloads, `get_job_logs` 404 while running; net48 csproj variant and the PhysicsModule/IMGUIModule CS0012 gotcha; HarmonyX 5.4.2350 lacks `LoadLocal`/`LocalIndex`; §5 melee attacks (`DoMeleeAttack` ray fan, `m_hitThroughWalls`/`m_multiHit`/`m_lowerDamagePerHit`, `ModifyDamage` ordering, PvP friendly filtering, `BaseAI.IsEnemy`); §7c SnakePolearms specifics; interrupted tool calls may have run. Corrected: the Reload Config button came from ValheimMapMarker, not SnakePolearms; only SnakeWood/SnakeSmarterHoe auto-release, the other repos release on tags. |
 | 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
 | 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
+| 1.6 | 2026-10-25 04:00 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback. |
