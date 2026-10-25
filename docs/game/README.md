@@ -18,3 +18,4 @@ fix the note and say so in its changelog line.
 | [asset-names.md](asset-names.md) | Vanilla effect and sound prefab names found by asset search, for borrowing |
 | [attacks-and-throws.md](attacks-and-throws.md) | How an attack runs (`StartAttack` → `Attack.Start` → `OnAttackTrigger`), thrown items without a projectile, holding the player still (`SetControls`), equip duration |
 | [audio-zsfx.md](audio-zsfx.md) | `ZSFX` volume, making sounds positional, which sounds not to borrow |
+| [network-objects.md](network-objects.md) | `ZNetView` registration, destroying network objects safely, the `ZNetScene.RemoveObjects` error flood |

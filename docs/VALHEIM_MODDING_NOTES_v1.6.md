@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | **Version** | 1.6 |
-| **Last updated** | 2026-10-25 04:00 UTC |
+| **Last updated** | 2026-10-25 04:40 UTC |
 | **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -350,7 +350,8 @@ cost a CI round-trip).
 Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demisters, blocking and
 left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, vanilla
 effect and sound names, attacks and throws (attack flow, projectile-less throws, holding the
-player still, equip duration), and sounds (`ZSFX` volume, positional audio). Read the matching file before decompiling the same system again.
+player still, equip duration), sounds (`ZSFX` volume, positional audio), and network objects
+(destroying them safely, the `ZNetScene.RemoveObjects` error flood). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -738,7 +739,13 @@ shield version (1.8.0) in-game, the weapon version (1.9.0) is untested.
   [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md),
   [`attacks-and-throws.md`](game/attacks-and-throws.md), [`audio-zsfx.md`](game/audio-zsfx.md).
 
-Known open items: in-game test of the weapon version (attack animations from the cloned
+1.9.0 in testing flooded the log with `NullReferenceException` in `ZNetScene.RemoveObjects` and
+slowed the game once the wisp was used (cause not yet pinned down; see
+[`network-objects.md`](game/network-objects.md)). 1.9.1 adds a guard that clears and names the
+broken object, and makes the charged cast cost twice a sweep's stamina and no eitr (the user's
+choice).
+
+Known open items: which object broke ZNetScene (read the guard's log line); in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
 ---
@@ -788,4 +795,4 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.3 | 2026-10-23 04:22 | Claude Code, SnakePolearms session | Added: ValheimMapMarker to the ecosystem; reading another session's transcript; clock-based waits (background `sleep` returned early), proxy-blocked SDK/SteamCMD downloads, `get_job_logs` 404 while running; net48 csproj variant and the PhysicsModule/IMGUIModule CS0012 gotcha; HarmonyX 5.4.2350 lacks `LoadLocal`/`LocalIndex`; §5 melee attacks (`DoMeleeAttack` ray fan, `m_hitThroughWalls`/`m_multiHit`/`m_lowerDamagePerHit`, `ModifyDamage` ordering, PvP friendly filtering, `BaseAI.IsEnemy`); §7c SnakePolearms specifics; interrupted tool calls may have run. Corrected: the Reload Config button came from ValheimMapMarker, not SnakePolearms; only SnakeWood/SnakeSmarterHoe auto-release, the other repos release on tags. |
 | 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
 | 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
-| 1.6 | 2026-10-25 04:00 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback. |
+| 1.6 | 2026-10-25 04:40 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback; `docs/game/network-objects.md` (the RemoveObjects error flood and destroying network objects safely). |
