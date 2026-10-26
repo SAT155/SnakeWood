@@ -43,6 +43,8 @@ North Wisp session. All *(verified)* by decompile unless noted.
 
 - **Wisp everyone sees and that clears mist for everyone**: `Instantiate(demister_ball)` and move
   it yourself (ValheimMapMarker's North Wisp).
-- **Invisible, local mist clearer**: instantiate `demister_ball` under an inactive holder with
-  `ZNetView.m_forceDisableInit = true`, strip every component except `Transform`, `Demister`,
-  `ParticleSystemForceField`, then activate. Set `endRange` for the size.
+- **Invisible, local mist clearer** (ValheimMapMarker 1.9.3): a new inactive GameObject, add a
+  `ParticleSystemForceField` and copy `demister_ball`'s field settings onto it, then add a
+  `Demister`, copy its public fields from the prefab's and set `m_forceField`, then activate.
+  Set `endRange` for the size. (Stripping a `demister_ball` copy with `DestroyImmediate` worked
+  but broke when done inside an animation event; see `network-objects.md`.)
