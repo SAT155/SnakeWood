@@ -48,3 +48,14 @@ North Wisp session. All *(verified)* by decompile unless noted.
   `Demister`, copy its public fields from the prefab's and set `m_forceField`, then activate.
   Set `endRange` for the size. (Stripping a `demister_ball` copy with `DestroyImmediate` worked
   but broke when done inside an animation event; see `network-objects.md`.)
+
+## Valheim Plus
+
+The user's server runs Valheim Plus. Its `Demister_OnEnable_Patch` postfix (read from
+Grantapher/ValheimPlus, `ValheimPlus/GameClasses/Demister.cs`, 2026-10-27) checks
+`transform.root.name` against `demister_ball` / `piece_groundtorch_mist` and then
+`transform.parent.name` against `Mistwalker` **without a null check**, so any `Demister` on a
+root object throws a `NullReferenceException` on enable (seen in-game with the North Wisp's mist
+clearers). Put your own demisters under a parent object. A `demister_ball` copy gets V+'s
+Wisplight range applied when its range setting is on.
+
