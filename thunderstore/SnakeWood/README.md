@@ -251,7 +251,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   the raw log with a Lox saddle strapped on), `Mixed` (the raw log with a little plank seat, the
   old default; switched to `RawWood` once on update), or `BuildPiece` (the build piece laid flat,
   as in 1.0). Needs a restart.
-- **Hover Height While Moving** (0.4): logs hover at full height only standing still; moving, they sink toward this share of it by half of top speed, so enemies can still reach you. 1 = full height at any speed.
+- **Hover Height At Rest** (0.4): logs hover at full height only while moving; standing still or parked they sink to this share of it, so enemies can reach you while you sit there. 1 = full height at any speed.
 - **Extra Reach While Riding** (2 m): how much further than on foot you can reach doors, portals, signs and chests while riding.
 - **Hover Glow**: the coloured light under each log.
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.

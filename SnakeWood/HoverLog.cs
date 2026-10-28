@@ -94,12 +94,13 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 	}
 
-	// Full hover height only at rest: moving, the log sinks toward Hover Height While Moving (a
-	// share of it) by half of top speed, so creatures can still reach a rider who's on the go.
+	// Low at rest, full hover height on the move: standing still or parked, the log sinks to
+	// Hover Height At Rest (a share of it) so creatures can reach a rider who's sitting there; it
+	// rises to full height by half of top speed.
 	private float MovingHeightFactor(Vector3 vel)
 	{
 		float t = Mathf.Clamp01(new Vector3(vel.x, 0f, vel.z).magnitude / Mathf.Max(1f, 0.5f * TopSpeedAt(false)));
-		return Mathf.Lerp(1f, SnakeWoodPlugin.MovingHoverHeight.Value, t);
+		return Mathf.Lerp(SnakeWoodPlugin.RestHoverHeight.Value, 1f, t);
 	}
 
 	private float TopSpeedAt(bool onWater) => m_sled != null ? m_sled.TopSpeed(onWater) : m_v.MaxSpeedCfg.Value;
