@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.4 |
-| **Last updated** | 2026-10-24 07:04 UTC |
-| **Updated by** | Claude Code, SnakeWood session (`claude/exciting-mendel-fudt8s`), review pass |
+| **Version** | 1.6 |
+| **Last updated** | 2026-10-28 04:20 UTC |
+| **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -29,6 +29,15 @@ build on that one.
 7. If you keep a copy in another repo, copy the whole file under the same versioned name, and
    prefer sending the update back to the canonical copy so it stays the source of truth.
 
+**When to update (the user's standing rule, 2026-10-24):** after you change any SnakeSquad repo,
+update these notes with what changed and what you learned. When several sessions have changes
+waiting, they update in the order of their changes, earliest first, so later learnings build on
+earlier ones. What you learn by **decompiling** goes in a small per-system topic file under
+[`docs/game/`](game/README.md) (class and method names, key fields, how it fits together,
+gotchas, the game version you read), linked from §5 here; never paste raw decompiled code.
+Add to an existing topic file when one covers the system. Keep it short: the user wants this to
+cost as few tokens as it can while staying useful.
+
 What Claude Code sessions learned building and maintaining the SnakeSquad mods (started by
 the SnakeWood session, extended by the SnakeSmarterHoe and SnakePolearms sessions). Written for the next Claude instance that
 works on a Valheim mod here. Treat it as field notes, not gospel: anything marked *(verified)* was
@@ -50,7 +59,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only, works on a vanilla dedicated server. Shows as **SnakeyRoadCraft** in Configuration Manager (GUID `com.jubaroo.smarterhoe` unchanged, so it replaces upstream). Fixes terrain-edit multiplayer sync, long-ramp zone gaps, ±8 m limit warnings; replaces auto-build with **shared blueprints**. Fork changes marked `// Fork` or in `TerrainSync.cs`, `Blueprints.cs`, `StrikeGate.cs`. See §7b. |
 | **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
-| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeSquadMods**: **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. |
+| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
 | **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
@@ -69,8 +78,15 @@ Common conventions across the Valheim repos:
   - **SnakeSailing**: switched in [SAT155/SnakeSailing#1](https://github.com/SAT155/SnakeSailing/pull/1)
     (draft, 2026-10-24). With no manifest, MAJOR.MINOR comes from a root `VERSION` file and each
     mod's `ModVersion` is listed in the release notes. Until merged it still releases on tags only.
-  - **SnakePolearms, ValheimMapMarker**: still release only on a pushed `v*` tag, which sessions
-    can't push (§2), so they ship as CI artifacts. Switching them needs a session with push access
+  - **ValheimMapMarker**: switched in [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
+    (draft, 2026-10-25): MAJOR.MINOR from `thunderstore/SnakeTography/manifest.json`, PATCH = run
+    number via `PACKAGE_VERSION` (read by `thunderstore/package.py`); releases on default-branch
+    pushes that change a plugin folder or `thunderstore/`; a manual `workflow_dispatch` on another
+    branch makes a **pre-release** (how a session hands the user a test build to import). The
+    user wants releases with the zip attached directly: r2modman imports it with no extra
+    extract step, unlike the double-zipped CI artifact.
+  - **SnakePolearms**: still releases only on a pushed `v*` tag, which sessions can't push (§2),
+    so it ships as CI artifacts. Switching them needs a session with push access
     to those repos (the SnakeWood session's `add_repo` with push was refused by the permission
     check; ask the user).
 - **Default branches are `claude/...` branches and differ per repo** (check with
@@ -218,6 +234,15 @@ has a smaller copy with only `types` that prints whole types plus `Humanoid` att
     `item_roundlog` "Corewood" → `RoundLog`).
   - Values on prefabs (speeds, damage, HP) live in serialized assets, not code. For those, log
     them at runtime instead (see §6 debug tricks).
+  - The asset search adds ~2 min to the run. Effect and sound names found so far are in
+    [`docs/game/asset-names.md`](game/asset-names.md); check there before searching again.
+- The workflow can be dispatched on the default branch (`ref`) of a repo that has it; no push
+  needed. Several types in one run, with one `grep` alternation and `after` 10–40, keeps the
+  log small.
+- `get_job_logs` with `return_content` returns the log as JSON on one line; past the size limit
+  it's saved to a file. Load it with `json.loads`, take the `logs_content` (or similar) field,
+  write it out, then `cut -c30-` (strip timestamps) and `awk '/=== Type ===/,/=== Next ===/'`
+  to read one type at a time.
 
 Always verify an API by decompiling before relying on it. Signatures drift between versions
 (e.g. `ZNetScene.FindInstance(ZDO)` returns a **`ZNetView`**, not a `GameObject` — a guess
@@ -321,6 +346,12 @@ cost a CI round-trip).
 ---
 
 ## 5. Game systems cheat-sheet (verified by decompile unless noted)
+
+Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demisters, blocking and
+left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, vanilla
+effect and sound names, attacks and throws (attack flow, projectile-less throws, holding the
+player still, equip duration), sounds (`ZSFX` volume, positional audio), and network objects
+(destroying them safely, the `ZNetScene.RemoveObjects` error flood). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -674,6 +705,60 @@ dependency (`ValheimModding-Jotunn-2.30.1` in the manifest); builds as netstanda
 newer SmartBuild). Compatibility target is Valheim Plus's placement patches. Placement debugging
 is under `Debug / LogPlacement`.
 
+## 7e. ValheimMapMarker: North Wisp (CoordMarker 1.9.0, package SnakeTography 1.7.x)
+
+From the North Wisp session, 2026-10-24 to 25, [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
+(draft). Files `SnakeSquadCoordMarker/NorthWisp*.cs`. Built green in CI; the user tested the
+shield version (1.8.0) in-game, the weapon version (1.9.0) is untested.
+
+- A craftable copy of the Wisplight item (own shared data, Wisplight's recipe), and an `attach`
+  child built from the dropped model (the Wisplight item has none).
+- **History of the controls**, so a later session doesn't undo what the user asked for:
+  first a hotbar use, then a shield-slot item driven by block (1.8.0), then (the user's choice,
+  2026-10-25) **a one-handed throwing weapon with no ammo**: attack = north throw (cloned
+  `BombOoze` throw), **middle mouse (secondary attack) pressed once** = stand locked in place
+  while it charges, then it fires by itself (cloned `SpearFlint` throw). How: see
+  [`attacks-and-throws.md`](game/attacks-and-throws.md).
+- The north throw flies 4 m out along the look direction, loops about "disoriented" for 1.8 s,
+  then eases north (+Z) (the user's description). The charged cast aims at the crosshair, up to
+  150 m, mist trail, bounces up to 3 times, bursts: spirit damage to `IsEnemy` characters in
+  9 m, local glow on each, 20 m local mist clear.
+- Costs through the vanilla attack: throw 5 stamina; charged = Bronze Atgeir sweep stamina
+  (read at runtime) + 5 eitr, weapon skill = Elemental Magic so the game applies its discount;
+  the burst raises Elemental Magic on a hit.
+- The wisp is the networked `demister_ball`, so unmodded players see it and it clears mist for
+  everyone. Sounds and effects are vanilla prefab names in config (*4 - North Wisp Effects*).
+- User feedback on 1.8.0 that shaped 1.9.0: sounds were "too intense and busy", **no potion
+  sounds** (they signal a potion was drunk), sounds played at full volume at any distance
+  (fixed by forcing 3D, see [`audio-zsfx.md`](game/audio-zsfx.md)), and equipping took the
+  armor-style timed action (fixed with `m_equipDuration = 0`). An internal *Effects Version*
+  config resets old effect defaults once.
+- The user's direction: keep everything configurable, and prefer whatever unmodded players can
+  also see or hear ("anything spoofable for the unmodded players is ideal").
+- Mechanics behind it: [`mist-and-demisters.md`](game/mist-and-demisters.md),
+  [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md),
+  [`attacks-and-throws.md`](game/attacks-and-throws.md), [`audio-zsfx.md`](game/audio-zsfx.md).
+
+1.9.0 in testing flooded the log with `NullReferenceException` in `ZNetScene.RemoveObjects` and
+slowed the game after the alt attack. Cause: its mist clearers stripped a `demister_ball` copy
+with `DestroyImmediate` inside the throw's animation event, which Unity refuses, so the copy
+kept its `ZNetView` (see [`network-objects.md`](game/network-objects.md)). 1.9.1 added a guard
+that clears and names broken objects; 1.9.2 handles the release in the next `Update`. 1.9.1 also
+made the charged cast cost twice a sweep's stamina and no eitr (the user's choice).
+
+1.9.3 builds local mist clearers fresh (no stripping at all); 1.9.4 parents them, since Valheim
+Plus's `Demister.OnEnable` postfix throws for a parentless Demister (see
+[`mist-and-demisters.md`](game/mist-and-demisters.md)). 1.10.0 (package 1.8.x, 2026-10-28):
+the burst is a **flashbang** at the user's request (blinding local flash, camera shake within
+25 m, hostile non-boss creatures in 9 m re-staggered for 4 s via the networked
+`Character.Stagger`, see [`attacks-and-throws.md`](game/attacks-and-throws.md)); and after a
+crash to desktop when it burst near enemies (area loaded by an unmodded player), borrowed
+effects with game logic are skipped (see [`asset-names.md`](game/asset-names.md)); crash cause
+unconfirmed, no crash log yet.
+
+Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
+attacks, hand model position in the right hand, standing still while charging, default sounds).
+
 ---
 
 ## 8. Working with this user
@@ -720,3 +805,5 @@ is under `Debug / LogPlacement`.
 | 1.2 | 2026-10-23 04:21 | Claude Code, SnakeSmarterHoe session | Added: tag pushes refused by the git proxy, `send_later` check-ins, MCP reconnects; SteamCMD state 0x6 fix; SmarterHoe's path-filtered releases; forking from decompiled DLLs (ILSpy fixes, Harmony hook-name trap, postfix/finalizer and prefab-mutation notes); terrain editing (TerrainComp ownership, non-owner TerrainOp loses settings, corridor heightmaps, ±8 m, ZDO-stored blueprints, hoe pieces, GetBuildStamina); §7b SnakeSmarterHoe specifics; more on working with the user. Corrected: `dotnet` may exist in the sandbox. |
 | 1.3 | 2026-10-23 04:22 | Claude Code, SnakePolearms session | Added: ValheimMapMarker to the ecosystem; reading another session's transcript; clock-based waits (background `sleep` returned early), proxy-blocked SDK/SteamCMD downloads, `get_job_logs` 404 while running; net48 csproj variant and the PhysicsModule/IMGUIModule CS0012 gotcha; HarmonyX 5.4.2350 lacks `LoadLocal`/`LocalIndex`; §5 melee attacks (`DoMeleeAttack` ray fan, `m_hitThroughWalls`/`m_multiHit`/`m_lowerDamagePerHit`, `ModifyDamage` ordering, PvP friendly filtering, `BaseAI.IsEnemy`); §7c SnakePolearms specifics; interrupted tool calls may have run. Corrected: the Reload Config button came from ValheimMapMarker, not SnakePolearms; only SnakeWood/SnakeSmarterHoe auto-release, the other repos release on tags. |
 | 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
+| 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
+| 1.6 | 2026-10-25 04:40 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback; `docs/game/network-objects.md` (the RemoveObjects error flood and destroying network objects safely); Valheim Plus Demister patch gotcha; stagger and camera shake; effects with game logic; §7e up to North Wisp 1.10.0 (flashbang). |
