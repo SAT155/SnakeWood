@@ -31,3 +31,17 @@ North Wisp flooded a tester's log. *(verified)* = read in the decompile.
 - This was the North Wisp's bug: the charged cast's mist clearers were built at the throw's
   release point. The guard's log line named the object only by its hash, since the copy had
   been renamed; a hash not in `ZNetScene` points at a renamed copy like that.
+
+## Showing a local effect to other modded players (routed RPC)
+
+Lights, camera shake and other local-only things never reach other players. ValheimMapMarker's
+North Wisp 1.10.2 sends them as a routed RPC, built from memory of the API and not yet confirmed
+in-game:
+- Register on each new `ZRoutedRpc.instance` (it's made anew for each world joined; checking every
+  frame is cheap): `ZRoutedRpc.instance.Register<Vector3>("Name", (long sender, Vector3 pos) => …)`.
+- Send with `InvokeRoutedRPC(ZRoutedRpc.Everybody, "Name", pos)`. Skip the handler when
+  `sender == ZRoutedRpc.instance.m_id`, in case the sender gets its own call (unverified).
+- Leave out of the remote copy any spawned prefab with a `ZNetView`: it is already a network
+  object that everyone sees.
+- Unmodded clients have no handler for it. That is assumed harmless (at most a log line) but not
+  verified.

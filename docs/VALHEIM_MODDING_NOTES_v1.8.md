@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.7 |
-| **Last updated** | 2026-10-28 04:17 UTC |
-| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
+| **Version** | 1.8 |
+| **Last updated** | 2026-10-28 05:30 UTC |
+| **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -783,6 +783,14 @@ crash to desktop when it burst near enemies (area loaded by an unmodded player),
 effects with game logic are skipped (see [`asset-names.md`](game/asset-names.md)); crash cause
 unconfirmed, no crash log yet.
 
+1.10.1: the user found the charged throw went "all star quarterback" far, so it now arcs under
+gravity (9.81 × **Gravity**) from release at **Speed** 20 m/s, aimed with the lower ballistic
+solution at the crosshair point (45° when out of reach), about 40 m on flat ground; a
+**Proximity Fuse** (4 m, armed after 3 m of flight) bursts it near hostiles. 1.10.2: the flash,
+glow and camera shake were local only, so the burst is sent to other modded players as a routed
+RPC (see [`network-objects.md`](game/network-objects.md)); unmodded players only see the burst
+effects that have a `ZNetView`.
+
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
@@ -835,3 +843,4 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
 | 1.6 | 2026-10-25 04:40 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback; `docs/game/network-objects.md` (the RemoveObjects error flood and destroying network objects safely); Valheim Plus Demister patch gotcha; stagger and camera shake; effects with game logic; §7e up to North Wisp 1.10.0 (flashbang). |
 | 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log, lower hover at rest, fish disguised as fish, passenger grip). |
+| 1.8 | 2026-10-28 05:30 | Claude Code, ValheimMapMarker North Wisp session | Added: §7e North Wisp 1.10.1 (gravity arc, proximity fuse) and 1.10.2 (burst shared over a routed RPC); `network-objects.md` routed RPC broadcast pattern. |
