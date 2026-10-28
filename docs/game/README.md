@@ -19,3 +19,4 @@ fix the note and say so in its changelog line.
 | [attacks-and-throws.md](attacks-and-throws.md) | How an attack runs (`StartAttack` → `Attack.Start` → `OnAttackTrigger`), thrown items without a projectile, holding the player still (`SetControls`), equip duration |
 | [audio-zsfx.md](audio-zsfx.md) | `ZSFX` volume, making sounds positional, which sounds not to borrow |
 | [network-objects.md](network-objects.md) | `ZNetView` registration, destroying network objects safely, the `ZNetScene.RemoveObjects` error flood |
+| [hover-and-portal-triggers.md](hover-and-portal-triggers.md) | `Player.FindHoverObject` reach and first-hit rule, portal triggers (`TeleportWorldTrigger`, `TeleportWorld.Teleport`), saddle and rug prefab names |

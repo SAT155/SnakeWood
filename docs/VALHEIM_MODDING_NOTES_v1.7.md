@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.6 |
-| **Last updated** | 2026-10-28 04:20 UTC |
-| **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
+| **Version** | 1.7 |
+| **Last updated** | 2026-10-28 04:17 UTC |
+| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -94,7 +94,10 @@ Common conventions across the Valheim repos:
   SnakeSailing `claude/charming-noether-raq5zn`, SnakeSmarterHoe `claude/jolly-fermi-in181p`,
   SnakePolearms `claude/valheim-polearm-pierce-mod-ts6xtu`, SnakeHammer
   `claude/project-thread-55fg1l`, ValheimMapMarker `main`. A session's designated branch can
-  differ from the default; then changes go in through a PR and release when it's merged.
+  differ from the default; then changes go in through a PR and release when it's merged. For a
+  test build before the merge, dispatch SnakeWood's **Build** workflow on the PR branch: the
+  release job runs for any workflow_dispatch and tags `--target` that commit *(verified,
+  v1.23.79)*.
 - Player-facing docs: `thunderstore/<Package>/README.md`. Developer docs: root `README.md`.
 - Config entries carry long, plain-English descriptions; sections numbered (`"1 - Riding"`,
   `"3 - Balance"`, `"9 - Debug"`) so Configuration Manager orders them.
@@ -400,7 +403,10 @@ player still, equip duration), sounds (`ZSFX` volume, positional audio), and net
   colliders to "Ignore Raycast" during the rider's attacks.
 - `UpdateHover` clears `m_hovering` while controlling a doodad; `Use` then either interacts with
   `m_hovering` or calls `StopDoodadControl()`. Postfix `UpdateHover` +
-  `FindHoverObject(out hover, out creature)` to allow doors etc. while riding.
+  `FindHoverObject(out hover, out creature)` to allow doors etc. while riding. Only the first
+  raycast hit counts and reach is `m_maxInteractDistance` (5 m) from the eye, so put the ridden
+  vehicle on Ignore Raycast and raise the reach for that call. Portals trigger only on the
+  player's own collider. Details: [`docs/game/hover-and-portal-triggers.md`](game/hover-and-portal-triggers.md).
 - `Character` carries players standing on a moving rigidbody only by its point velocity, not
   around turns — carry passengers through yaw changes yourself.
 - Stamina/eitr: `UseStamina`, `HaveStamina`, `GetStamina`, `UseEitr`, `HaveEitr`, `GetMaxEitr`;
@@ -590,7 +596,7 @@ compiles but hasn't been tested in-game)*
 
 ---
 
-## 7. SnakeWood specifics (as of v1.22.54)
+## 7. SnakeWood specifics (as of v1.23.79)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -619,6 +625,15 @@ Design decisions the user made (keep them):
   until 25% stamina is back.
 - Ore/metal restriction exists but is **off**; portals allowed; rider stays mounted through them.
 - Defaults the user picked: Surf pose, Crouch lowers the log, Mounted Combat on, Vanilla Disguise on.
+- **Log look (1.23):** the user disliked the little plank seat (`Model = Mixed`, a build piece
+  squashed onto the raw log), so the default is now `RawWood` (sit on the log); Balance Version 6
+  moves old `Mixed` configs over once. `Saddle` (experimental, untested in-game) puts the vanilla
+  `SaddleLox` item model on, scaled evenly by `FitUpright` with its own up kept; its native
+  bounds are logged at load in case it sits wrong.
+- **While riding (1.23):** E reaches doors, chests, portals (tag shows), signs and other logs,
+  looking past your own log, `Extra Reach While Riding` (2 m) beyond vanilla. `PortalByLog`
+  sends the rider through when any part of the log's capsule overlaps a portal trigger, so
+  portals against a wall work. Both in `HoverLogPortal.cs`.
 - Keys: R take out fuel, H hitch, U unhitch, Left Alt free look.
 - Tooltips must stay short (Valheim auto-shrinks long tooltip text until unreadable).
 
@@ -643,7 +658,8 @@ surface. The user is happy with this ("perfect for now"). Disguise for unmodded 
 delete the log), so the user chose not to.
 
 Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
-suggestions, landings); FrozenKing boss key; a race timer HUD was suggested. Possibly a
+suggestions, landings) and v1.23.79 (plain-log seat, Saddle look, riding reach, portal by log;
+PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 "Lifetime Fuel" core for the sled, which is off for it now.
 
 ## 7b. SnakeSmarterHoe specifics (as of v1.2.25)
@@ -807,3 +823,4 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
 | 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
 | 1.6 | 2026-10-25 04:40 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback; `docs/game/network-objects.md` (the RemoveObjects error flood and destroying network objects safely); Valheim Plus Demister patch gotcha; stagger and camera shake; effects with game logic; §7e up to North Wisp 1.10.0 (flashbang). |
+| 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log). |
