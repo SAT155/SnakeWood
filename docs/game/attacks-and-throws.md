@@ -57,3 +57,18 @@ mouse by default) and `"JoySecondaryAttack"`.
 `QueueEquipAction` runs a timed minor action ("$hud_equipping", `equipping` animation), which is
 what armor and utility items do. `SharedData.m_equipDuration` defaults to 1, so a cloned utility
 item (e.g. the Wisplight) turned weapon needs `m_equipDuration = 0`.
+
+## Stagger and camera shake *(verified 2026-10-28)*
+
+- `Character.Stagger(Vector3 forceDirection)` (public): runs `RPC_Stagger` if we own the
+  creature, else `InvokeRPC("RPC_Stagger", ...)` to its owner, so it works on creatures other
+  players own and everyone sees it. `RPC_Stagger` does nothing while `IsStaggering()`; otherwise
+  it turns the creature to face against the force and triggers the `stagger` animation. A
+  longer "stun" = call it again as each stagger ends (ValheimMapMarker's `FlashStun`, every 1.2 s).
+- Normal stagger from hits: `AddStaggerDamage` accumulates toward `GetMaxHealth() ×
+  m_staggerDamageFactor` (0 = never staggers from damage) and decays at a fifth of that per
+  second.
+- `GameCamera.instance.AddShake(Vector3 point, float range, float strength, bool continous)`:
+  local camera shake, scaled by distance, ignored if weaker than the current shake.
+- Check `character.m_nview.IsValid()` before acting on a creature from `GetAllCharacters()`.
+

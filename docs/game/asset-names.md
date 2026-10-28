@@ -47,3 +47,13 @@ Re-run with your own regex for other needs.
 
 - `fx_ItemSparkles`, `vfx_Firework_Sparkler`, `vfx_LightFoot`, `fx_charred_chestglow`,
   `fx_charred_eyeglow`, seeker sounds and effects (`sfx_seeker_*`, `fx_seeker_*`).
+
+## Caution: effects with game logic
+
+Some `fx_*` names are more than visuals. The North Wisp's first burst defaults
+(`fx_summon_spirit_spawn`, `fx_chainlightning_hit`) are the main suspect for a crash to desktop
+when it burst near enemies (2026-10-28, not confirmed). Before spawning a borrowed effect, check
+its components: ValheimMapMarker skips any prefab with a MonoBehaviour other than `ZNetView`,
+`ZSyncTransform`, `ZSFX`, `TimedDestruction`, `LightFlicker`, `LightLod`, `CamShaker`,
+`EffectFade`, `Billboard`, `LineConnect`, `RandomAnimation`, or with a collider, and logs it.
+
