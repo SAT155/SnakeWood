@@ -109,7 +109,7 @@ resets every log's Load Capacity (other settings you changed are kept).
 
 Ride straight into a portal and you stay on: you come out the other side still riding, with
 the log under you. It doesn't fly, drain stamina or burn fuel during the loading screen.
-Anything you carry still follows the game's portal rules.
+The portal takes you as soon as any part of the log enters it, so you can nose into one that stands against a wall. Anything you carry still follows the game's portal rules.
 
 Tight spots: the log bumps into things at its own size (smaller than it looks), and if it ever
 ends up wedged inside a wall or rock it lets go of it for a moment and slides free. Holding
@@ -149,7 +149,7 @@ Every log burns **resin**. A new log starts empty.
 | --- | --- |
 | **E** on a log | Get on. |
 | **E** again | Get off (looking at the log or at nothing). |
-| **E** on a door | Open or close it without getting off. |
+| **E** on a door, chest, portal or sign | Use it without getting off. You reach a little further than on foot (`Extra Reach While Riding`). |
 | **W / S** | Throttle and reverse. |
 | **Mouse** | Steer. The log turns toward where you look, like the Lox. |
 | **A / D** | Strafe. With `Steering = Keys`, A and D turn instead. |
@@ -245,8 +245,11 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down (fish logs tilt half as far again; sleds not at all).
 - **Fish Swim Wiggle**: how far a fish log's model sways its tail and bobs (the rider and camera stay steady; 0 = off). Fish keep their own proportions and swim in the water: sitting still you sit in it (and get wet); at speed you skim just over the surface with the fish underneath.
 - **Free Look Key** (Left Alt): with camera steering, hold to look around without turning. Standing still you can always look around freely.
-- **Model**: `Mixed` (raw log plus build-piece saddle, default), `RawWood`, or `BuildPiece`
-  (the build piece laid flat, as in 1.0). Needs a restart.
+- **Model**: `RawWood` (just the raw log, you sit on the wood; default), `Saddle` (experimental:
+  the raw log with a Lox saddle strapped on), `Mixed` (the raw log with a little plank seat, the
+  old default; switched to `RawWood` once on update), or `BuildPiece` (the build piece laid flat,
+  as in 1.0). Needs a restart.
+- **Extra Reach While Riding** (2 m): how much further than on foot you can reach doors, portals, signs and chests while riding.
 - **Hover Glow**: the coloured light under each log.
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
 - **Balance**: **Boost Stamina Per Second**, **Hop Stamina**, **Deep Water Depth**,

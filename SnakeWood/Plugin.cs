@@ -63,6 +63,7 @@ public enum ModelStyle
 	Mixed,
 	RawWood,
 	BuildPiece,
+	Saddle,
 }
 
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
@@ -70,7 +71,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 {
 	internal const string PluginGUID = "com.snakesquad.snakewood";
 	internal const string PluginName = "SnakeWood";
-	internal const string PluginVersion = "1.22.1";
+	internal const string PluginVersion = "1.23.0";
 
 	private static SnakeWoodPlugin instance = null!;
 	internal static ManualLogSource Log = null!;
@@ -118,6 +119,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> FishWiggle = null!;
 	internal static ConfigEntry<KeyboardShortcut> FreeLookKey = null!;
 	internal static ConfigEntry<float> MaxPitch = null!;
+	internal static ConfigEntry<float> RidingReach = null!;
 	internal static ConfigEntry<ModelStyle> Model = null!;
 	internal static ConfigEntry<bool> Glow = null!;
 	internal static ConfigEntry<bool> Trails = null!;
@@ -167,7 +169,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static bool ResetLoads;
 	// Balance version 5: Surf became the default pose and Core Wood got stronger.
 	internal static bool ResetV5;
-	private const int CurrentBalanceVersion = 5;
+	private const int CurrentBalanceVersion = 6;
 	internal static ConfigEntry<bool> RamFriendlies = null!;
 
 	private void Awake()
@@ -196,10 +198,12 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Fish logs swim rather than steer: they turn toward where you look lazily and dive and climb with your look more than wood does. Their model bobs gently and its tail sways by up to this many degrees (the rider and camera stay steady). 0 turns the sway and bob off.", new AcceptableValueRange<float>(0f, 20f)));
 		FreeLookKey = Config.Bind("1 - Riding", "Free Look Key", new KeyboardShortcut(KeyCode.LeftAlt),
 			"With camera steering, hold this to look around without turning the log. Standing still, you can always look around freely.");
+		RidingReach = Config.Bind("1 - Riding", "Extra Reach While Riding", 2f,
+			new ConfigDescription("How much further than on foot (5 m) you can reach doors, portals, signs and chests while riding, in metres. You sit or stand higher and further back on a log than when you walk up to them.", new AcceptableValueRange<float>(0f, 5f)));
 		MaxPitch = Config.Bind("1 - Riding", "Max Pitch", 20f,
 			new ConfigDescription("How far the nose tips up or down, in degrees.", new AcceptableValueRange<float>(0f, 45f)));
-		Model = Config.Bind("1 - Riding", "Model", ModelStyle.Mixed,
-			"Mixed: the raw wood log with a saddle made from that wood's build piece. RawWood: just the raw wood log. BuildPiece: the build piece laid flat (the original look). Takes effect after a restart.");
+		Model = Config.Bind("1 - Riding", "Model", ModelStyle.RawWood,
+			"RawWood: just the raw wood log, and you sit on the wood. Saddle (experimental): the raw log with a leather Lox saddle strapped on. Mixed: the raw log with a little plank cut from that wood's build piece as a seat. BuildPiece: the build piece laid flat (the original look). Takes effect after a restart.");
 		Glow = Config.Bind("1 - Riding", "Hover Glow", true,
 			"A soft light under each log, coloured by its wood. Takes effect for logs that load after you change it.");
 		Trails = Config.Bind("1 - Riding", "Trails", true,
@@ -294,6 +298,11 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		{
 			Pose.Value = RiderPose.Surf;
 		}
+		if (balanceVersion.Value < 6 && Model.Value == ModelStyle.Mixed)
+		{
+			// The plank seat was the old default; the user preferred sitting on the log itself.
+			Model.Value = ModelStyle.RawWood;
+		}
 		foreach (HoverLogVariant variant in HoverLogVariant.All)
 		{
 			variant.BindConfig(Config);
@@ -302,7 +311,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 		{
 			ResetSpeeds = ResetRecipes = ResetLoads = ResetV5 = false;
 			balanceVersion.Value = CurrentBalanceVersion;
-			Log.LogInfo("Settings changed by a rebalance (log speeds, wood log recipes, load capacities) reset to this version's defaults.");
+			Log.LogInfo("Settings changed by a rebalance (log speeds, wood log recipes, load capacities, plank seat model) reset to this version's defaults.");
 		}
 
 		Config.Bind("1 - Riding", "Reload Config From Disk", false,
