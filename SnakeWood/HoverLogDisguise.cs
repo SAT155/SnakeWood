@@ -90,6 +90,31 @@ internal static class HoverLogDisguise
 		return (length, girth);
 	}
 
+	// A fish log can show as its own vanilla fish (the user accepted the risk: a player without the
+	// mod who ends up owning it can pick it up, which deletes the ride). Turned the way LayFlat turns
+	// the modded model, so both face the same way. Vanilla can't be told to scale it, so it shows at
+	// the fish item's own size.
+	private static (int hash, Vector3 offset)? FishDisguise(string variant)
+	{
+		if (!SnakeWoodPlugin.FishDisguise.Value || ZNetScene.instance == null
+			|| HoverLogVariant.Get(variant) is not HoverLogVariant v || !v.IsFish)
+		{
+			return null;
+		}
+		GameObject? fish = ZNetScene.instance.GetPrefab(v.WoodItem);
+		if (fish == null || fish.GetComponent<ZSyncTransform>() == null)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant}: the vanilla {v.WoodItem} can't follow a moving log, so it shows as a tree log to players without the mod.");
+			return null;
+		}
+		Vector3 size = HoverLogPrefabs.Bounds(fish.transform).size;
+		Vector3 offset = size.y >= size.x && size.y >= size.z ? new Vector3(90f, 0f, 0f)
+			: size.x >= size.z ? new Vector3(0f, 90f, 0f)
+			: Vector3.zero;
+		SnakeWoodPlugin.Log.LogInfo($"{variant} logs show as the vanilla {fish.name} to players without the mod (size {size}, turn {offset}).");
+		return (fish.name.GetStableHashCode(), offset);
+	}
+
 	// The vanilla log to disguise as, and the turn that lays its longest side along +Z (forward).
 	private static (int hash, Vector3 offset) DisguiseFor(string variant)
 	{
@@ -99,6 +124,11 @@ internal static class HoverLogDisguise
 		}
 		int hash = 0;
 		Vector3 offset = Vector3.zero;
+		if (FishDisguise(variant) is (int, Vector3) fish)
+		{
+			s_disguises[variant] = fish;
+			return fish;
+		}
 		if (ZNetScene.instance != null)
 		{
 			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : variant.StartsWith("Fish") ? s_hints["Fish2"] : new string[0];

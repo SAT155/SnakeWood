@@ -110,9 +110,15 @@ public static class HoverLogPrefabs
 		{
 			style = ModelStyle.BuildPiece;
 		}
-		if (style != ModelStyle.RawWood && template == null)
+		if ((style is ModelStyle.Mixed or ModelStyle.BuildPiece) && template == null)
 		{
 			style = HasMesh(rawWood) ? ModelStyle.RawWood : style;
+		}
+		GameObject? saddleItem = style == ModelStyle.Saddle ? db.GetItemPrefab(SaddleItem) : null;
+		if (style == ModelStyle.Saddle && !HasMesh(saddleItem))
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant.Name}: no {SaddleItem} model in this game version, so the log has no saddle.");
+			style = ModelStyle.RawWood;
 		}
 		if (style == ModelStyle.BuildPiece && template == null)
 		{
@@ -120,7 +126,8 @@ public static class HoverLogPrefabs
 			return null;
 		}
 		SnakeWoodPlugin.Log.LogInfo($"{variant.Name}: {style} model from {(style == ModelStyle.BuildPiece ? template!.name : rawWood!.name)}" +
-			(style == ModelStyle.Mixed ? $" with a {template!.name} saddle." : "."));
+			(style == ModelStyle.Mixed ? $" with a {template!.name} saddle."
+				: style == ModelStyle.Saddle ? $" with a {SaddleItem} saddle (model {Bounds(saddleItem!.transform).size})." : "."));
 
 		if (s_holder == null)
 		{
@@ -174,6 +181,16 @@ public static class HoverLogPrefabs
 			FitToBox(saddle, frame,
 				new Vector3(2.4f * radius, 0.12f, 0.35f * variant.Length),
 				new Vector3(0f, radius + 0.04f + fishLift, -0.12f * variant.Length));
+		}
+		else if (style == ModelStyle.Saddle && !variant.Sled)
+		{
+			// The Lox's leather saddle, kept upright and in proportion, sized to the log's width.
+			GameObject saddle = Object.Instantiate(saddleItem!, frame, false);
+			saddle.name = "saddle";
+			StripToVisual(saddle);
+			float radius = 0.225f * variant.Thickness;
+			FitUpright(saddle, frame, 2.6f * radius, 0.35f * variant.Length,
+				new Vector3(0f, radius + 0.08f + fishLift, -0.12f * variant.Length));
 		}
 		foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true))
 		{
@@ -339,6 +356,9 @@ public static class HoverLogPrefabs
 		}
 	}
 
+	// The Lox saddle item; its model makes the Saddle style's seat.
+	private const string SaddleItem = "SaddleLox";
+
 	// The vanilla pole/beam built from the same wood (the longest one), so each log looks like its
 	// wood. Falls back to the variant's named hints, then to any plain wooden pole.
 	private static GameObject? FindTemplate(HoverLogVariant variant, PieceTable hammer)
@@ -492,6 +512,17 @@ public static class HoverLogPrefabs
 		visual.transform.localScale = Vector3.Scale(visual.transform.localScale, new Vector3(Mathf.Abs(local.x), Mathf.Abs(local.y), Mathf.Abs(local.z)));
 		bounds = Bounds(visual.transform, root);
 		visual.transform.localPosition += center - bounds.center;
+	}
+
+	// Scales a model evenly (keeping its own up and forward) until it fits within the given width
+	// and length, then sets it so the middle of its top sits at `top`.
+	private static void FitUpright(GameObject visual, Transform root, float width, float length, Vector3 top)
+	{
+		Bounds bounds = Bounds(visual.transform, root);
+		float scale = Mathf.Min(width / Mathf.Max(0.01f, bounds.size.x), length / Mathf.Max(0.01f, bounds.size.z));
+		visual.transform.localScale *= scale;
+		bounds = Bounds(visual.transform, root);
+		visual.transform.localPosition += top - new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
 	}
 
 	private static bool HasMesh(GameObject? go) => go != null &&

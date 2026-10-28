@@ -126,23 +126,77 @@ internal static class FreeRiderInPortalPatch
 	private static bool Prefix(Player __instance) => !(MountedPortal.Active && __instance == Player.m_localPlayer);
 }
 
-// Vanilla stops looking for things to use while you control a doodad. On a log, doors (and the
-// log itself, to get off) can still be used.
+// Vanilla stops looking for things to use while you control a doodad. On a log, doors, portals,
+// signs, chests (and other logs) can still be used. The search looks past the log you ride (it
+// would block the view down and ahead) and reaches further than on foot, since a rider sits higher
+// and further back than someone walking up to a door.
 [HarmonyPatch(typeof(Player), nameof(Player.UpdateHover))]
 internal static class DoorsWhileRidingPatch
 {
 	private static void Postfix(Player __instance)
 	{
-		if (__instance != Player.m_localPlayer || __instance.GetDoodadController() is not HoverLog)
+		if (__instance != Player.m_localPlayer || __instance.GetDoodadController() is not HoverLog log)
 		{
 			return;
 		}
-		__instance.FindHoverObject(out GameObject hover, out Character _);
+		GameObject hover;
+		HoverLog? own = HoverLog.BeginRiderPassThrough();
+		float reach = __instance.m_maxInteractDistance;
+		__instance.m_maxInteractDistance = reach + SnakeWoodPlugin.RidingReach.Value;
+		try
+		{
+			__instance.FindHoverObject(out hover, out Character _);
+		}
+		finally
+		{
+			__instance.m_maxInteractDistance = reach;
+			own?.EndRiderPassThrough();
+		}
 		if (hover != null && (hover.GetComponentInParent<Door>() != null || hover.GetComponentInParent<HoverLog>() != null
-			|| hover.GetComponentInParent<Container>() != null))
+			|| hover.GetComponentInParent<Container>() != null || hover.GetComponentInParent<TeleportWorld>() != null
+			|| hover.GetComponentInParent<Sign>() != null))
 		{
 			__instance.m_hovering = hover;
 		}
+		PortalByLog.Check(__instance, log);
+	}
+}
+
+// A portal only takes you when your own body walks into its trigger. Riding, the log's nose gets
+// there first, and against a wall your body never does. So the log's whole length counts: as it
+// enters a portal's trigger, the rider goes through (MountedPortal brings the log along).
+internal static class PortalByLog
+{
+	private static readonly Collider[] s_hits = new Collider[32];
+	private static TeleportWorld? s_inside;
+
+	public static void Check(Player player, HoverLog log)
+	{
+		if (MountedPortal.Active || player.IsTeleporting() || log.Frame.GetComponent<CapsuleCollider>() is not CapsuleCollider capsule)
+		{
+			s_inside = null;
+			return;
+		}
+		Transform t = capsule.transform;
+		Vector3 center = t.TransformPoint(capsule.center);
+		Vector3 half = t.TransformVector(Vector3.forward * Mathf.Max(0f, capsule.height / 2f - capsule.radius));
+		float radius = capsule.radius * Mathf.Max(t.lossyScale.x, t.lossyScale.y) + 0.2f;
+		int count = Physics.OverlapCapsuleNonAlloc(center - half, center + half, radius, s_hits, ~0, QueryTriggerInteraction.Collide);
+		TeleportWorld? portal = null;
+		for (int i = 0; i < count && portal == null; i++)
+		{
+			if (s_hits[i].isTrigger && s_hits[i].GetComponentInParent<TeleportWorldTrigger>() is TeleportWorldTrigger trigger)
+			{
+				portal = trigger.m_teleportWorld;
+			}
+		}
+		// Only on the way in, so standing in a portal that refuses you (ore, no link) doesn't repeat its message.
+		if (portal != null && portal != s_inside)
+		{
+			ZLog.Log("Teleportation TRIGGER (hover log)");
+			portal.Teleport(player);
+		}
+		s_inside = portal;
 	}
 }
 
