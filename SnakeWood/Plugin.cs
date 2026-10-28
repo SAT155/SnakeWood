@@ -120,6 +120,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<KeyboardShortcut> FreeLookKey = null!;
 	internal static ConfigEntry<float> MaxPitch = null!;
 	internal static ConfigEntry<float> RidingReach = null!;
+	internal static ConfigEntry<float> MovingHoverHeight = null!;
 	internal static ConfigEntry<ModelStyle> Model = null!;
 	internal static ConfigEntry<bool> Glow = null!;
 	internal static ConfigEntry<bool> Trails = null!;
@@ -198,6 +199,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			new ConfigDescription("Fish logs swim rather than steer: they turn toward where you look lazily and dive and climb with your look more than wood does. Their model bobs gently and its tail sways by up to this many degrees (the rider and camera stay steady). 0 turns the sway and bob off.", new AcceptableValueRange<float>(0f, 20f)));
 		FreeLookKey = Config.Bind("1 - Riding", "Free Look Key", new KeyboardShortcut(KeyCode.LeftAlt),
 			"With camera steering, hold this to look around without turning the log. Standing still, you can always look around freely.");
+		MovingHoverHeight = Config.Bind("1 - Riding", "Hover Height While Moving", 0.4f,
+			new ConfigDescription("Logs hover at their full Hover Height only while standing still. Moving, they sink toward this share of it (reached at half of top speed), so enemies can still hit you on the go. 1 keeps the full height at any speed. Never lower than 0.25 m.", new AcceptableValueRange<float>(0.1f, 1f)));
 		RidingReach = Config.Bind("1 - Riding", "Extra Reach While Riding", 2f,
 			new ConfigDescription("How much further than on foot (5 m) you can reach doors, portals, signs and chests while riding, in metres. You sit or stand higher and further back on a log than when you walk up to them.", new AcceptableValueRange<float>(0f, 5f)));
 		MaxPitch = Config.Bind("1 - Riding", "Max Pitch", 20f,
