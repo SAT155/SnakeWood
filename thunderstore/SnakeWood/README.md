@@ -7,7 +7,8 @@ leans into turns, hops, and each wood type handles differently.
 mod still see something: each log is saved as a vanilla half log (what a felled tree splits
 into), so to them it's a log floating along with the rider (they can't ride or chop it). The game
 can't shrink that log for them, so the real hover log grows to about the same size instead. If the mod is ever removed,
-saved logs become ordinary tree logs. `Vanilla Disguise` turns this off.
+saved logs become ordinary tree logs. Fish logs show as their vanilla fish instead, at normal
+fish size (`Fish Show As Fish`). `Vanilla Disguise` turns this off.
 
 ## The logs
 
@@ -242,6 +243,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - **Crouch Action**: `Lower` (default, sink and creep) or `Brake`.
 - **Combat Stance**: `Stand` (default) or `Seated` (experimental).
 - **Vanilla Disguise**: on by default (see the top of this page).
+- **Fish Show As Fish** (on): with the disguise on, players without the mod see a fish log as its vanilla fish (normal fish size) instead of a tree log. Risk: if one of them ends up owning a parked fish log they can pick it up, which deletes it. Off goes back to tree logs.
 - **Pitch With Look** and **Max Pitch**: nose tilt from looking up or down (fish logs tilt half as far again; sleds not at all).
 - **Fish Swim Wiggle**: how far a fish log's model sways its tail and bobs (the rider and camera stay steady; 0 = off). Fish keep their own proportions and swim in the water: sitting still you sit in it (and get wet); at speed you skim just over the surface with the fish underneath.
 - **Free Look Key** (Left Alt): with camera steering, hold to look around without turning. Standing still you can always look around freely.

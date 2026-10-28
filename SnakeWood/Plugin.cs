@@ -114,6 +114,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> SeatHeight = null!;
 	internal static ConfigEntry<bool> MountedCombat = null!;
 	internal static ConfigEntry<bool> Disguise = null!;
+	internal static ConfigEntry<bool> FishDisguise = null!;
 	internal static ConfigEntry<CombatStance> Stance = null!;
 	internal static ConfigEntry<bool> PitchControl = null!;
 	internal static ConfigEntry<float> FishWiggle = null!;
@@ -189,6 +190,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"Attack, use bows and block while riding. Off: attacking gets you off the log, like on the Lox.");
 		Disguise = Config.Bind("1 - Riding", "Vanilla Disguise", true,
 			"Saves hover logs as a vanilla fallen-tree log, so players without the mod see a tree log floating along with the rider (they can't ride or chop it). Modded players still see the real log. Applies to logs as they load.");
+		FishDisguise = Config.Bind("1 - Riding", "Fish Show As Fish", true,
+			"With Vanilla Disguise on, fish logs show to players without the mod as their vanilla fish (at the fish's normal size) instead of a tree log. Risk: a player without the mod who ends up owning a parked fish log can pick it up, which deletes it. Off shows them as tree logs, which can't be picked up. Applies to logs as they load.");
 		Crouch = Config.Bind("1 - Riding", "Crouch Action", CrouchAction.Lower,
 			"What holding Crouch (Ctrl) does while riding. Lower: the log sinks right down and creeps along, for squeezing under things and into portals. Brake: stops hard.");
 		Stance = Config.Bind("1 - Riding", "Combat Stance", CombatStance.Stand,
