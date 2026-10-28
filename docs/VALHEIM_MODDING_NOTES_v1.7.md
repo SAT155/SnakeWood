@@ -596,7 +596,7 @@ compiles but hasn't been tested in-game)*
 
 ---
 
-## 7. SnakeWood specifics (as of v1.23.88)
+## 7. SnakeWood specifics (as of v1.23.92)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -656,12 +656,15 @@ water. **Unmodded players can't see the team** (accepted by the user).
 the model bobs and sways its tail (rider/camera steady), real fish proportions (uniform scale,
 height ≤ 1.1 m, seat raised to the back). Over water a fish's depth follows speed: at rest the
 seat sits 0.3 m under (rider gets Wet), and by 60% of top speed the rider skims just above the
-surface. The user is happy with this ("perfect for now"). Disguise for unmodded players stays a
-**tree log**: a vanilla fish disguise is possible but an unmodded owner could pick it up (and
-delete the log), so the user chose not to.
+surface. The user is happy with this ("perfect for now"). Disguise for unmodded players: since 1.23 a fish
+log shows as its **vanilla fish item** (`Fish Show As Fish`, on). The user accepted the risk that an
+unmodded owner can pick it up (deleting the ride). Vanilla can't scale it, so unmodded players see a
+normal-size fish; `HoverLogDisguise.SizeOf` returns null for non-`TreeLog` prefabs, so the modded
+model isn't resized. The disguise turn matches `LayFlat` (+X long side → Euler(0, 90, 0)), unlike tree
+logs (Euler(0, -90, 0)), so both sides face the same way *(untested in-game)*.
 
 Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
-suggestions, landings) and v1.23.88 (plain-log seat, Saddle look, riding reach, portal by log, lower hover while moving;
+suggestions, landings) and v1.23.92 (plain-log seat, Saddle look, riding reach, portal by log, lower hover while moving, fish disguise;
 PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 "Lifetime Fuel" core for the sled, which is off for it now.
 
@@ -826,4 +829,4 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.4 | 2026-10-24 07:04 | Claude Code, SnakeWood session (review) | Review pass. Added: SnakeHammer (ecosystem row, §7d); per-repo default branches; release-scheme status per repo (SnakeSailing switch PR, Polearms/MapMarker still on tags); `add_repo` push can be refused by the permission check; `GlobalKeys` only has the first five boss keys; more on working with the user. Corrected: SnakeWood docs-only pushes don't release; SnakeWood is ~5.2k lines. Merged the duplicate combat-facing note into §5 melee and the duplicate failed-CI note into §2; intro now credits all sessions. |
 | 1.5 | 2026-10-24 07:29 | Claude Code, ValheimMapMarker North Wisp session | Added: the user's standing rule to update these notes after every repo change (earliest change first) and to put decompile learnings in per-system topic files under `docs/game/` (new: mist and demisters, blocking and left-hand items, stamina/eitr/skills/spirit damage, vanilla effect and sound names); §7e North Wisp; reading big Decompile logs, dispatching it on the default branch. Corrected: the ValheimMapMarker package is SnakeTography. |
 | 1.6 | 2026-10-25 04:40 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback; `docs/game/network-objects.md` (the RemoveObjects error flood and destroying network objects safely); Valheim Plus Demister patch gotcha; stagger and camera shake; effects with game logic; §7e up to North Wisp 1.10.0 (flashbang). |
-| 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log, lower hover while moving). |
+| 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log, lower hover while moving, fish disguised as fish). |
