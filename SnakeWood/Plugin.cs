@@ -122,6 +122,7 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 	internal static ConfigEntry<float> MaxPitch = null!;
 	internal static ConfigEntry<float> RidingReach = null!;
 	internal static ConfigEntry<float> RestHoverHeight = null!;
+	internal static ConfigEntry<float> PassengerGrip = null!;
 	internal static ConfigEntry<ModelStyle> Model = null!;
 	internal static ConfigEntry<bool> Glow = null!;
 	internal static ConfigEntry<bool> Trails = null!;
@@ -204,6 +205,8 @@ public class SnakeWoodPlugin : BaseUnityPlugin
 			"With camera steering, hold this to look around without turning the log. Standing still, you can always look around freely.");
 		RestHoverHeight = Config.Bind("1 - Riding", "Hover Height At Rest", 0.4f,
 			new ConfigDescription("Logs hover at their full Hover Height only while moving. Standing still or parked, they sink to this share of it (and rise back to full height by half of top speed), so enemies can reach you while you sit there. 1 keeps the full height at any speed. Never lower than 0.25 m.", new AcceptableValueRange<float>(0.1f, 1f)));
+		PassengerGrip = Config.Bind("1 - Riding", "Passenger Grip", 0.6f,
+			new ConfigDescription("Players standing on someone else's log stay stuck to the deck when a bump lifts them off it, for up to this many seconds, as long as they're still over the deck. Jumping or walking off the edge lets go. 0 = only while touching the deck. Each passenger's own setting applies.", new AcceptableValueRange<float>(0f, 3f)));
 		RidingReach = Config.Bind("1 - Riding", "Extra Reach While Riding", 2f,
 			new ConfigDescription("How much further than on foot (5 m) you can reach doors, portals, signs and chests while riding, in metres. You sit or stand higher and further back on a log than when you walk up to them.", new AcceptableValueRange<float>(0f, 5f)));
 		MaxPitch = Config.Bind("1 - Riding", "Max Pitch", 20f,

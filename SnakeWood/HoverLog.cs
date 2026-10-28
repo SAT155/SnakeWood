@@ -1276,18 +1276,43 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 	// Character carries anyone standing on a moving body along in a straight line, but not around
 	// its turns, so passengers would slide off whenever the log turns. On each player's own game, a
 	// passenger standing on this log is held to their spot on the deck while they stand still (grip
-	// through speeding up, braking and turns), and swung round with the log while they walk.
+	// through speeding up, braking and turns), and swung round with the log while they walk. A bump
+	// that lifts them off the deck for a moment (the log bobbing, landing, rising) doesn't let go:
+	// they stay held while they're still over the deck, until they jump or walk off its edge.
 	private float m_lastSeenYaw = float.NaN;
 	private bool m_holdingPassenger;
 	private Vector3 m_passengerSpot;
+	private float m_lastOnDeck = -10f;
+	private float m_lastSeenY = float.NaN;
+	private BoxCollider? m_deck;
 
 	private void CarryPassenger()
 	{
 		float yaw = FrameYaw();
 		float turned = float.IsNaN(m_lastSeenYaw) ? 0f : Mathf.DeltaAngle(m_lastSeenYaw, yaw);
 		m_lastSeenYaw = yaw;
+		float rose = float.IsNaN(m_lastSeenY) ? 0f : m_body.position.y - m_lastSeenY;
+		m_lastSeenY = m_body.position.y;
 		Player player = Player.m_localPlayer;
-		if (player == null || player.IsAttached() || player.IsTeleporting() || player.m_lastGroundBody != m_body || !player.IsOnGround())
+		if (player == null || player.IsAttached() || player.IsTeleporting())
+		{
+			m_holdingPassenger = false;
+			return;
+		}
+		bool onDeck = player.m_lastGroundBody == m_body && player.IsOnGround();
+		Vector3 deckVelocity = m_body.GetPointVelocity(player.m_body.position);
+		if (player.m_body.linearVelocity.y - deckVelocity.y > 2.5f)
+		{
+			// Jumping (or thrown up): let go until they land on it again.
+			m_lastOnDeck = -10f;
+			m_holdingPassenger = false;
+			return;
+		}
+		if (onDeck)
+		{
+			m_lastOnDeck = Time.time;
+		}
+		else if (Time.time - m_lastOnDeck > SnakeWoodPlugin.PassengerGrip.Value || !OverDeck(player.m_body.position))
 		{
 			m_holdingPassenger = false;
 			return;
@@ -1297,10 +1322,14 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		Vector3 position;
 		if (player.m_moveDir.sqrMagnitude > 0.01f)
 		{
-			// Walking: let them move, just carry them round the turn.
+			// Walking: let them move, just carry them round the turn and up and down with the deck.
 			m_holdingPassenger = false;
 			Vector3 pivot = m_body.position;
-			position = pivot + spin * (player.m_body.position - pivot);
+			position = pivot + spin * (player.m_body.position - pivot) + Vector3.up * rose;
+			if (!onDeck)
+			{
+				player.m_body.linearVelocity = new Vector3(player.m_body.linearVelocity.x, deckVelocity.y, player.m_body.linearVelocity.z);
+			}
 		}
 		else
 		{
@@ -1314,6 +1343,20 @@ public class HoverLog : MonoBehaviour, Interactable, Hoverable, IDoodadControlle
 		}
 		player.m_body.position = position;
 		player.transform.position = position;
+	}
+
+	// Whether a point is above the deck (not off its ends or sides) and close to its top.
+	private bool OverDeck(Vector3 point)
+	{
+		m_deck ??= m_frame.Find("deck")?.GetComponent<BoxCollider>();
+		if (m_deck == null)
+		{
+			return false;
+		}
+		Vector3 local = m_deck.transform.InverseTransformPoint(point) - m_deck.center;
+		Vector3 half = m_deck.size * 0.5f;
+		float above = (local.y - half.y) * m_deck.transform.lossyScale.y;
+		return Mathf.Abs(local.x) <= half.x + 0.1f && Mathf.Abs(local.z) <= half.z + 0.1f && above > -0.3f && above < 1.2f;
 	}
 
 	private void FixedUpdate()

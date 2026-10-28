@@ -252,6 +252,7 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
   old default; switched to `RawWood` once on update), or `BuildPiece` (the build piece laid flat,
   as in 1.0). Needs a restart.
 - **Hover Height At Rest** (0.4): logs hover at full height only while moving; standing still or parked they sink to this share of it, so enemies can reach you while you sit there. 1 = full height at any speed.
+- **Passenger Grip** (0.6 s): players standing on a log stay stuck to its deck through bumps, as long as they're over the deck. Jumping or walking off the edge lets go.
 - **Extra Reach While Riding** (2 m): how much further than on foot you can reach doors, portals, signs and chests while riding.
 - **Hover Glow**: the coloured light under each log.
 - **Trails**, **Trail Opacity** and **Trail Density**: turn the particle trails off, make them fainter, or thicker.
