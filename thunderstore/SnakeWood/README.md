@@ -5,8 +5,9 @@ leans into turns, hops, and each wood type handles differently.
 
 **Install on every player's game and on the server** to build and ride logs. Players without the
 mod still see something: each log is saved as a vanilla half log (what a felled tree splits
-into), so to them it's a log floating along with the rider (they can't ride or chop it). The game
-can't shrink that log for them, so the real hover log grows to about the same size instead. If the mod is ever removed,
+into) from that wood's own tree where there is one (Yggdrasil for Yggdrasil, Ashlands for
+Ashwood, and so on), resized to the hover log's size, so to them it's a log floating along with
+the rider (they can't ride or chop it). If the mod is ever removed,
 saved logs become ordinary tree logs. Fish logs show as their vanilla fish instead, at normal
 fish size (`Fish Show As Fish`). `Vanilla Disguise` turns this off.
 
