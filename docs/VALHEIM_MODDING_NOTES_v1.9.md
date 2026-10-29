@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.8 |
-| **Last updated** | 2026-10-28 05:30 UTC |
-| **Updated by** | Claude Code, ValheimMapMarker North Wisp session (`claude/project-thread-qgrmo6`) |
+| **Version** | 1.9 |
+| **Last updated** | 2026-10-29 04:09 UTC |
+| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -524,8 +524,16 @@ compiles but hasn't been tested in-game)*
 - Thin, coplanar or nearly coplanar visual pieces z-fight ("flickering lighting"). Lift touching
   parts a couple of cm apart. The `wood_floor` piece scaled thin also seemed to flicker on a
   moving object; replaced with pole planks *(cause unverified)*.
-- Vanilla tree logs (`TreeLog`) used as disguises: `*_log_half` variants
-  (FirTree/PineTree/beech/Birch/Oak/yggashoot/AshlandsTreeLogHalf…), sizes logged by SnakeWood.
+- Vanilla tree logs (`TreeLog`) used as disguises: `*_log_half` variants *(verified, asset search)*:
+  `beech_log_half`, `Birch_log_half`, `Oak_log_half`, `FirTree_log_half`, `FirTree_big_log_half`,
+  `FirTree_Snow_log_half`, `PineTree_log_half`, `PineTree_Snow_log_half`(`_frost_troll`),
+  `yggashoot_log_half`, `AshlandsTreeLogHalf1/2` (no swamp/Ancient tree half log).
+- **Scaling a vanilla object for unmodded players**: `ZNetView.m_syncInitialScale` (prefab field) makes
+  `ZNetView.Awake` apply `zdo.GetVec3(ZDOVars.s_scaleHash)` (or the float `s_scaleScalarHash`) as
+  `localScale`; `SetLocalScale` writes it on the owner. `TreeLog.Destroy` calls
+  `SetLocalScale(parent scale)` on its half logs, so half logs almost certainly sync scale *(decompile
+  verified; the prefab flag itself is unverified, SnakeWood logs "scalable" per log at load)*. SnakeWood
+  1.23 sets that vec3 on the disguise ZDO so each wood's own half log shows at the hover log's size.
 
 **Hover / vehicle feel** (SnakeWood; tuned in-game with the user)
 
@@ -596,7 +604,7 @@ compiles but hasn't been tested in-game)*
 
 ---
 
-## 7. SnakeWood specifics (as of v1.23.101)
+## 7. SnakeWood specifics (as of v1.23.109)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -634,6 +642,11 @@ Design decisions the user made (keep them):
   looking past your own log, `Extra Reach While Riding` (2 m) beyond vanilla. `PortalByLog`
   sends the rider through when any part of the log's capsule overlaps a portal trigger, so
   portals against a wall work. Both in `HoverLogPortal.cs`.
+- **Disguise per wood (1.23):** the user wanted each log to look like its own tree's half log to
+  unmodded players (Yggdrasil showed as a plain log because its half log is over 5 m). Now its own
+  tree's half log is picked at any size and shrunk through the ZDO scale (above); the modded log no
+  longer grows to match (`SizeOf` returns null for scalable prefabs). Hints: Ancient Bark → oak
+  (no swamp half log), Timberwood → snow fir/pine; `*OLD` and `*troll` prefabs are skipped.
 - **Passengers (1.23):** the user wanted players standing on a log locked to the deck better.
   `CarryPassenger` now keeps holding through bumps that lift them off (`Passenger Grip`, 0.6 s,
   while `OverDeck`), carries walkers up and down with the deck, and lets go on a jump (relative
@@ -669,7 +682,7 @@ model isn't resized. The disguise turn matches `LayFlat` (+X long side → Euler
 logs (Euler(0, -90, 0)), so both sides face the same way *(untested in-game)*.
 
 Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
-suggestions, landings) and v1.23.101 (plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
+suggestions, landings) and v1.23.109 (per-wood resized disguise, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
 PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 "Lifetime Fuel" core for the sled, which is off for it now.
 
@@ -844,3 +857,4 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.6 | 2026-10-25 04:40 | Claude Code, ValheimMapMarker North Wisp session | Added: ValheimMapMarker's switch to automatic releases with test pre-releases from manual runs (§1); new topic files `docs/game/attacks-and-throws.md` (attack flow, throws without a projectile, holding the player still, equip duration) and `docs/game/audio-zsfx.md` (ZSFX volume, positional sounds, no potion sounds); §7e rewritten for the weapon version and the user's feedback; `docs/game/network-objects.md` (the RemoveObjects error flood and destroying network objects safely); Valheim Plus Demister patch gotcha; stagger and camera shake; effects with game logic; §7e up to North Wisp 1.10.0 (flashbang). |
 | 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log, lower hover at rest, fish disguised as fish, passenger grip). |
 | 1.8 | 2026-10-28 05:30 | Claude Code, ValheimMapMarker North Wisp session | Added: §7e North Wisp 1.10.1 (gravity arc, proximity fuse) and 1.10.2 (burst shared over a routed RPC); `network-objects.md` routed RPC broadcast pattern. |
+| 1.9 | 2026-10-29 04:09 | Claude Code, SnakeWood seat/reach/portals session | Added: vanilla half-log prefab list, scaling vanilla objects through `ZNetView.m_syncInitialScale` / `ZDOVars.s_scaleHash` (`TreeLog.Destroy` passes scale to halves); §7 SnakeWood disguise uses each wood's own tree half log, resized. |
