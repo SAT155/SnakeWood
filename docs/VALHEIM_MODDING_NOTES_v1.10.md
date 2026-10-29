@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.9 |
-| **Last updated** | 2026-10-29 04:09 UTC |
-| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
+| **Version** | 1.10 |
+| **Last updated** | 2026-10-29 04:22 UTC |
+| **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -60,7 +60,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
-| **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
+| **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. See §7f. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
 Common conventions across the Valheim repos:
@@ -75,9 +75,10 @@ Common conventions across the Valheim repos:
   the mod's folders); a manual workflow_dispatch always does. Bump the manifest (and the
   `PluginVersion` const) for feature releases.
   - Uses it: **SnakeWood**, **SnakeSmarterHoe**, **SnakeHammer** *(verified in their build.yml)*.
-  - **SnakeSailing**: switched in [SAT155/SnakeSailing#1](https://github.com/SAT155/SnakeSailing/pull/1)
-    (draft, 2026-10-24). With no manifest, MAJOR.MINOR comes from a root `VERSION` file and each
-    mod's `ModVersion` is listed in the release notes. Until merged it still releases on tags only.
+  - **SnakeSailing**: [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
+    (draft, 2026-10-29, supersedes #1) copies SnakeWood's workflow for SnakeSkills (manifest
+    `thunderstore/SnakeSkills/manifest.json`); a manual run on a non-default branch makes a
+    **pre-release** (test build v1.0.10). Until merged, the default branch still releases on tags only.
   - **ValheimMapMarker**: switched in [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
     (draft, 2026-10-25): MAJOR.MINOR from `thunderstore/SnakeTography/manifest.json`, PATCH = run
     number via `PACKAGE_VERSION` (read by `thunderstore/package.py`); releases on default-branch
@@ -173,7 +174,7 @@ as `::error::` lines by the build step.
 ## 3. CI: building without the game
 
 `.github/workflows/build.yml` (same shape in SnakeWood, SnakeSmarterHoe, SnakePolearms,
-ValheimMapMarker; SnakeSailing and ValheimMapMarker use a matrix):
+ValheimMapMarker, SnakeSailing (SnakeSkills); ValheimMapMarker uses a matrix):
 
 1. `actions/setup-dotnet@v4` with `8.0.x`.
 2. Install SteamCMD (`lib32gcc-s1`, tarball from steamcdn), then
@@ -354,7 +355,9 @@ Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demiste
 left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, vanilla
 effect and sound names, attacks and throws (attack flow, projectile-less throws, holding the
 player still, equip duration), sounds (`ZSFX` volume, positional audio), and network objects
-(destroying them safely, the `ZNetScene.RemoveObjects` error flood). Read the matching file before decompiling the same system again.
+(destroying them safely, the `ZNetScene.RemoveObjects` error flood), and the character save
+(custom skills lost to unmodded loads, `Player.m_customData`:
+[`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -807,6 +810,32 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
+## 7f. SnakeSkills (SnakeSailing repo, 1.0.x)
+
+From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
+(draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
+lost after starting the game unmodded once.
+
+- One plugin `com.snakesquad.snakeskills` (`SnakeSkills/`: `Plugin.cs`, `Sailing.cs`,
+  `Ranching.cs`, `Mining.cs`, `SkillBackup.cs`, `ConfigImport.cs`). Each skill file is the old
+  mod as a static class with `Init(plugin)`; game logic unchanged. One ServerSync `ConfigSync`.
+- Same skill names, so SkillManager gives the same ids (`Skill.fromName` = abs stable hash of
+  the English name) and old levels carry over. Don't rename a skill.
+- **Skill backup**: why and how in
+  [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md). Levels lost before
+  SnakeSkills can't come back; the backup starts at the first save with it.
+- `BepInIncompatibility` on the old GUIDs (`org.bepinex.plugins.sailing/ranching/mining`):
+  SnakeSkills stays unloaded while any of them is installed.
+- First start (no `com.snakesquad.snakeskills.cfg` yet) copies values from the old .cfg files by
+  section and key, parsing them by hand (`ConfigFile` only exposes bound entries). Sailing's
+  per-ship entries bind late (`ZNetScene.Awake`), so the parsed old values are kept for them.
+- Config sections: 1 General, 2 Sailing, 3 Sailing Ship Speed, 4 Ranching, 5 Mining.
+- The repo's old `Sailing/`, `Ranching/`, `Mining/` projects were removed (in git history).
+
+Known open items: never tested in-game. Test: play with SnakeSkills, quit, start unmodded and
+join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
+SnakeSkills on GitHub if the user wants.
+
 ---
 
 ## 8. Working with this user
@@ -858,3 +887,4 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log, lower hover at rest, fish disguised as fish, passenger grip). |
 | 1.8 | 2026-10-28 05:30 | Claude Code, ValheimMapMarker North Wisp session | Added: §7e North Wisp 1.10.1 (gravity arc, proximity fuse) and 1.10.2 (burst shared over a routed RPC); `network-objects.md` routed RPC broadcast pattern. |
 | 1.9 | 2026-10-29 04:09 | Claude Code, SnakeWood seat/reach/portals session | Added: vanilla half-log prefab list, scaling vanilla objects through `ZNetView.m_syncInitialScale` / `ZDOVars.s_scaleHash` (`TreeLog.Destroy` passes scale to halves); §7 SnakeWood disguise uses each wood's own tree half log, resized. |
+| 1.10 | 2026-10-29 04:22 | Claude Code, SnakeSkills session | Added: topic file `docs/game/player-save-and-custom-skills.md` (vanilla `Skills.Load` drops unknown skill ids, `Player.m_customData` survives vanilla saves, SkillManager ids); §7f SnakeSkills (Sailing/Ranching/Mining combined, skill backup, config import); SnakeSailing ecosystem row, release scheme and CI notes updated. |
