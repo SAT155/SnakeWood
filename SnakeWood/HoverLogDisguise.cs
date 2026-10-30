@@ -25,7 +25,7 @@ internal static class HoverLogDisguise
 		["Wood"] = new[] { "beech", "fir" },
 		["FineWood"] = new[] { "birch", "oak" },
 		["RoundLog"] = new[] { "pine" },
-		["ElderBark"] = new[] { "oak" },
+		["ElderBark"] = new[] { "swamp" },
 		["YggdrasilWood"] = new[] { "ygga", "yggdrasil" },
 		["Blackwood"] = new[] { "ash" },
 		["Frostwood"] = new[] { "snow" },
@@ -144,6 +144,7 @@ internal static class HoverLogDisguise
 			// the entire tree. The real hover log is then sized to match (SizeOf).
 			var logs = ZNetScene.instance.m_prefabs
 				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null
+					&& p.name.ToLowerInvariant().Contains("log")
 					&& !p.name.ToLowerInvariant().Contains("old") && !p.name.ToLowerInvariant().Contains("troll"))
 				.Select(p =>
 				{
@@ -151,11 +152,11 @@ internal static class HoverLogDisguise
 					string lower = p.name.ToLowerInvariant();
 					return (prefab: p, size, half: lower.Contains("half"), own: hints.Any(lower.Contains), scales: SyncsScale(p));
 				})
-				// Its own tree's half log: at any size if vanilla can be told to resize it, otherwise
-				// only if it's no longer than 5 m (the hover log would grow to match). Else the
-				// smallest half log.
-				.OrderBy(c => c.half ? 0 : 1)
-				.ThenBy(c => c.own && (c.scales || LongSide(c.size) <= 5f) ? 0 : 1)
+				// Its own tree's log, a half log if there is one (the Ancient tree only has a whole
+				// one): at any size if vanilla can be told to resize it, otherwise only if it's no
+				// longer than 5 m (the hover log would grow to match). Else the smallest half log.
+				.OrderBy(c => c.own && (c.scales || LongSide(c.size) <= 5f) ? 0 : 1)
+				.ThenBy(c => c.half ? 0 : 1)
 				.ThenBy(c => c.size.x * c.size.y * c.size.z)
 				.ToList();
 			if (!s_listed)

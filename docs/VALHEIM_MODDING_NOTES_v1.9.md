@@ -531,8 +531,8 @@ compiles but hasn't been tested in-game)*
 - **Scaling a vanilla object for unmodded players**: `ZNetView.m_syncInitialScale` (prefab field) makes
   `ZNetView.Awake` apply `zdo.GetVec3(ZDOVars.s_scaleHash)` (or the float `s_scaleScalarHash`) as
   `localScale`; `SetLocalScale` writes it on the owner. `TreeLog.Destroy` calls
-  `SetLocalScale(parent scale)` on its half logs, so half logs almost certainly sync scale *(decompile
-  verified; the prefab flag itself is unverified, SnakeWood logs "scalable" per log at load)*. SnakeWood
+  `SetLocalScale(parent scale)` on its half logs, so half logs sync scale *(verified: every `TreeLog`
+  prefab reports `m_syncInitialScale` in the user's log, v1.23.109)*. SnakeWood
   1.23 sets that vec3 on the disguise ZDO so each wood's own half log shows at the hover log's size.
 
 **Hover / vehicle feel** (SnakeWood; tuned in-game with the user)
@@ -645,8 +645,11 @@ Design decisions the user made (keep them):
 - **Disguise per wood (1.23):** the user wanted each log to look like its own tree's half log to
   unmodded players (Yggdrasil showed as a plain log because its half log is over 5 m). Now its own
   tree's half log is picked at any size and shrunk through the ZDO scale (above); the modded log no
-  longer grows to match (`SizeOf` returns null for scalable prefabs). Hints: Ancient Bark → oak
-  (no swamp half log), Timberwood → snow fir/pine; `*OLD` and `*troll` prefabs are skipped.
+  longer grows to match (`SizeOf` returns null for scalable prefabs). Own tree first, half log before whole: Ancient Bark →
+  `SwampTree1_log` (no swamp half log), Timberwood → snow fir/pine; names without "log" (a falling
+  ice stalactite has `TreeLog`), `*OLD` and `*troll` are skipped. Every log prefab is scalable
+  *(verified in the user's log)*. `yggashoot_log_half` (Mistlands Yggdrasil shoot) looks like a
+  plain dark log in vanilla.
 - **Passengers (1.23):** the user wanted players standing on a log locked to the deck better.
   `CarryPassenger` now keeps holding through bumps that lift them off (`Passenger Grip`, 0.6 s,
   while `OverDeck`), carries walkers up and down with the deck, and lets go on a jump (relative
