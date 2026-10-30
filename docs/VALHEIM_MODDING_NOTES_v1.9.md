@@ -604,7 +604,7 @@ compiles but hasn't been tested in-game)*
 
 ---
 
-## 7. SnakeWood specifics (as of v1.23.109)
+## 7. SnakeWood specifics (as of v1.23.116)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -685,7 +685,7 @@ model isn't resized. The disguise turn matches `LayFlat` (+X long side → Euler
 logs (Euler(0, -90, 0)), so both sides face the same way *(untested in-game)*.
 
 Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
-suggestions, landings) and v1.23.109 (per-wood resized disguise, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
+suggestions, landings) and v1.23.116 (per-wood resized disguise, Ancient Bark as swamp log, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
 PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 "Lifetime Fuel" core for the sled, which is off for it now.
 
