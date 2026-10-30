@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.16 |
-| **Last updated** | 2026-10-30 20:15 UTC |
+| **Version** | 1.17 |
+| **Last updated** | 2026-10-30 20:45 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -815,7 +815,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.5.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.8.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -888,8 +888,20 @@ lost after starting the game unmodded once.
   = 1.4; Hoe Changes Off = vanilla. Ramp style default back to Spread. Brush Size is an absolute,
   unsynced config value. Alt+wheel restores `GameCamera.m_distance` (UpdateCamera) and
   `Player.m_placeRotation` (UpdatePlacement) after the frame. Test build v1.5.33.
+- **1.6** (user: "I love it now"): middle click resets Brush Size to the default (biggest the skill
+  allows); control hints appended to the hoe pieces' descriptions in the build menu. Test build v1.6.36.
+- **1.7** (user: bumps left after a strike, asked for a dim red flash when the hoe can't do
+  something): ghost tints dim red for 0.6 s plus a TopLeft message when the brush is at the ±8 m
+  delta limit or there's a rock (MineRock/MineRock5) in it. Test build v1.7.39.
+- **1.8** (user: jagged bumps on plain level/lowering strikes, nowhere near the limit; then asked
+  for less hoe wear with skill). Cause: the bump pass compared each point with the mean of its
+  ring, so the lip where a level strike meets lower ground (and the top edge of a cut) counted as
+  a bump and got notched. Now a point only drops if the ring is close to a plane (worst residual ≤
+  ¼ of the point's height above it). New Durability Reduction (0.6 at 100): an `UpdatePlacement`
+  prefix/postfix gives back the skill's share of wear lost during that call (covers vanilla
+  strikes and Restore terrain). Test build v1.8.<run>.
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -952,3 +964,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.14 | 2026-10-30 04:45 | Claude Code, SnakeSkills session | Added: crafting amounts and fish stars (`Recipe.GetAmount`, one-ingredient recipes, which item a craft consumes) to `docs/game/fishing.md`; §7f SnakeSkills 1.3 fish yield. Merged the ufzjcp branch's v1.13. |
 | 1.15 | 2026-10-30 18:00 | Claude Code, SnakeSkills session | Added: custom hoe pieces without a TerrainOp, generated height = zero delta, restoring and paint, ±8 m delta clamp to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.4 (Restore terrain, Shift ramps). |
 | 1.16 | 2026-10-30 20:15 | Claude Code, SnakeSkills session | Added: ramp along a fitted plane, stopping scroll zoom/rotation in build mode to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.5. |
+| 1.17 | 2026-10-30 20:45 | Claude Code, SnakeSkills session | Added: `Heightmap.Poke`/`Generate` rebuild order and why a bump test needs a planarity check to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.6-1.8. |

@@ -35,6 +35,11 @@ in-game.
   (`WorldToVertex` rounds the other way).
 - After `DoOperation` the heights aren't rebuilt yet (delayed `Poke`). `Heightmap.Poke(0, false)`
   calls `Regenerate()` at once, so a postfix on `TerrainOp.Awake` can read the result.
+- Rebuild order (`Heightmap.Generate`, synchronous): `m_heights` = `m_buildData.m_baseHeights`
+  (generated), then `ApplyModifiers`: every enabled `TerrainModifier` (piece-attached level/smooth),
+  then `TerrainComp.ApplyToHeightmap`: each vertex `+= m_levelDelta + m_smoothDelta`, clamped to
+  ±8 m of the post-modifier height. `GetWorldBaseHeight` reads `m_baseHeights`.
+- Vanilla `SmoothTerrain` adds `lerp(h, target, t) - h` to `m_smoothDelta` (clamped ±1).
 - Saving: `TerrainComp.Save(false)` (only the owner's save reaches other players), then `Poke`.
 
 ## Restoring and custom hoe pieces
@@ -60,6 +65,14 @@ in-game.
   squares (gradient G). A cart-safe ramp of max slope m follows G if |G| ≤ m; otherwise it runs at
   angle acos(m/|G|) to G (rises exactly m along it, level across it): two mirror choices, pick by
   the camera's facing. Blend target heights in with a smoothstep falloff at the rim.
+
+## Knocking down bumps (SnakeSkills 1.8)
+
+- Comparing a point with the mean of its neighbours (the plane's height for a symmetric ring) is
+  not enough: the lip where a level strike meets lower ground, or the top of a cut, sits well above
+  that mean and gets notched, which looks like jagged bumps. Also fit the ring's slope
+  (`sum(h*dx)/sum(dx*dx)` per axis) and only lower the point if every ring point is within about a
+  quarter of the point's excess from that plane.
 
 ## Player side
 
