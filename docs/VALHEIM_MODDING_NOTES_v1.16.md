@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.15 |
-| **Last updated** | 2026-10-30 18:00 UTC |
+| **Version** | 1.16 |
+| **Last updated** | 2026-10-30 20:15 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -815,7 +815,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.4.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.5.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -878,8 +878,18 @@ lost after starting the game unmodded once.
   under an inactive root, added to the Hoe's `PieceTable`, shown via the known-recipes set in a
   `PieceTable.UpdateAvailable` prefix, and `Player.PlacePiece` intercepted (stamina, durability,
   animation by hand). Details in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.4.30.
+- **1.5** (user feedback 2026-10-30 20:04: Alt+scroll still zoomed, brush grew with skill, ramps
+  went straight up the steepest part; user expected vanilla-like "gentler direction"; asked how to
+  get older revisions back to compare). Ramp Mode **Slope** (default): least-squares plane of the
+  brush read before the strike; if ≤ cart slope the ramp follows it, else it runs across the hill
+  at the cart slope (angle acos(max/|G|) off the gradient), the side closer to the camera's facing;
+  points move onto it fully inside 60% of the radius, fading out. **Relax** = old neighbour
+  relaxation. Config to compare: Ramp Only With Shift Off + Relax + Spread = 1.2/1.3; Relax + Fill
+  = 1.4; Hoe Changes Off = vanilla. Ramp style default back to Spread. Brush Size is an absolute,
+  unsynced config value. Alt+wheel restores `GameCamera.m_distance` (UpdateCamera) and
+  `Player.m_placeRotation` (UpdatePlacement) after the frame. Test build v1.5.33.
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -941,3 +951,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.13 | 2026-10-30 04:33 | Claude Code, Pulsating Earrings session | Added: max eitr = food total (`GetTotalFoodValue`), eitr regen via `SEMan.ModifyEitrRegen`, trinket slot/prefab names/ViableTrinkets notes in `magic-costs-and-skills.md`; §7f SnakeSkills Pulsating Earrings permanent eitr bonus. |
 | 1.14 | 2026-10-30 04:45 | Claude Code, SnakeSkills session | Added: crafting amounts and fish stars (`Recipe.GetAmount`, one-ingredient recipes, which item a craft consumes) to `docs/game/fishing.md`; §7f SnakeSkills 1.3 fish yield. Merged the ufzjcp branch's v1.13. |
 | 1.15 | 2026-10-30 18:00 | Claude Code, SnakeSkills session | Added: custom hoe pieces without a TerrainOp, generated height = zero delta, restoring and paint, ±8 m delta clamp to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.4 (Restore terrain, Shift ramps). |
+| 1.16 | 2026-10-30 20:15 | Claude Code, SnakeSkills session | Added: ramp along a fitted plane, stopping scroll zoom/rotation in build mode to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.5. |

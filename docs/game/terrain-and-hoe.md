@@ -54,6 +54,13 @@ in-game.
   (`GetBuildStamina`), durability, the attack animation (`m_zanim.SetTrigger`) and the effect
   yourself.
 
+## Shaping a ramp (SnakeSkills 1.5)
+
+- Read the brush's heights before the strike (TerrainOp.Awake prefix), fit a plane by least
+  squares (gradient G). A cart-safe ramp of max slope m follows G if |G| ≤ m; otherwise it runs at
+  angle acos(m/|G|) to G (rises exactly m along it, level across it): two mirror choices, pick by
+  the camera's facing. Blend target heights in with a smoothstep falloff at the rim.
+
 ## Player side
 
 - Stamina per strike: `Player.GetBuildStamina()` = attack stamina × home-item modifiers and
@@ -61,6 +68,9 @@ in-game.
   on each placement from `UpdatePlacement`.
 - Sprint: `Player.CheckRun(Vector3 moveDir, float dt)` is a protected override; a prefix
   returning false with `__result = false` stops sprinting.
+- Scroll in build mode: `GameCamera.UpdateCamera` changes `m_distance` (zoom) and
+  `Player.UpdatePlacement` changes `m_placeRotation`. To use the wheel for something else, save
+  them in a prefix and put them back in a postfix while your key is held.
 - Ghost: `Player.UpdatePlacementGhost(bool)`; the hoe ghost shows its area through a
   `_GhostOnly` child, `Projector.orthographicSize` and `CircleProjector.m_radius`. Projector
   needs the full Unity module references (SnakeWood's `AddGameReferences` csproj target).
