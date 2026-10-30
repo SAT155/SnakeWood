@@ -534,8 +534,8 @@ compiles but hasn't been tested in-game)*
 - **Scaling a vanilla object for unmodded players**: `ZNetView.m_syncInitialScale` (prefab field) makes
   `ZNetView.Awake` apply `zdo.GetVec3(ZDOVars.s_scaleHash)` (or the float `s_scaleScalarHash`) as
   `localScale`; `SetLocalScale` writes it on the owner. `TreeLog.Destroy` calls
-  `SetLocalScale(parent scale)` on its half logs, so half logs almost certainly sync scale *(decompile
-  verified; the prefab flag itself is unverified, SnakeWood logs "scalable" per log at load)*. SnakeWood
+  `SetLocalScale(parent scale)` on its half logs, so half logs sync scale *(verified: every `TreeLog`
+  prefab reports `m_syncInitialScale` in the user's log, v1.23.109)*. SnakeWood
   1.23 sets that vec3 on the disguise ZDO so each wood's own half log shows at the hover log's size.
 
 **Hover / vehicle feel** (SnakeWood; tuned in-game with the user)
@@ -607,7 +607,7 @@ compiles but hasn't been tested in-game)*
 
 ---
 
-## 7. SnakeWood specifics (as of v1.23.109)
+## 7. SnakeWood specifics (as of v1.23.116)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -648,8 +648,11 @@ Design decisions the user made (keep them):
 - **Disguise per wood (1.23):** the user wanted each log to look like its own tree's half log to
   unmodded players (Yggdrasil showed as a plain log because its half log is over 5 m). Now its own
   tree's half log is picked at any size and shrunk through the ZDO scale (above); the modded log no
-  longer grows to match (`SizeOf` returns null for scalable prefabs). Hints: Ancient Bark → oak
-  (no swamp half log), Timberwood → snow fir/pine; `*OLD` and `*troll` prefabs are skipped.
+  longer grows to match (`SizeOf` returns null for scalable prefabs). Own tree first, half log before whole: Ancient Bark →
+  `SwampTree1_log` (no swamp half log), Timberwood → snow fir/pine; names without "log" (a falling
+  ice stalactite has `TreeLog`), `*OLD` and `*troll` are skipped. Every log prefab is scalable
+  *(verified in the user's log)*. `yggashoot_log_half` (Mistlands Yggdrasil shoot) looks like a
+  plain dark log in vanilla.
 - **Passengers (1.23):** the user wanted players standing on a log locked to the deck better.
   `CarryPassenger` now keeps holding through bumps that lift them off (`Passenger Grip`, 0.6 s,
   while `OverDeck`), carries walkers up and down with the deck, and lets go on a jump (relative
@@ -685,7 +688,7 @@ model isn't resized. The disguise turn matches `LayFlat` (+X long side → Euler
 logs (Euler(0, -90, 0)), so both sides face the same way *(untested in-game)*.
 
 Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
-suggestions, landings) and v1.23.109 (per-wood resized disguise, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
+suggestions, landings) and v1.23.116 (per-wood resized disguise, Ancient Bark as swamp log, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
 PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 "Lifetime Fuel" core for the sled, which is off for it now.
 
