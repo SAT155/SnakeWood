@@ -37,6 +37,23 @@ in-game.
   calls `Regenerate()` at once, so a postfix on `TerrainOp.Awake` can read the result.
 - Saving: `TerrainComp.Save(false)` (only the owner's save reaches other players), then `Poke`.
 
+## Restoring and custom hoe pieces
+
+- `m_levelDelta + m_smoothDelta` is the height above the generated terrain, so 0 is untouched
+  ("restore" = move it toward 0; also clear `m_modifiedHeight`). Deltas are clamped to ±8 m, so
+  a mod can't raise or dig more than 8 m from the generated height.
+- Paint: `TerrainComp.m_paintMask[i]` (Color) and `m_modifiedPaint[i]`; reset with
+  `Heightmap.m_paintMaskNothing`, and set the heightmap's `m_paintMask` texture pixel (x, y) to
+  clear for an instant visual. Then `Save(false)`, `Poke(0, false)`, `ClutterSystem.ResetGrass`.
+- A custom hoe piece without network or terrain side effects (SnakeSmarterHoe's way, reused by
+  SnakeSkills): copy a vanilla hoe piece under an inactive `DontDestroyOnLoad` root (no `Awake`),
+  remove `TerrainOp` and `ZNetView`, empty `m_resources`, add it to the Hoe's `PieceTable.m_pieces`.
+  It only shows if its `Piece.m_name` is in the known-recipes set passed to
+  `PieceTable.UpdateAvailable(knownRecipies, player, ...)` (prefix adds it). Intercept
+  `Player.PlacePiece(piece, pos, rot, doAttack)` with a prefix returning false and do stamina
+  (`GetBuildStamina`), durability, the attack animation (`m_zanim.SetTrigger`) and the effect
+  yourself.
+
 ## Player side
 
 - Stamina per strike: `Player.GetBuildStamina()` = attack stamina × home-item modifiers and

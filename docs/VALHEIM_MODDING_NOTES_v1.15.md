@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.14 |
-| **Last updated** | 2026-10-30 04:45 UTC |
+| **Version** | 1.15 |
+| **Last updated** | 2026-10-30 18:00 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -815,7 +815,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.3.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.4.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -868,8 +868,18 @@ lost after starting the game unmodded once.
   Yield Recipes (`FishAndBreadUncooked`) + (stars − 1) × amount from the first matching fish in
   the inventory (the one vanilla consumes). Mechanics in [`fishing.md`](game/fishing.md).
   Released together with the earrings as 1.3, test build v1.3.21 (pre-release).
+- **1.4 hoe changes** (user's asks 2026-10-30 17:40-17:50): slope easing ("ramping") only while
+  Shift is held; *Shift Ramp Style* Fill (default: only raises, so a ramp is built up against a
+  cliff, the user's screenshot was a cliff face), Cut, Spread. **Restore terrain** piece
+  (`RestoreTerrain.cs`): from Landscaping 25, free (no stone/workbench), moves `TerrainComp` deltas
+  toward 0 (generated height), per strike ≤ 2→20 m³ and 0.5→2 m depth by skill, falloff over the
+  outer half of the brush so partial restores stay smooth; clears paint where fully restored. Built
+  like SnakeSmarterHoe's custom pieces: copy of `mud_road_v2` with `TerrainOp`/`ZNetView` removed
+  under an inactive root, added to the Hoe's `PieceTable`, shown via the known-recipes set in a
+  `PieceTable.UpdateAvailable` prefix, and `Player.PlacePiece` intercepted (stamina, durability,
+  animation by hand). Details in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.4.30.
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -930,3 +940,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.12 | 2026-10-30 04:30 | Claude Code, SnakeSkills session | Added: topic file `docs/game/terrain-and-hoe.md` (TerrainOp/TerrainComp, zone ownership, writing heights, build stamina, sprint, hoe ghost); §7f SnakeSkills 1.2 Landscaping skill. |
 | 1.13 | 2026-10-30 04:33 | Claude Code, Pulsating Earrings session | Added: max eitr = food total (`GetTotalFoodValue`), eitr regen via `SEMan.ModifyEitrRegen`, trinket slot/prefab names/ViableTrinkets notes in `magic-costs-and-skills.md`; §7f SnakeSkills Pulsating Earrings permanent eitr bonus. |
 | 1.14 | 2026-10-30 04:45 | Claude Code, SnakeSkills session | Added: crafting amounts and fish stars (`Recipe.GetAmount`, one-ingredient recipes, which item a craft consumes) to `docs/game/fishing.md`; §7f SnakeSkills 1.3 fish yield. Merged the ufzjcp branch's v1.13. |
+| 1.15 | 2026-10-30 18:00 | Claude Code, SnakeSkills session | Added: custom hoe pieces without a TerrainOp, generated height = zero delta, restoring and paint, ±8 m delta clamp to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.4 (Restore terrain, Shift ramps). |
