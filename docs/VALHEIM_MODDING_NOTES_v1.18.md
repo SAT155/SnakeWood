@@ -905,7 +905,7 @@ lost after starting the game unmodded once.
   their ring's plane are left alone; one level ground / Shift ramp strike moves a vertex at most
   1.5 m (0) to 8 m (100), measured against the vertex's level+smooth delta snapshotted in the
   `TerrainOp.Awake` prefix (after claiming the zones) and clamped in Tidy, which now runs on every
-  level strike. Either limit flashes red with a message. Test build v1.9.<run>.
+  level strike. Either limit flashes red with a message. Test build v1.9.45.
 
 Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
