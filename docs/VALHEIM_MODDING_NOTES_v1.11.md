@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.10 |
-| **Last updated** | 2026-10-29 04:22 UTC |
+| **Version** | 1.11 |
+| **Last updated** | 2026-10-30 03:48 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -357,7 +357,8 @@ effect and sound names, attacks and throws (attack flow, projectile-less throws,
 player still, equip duration), sounds (`ZSFX` volume, positional audio), and network objects
 (destroying them safely, the `ZNetScene.RemoveObjects` error flood), and the character save
 (custom skills lost to unmodded loads, `Player.m_customData`:
-[`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)). Read the matching file before decompiling the same system again.
+[`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
+skill raises ([`fishing.md`](game/fishing.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -813,7 +814,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.0.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.1.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -834,8 +835,14 @@ lost after starting the game unmodded once.
   per-ship entries bind late (`ZNetScene.Awake`), so the parsed old values are kept for them.
 - Config sections: 1 General, 2 Sailing, 3 Sailing Ship Speed, 4 Ranching, 5 Mining.
 - The repo's old `Sailing/`, `Ranching/`, `Mining/` projects were removed (in git history).
+- **Fishing XP by fish (1.1, `Fishing.cs`)**, the user's ask: harder fish much more rewarding,
+  "okay with this being much more experience than vanilla due to fishing being so tedious".
+  Catch XP per fish prefab from a config list (Perch 10 … Magmafish 150, unlisted fish 60 and
+  logged), × (1 + 0.5 per extra star), given in 1-XP `RaiseSkill` steps; reeling XP with a fish
+  on is × (1 + fish XP × 0.02). Config section 6 Fishing. Mechanics in
+  [`fishing.md`](game/fishing.md). Test build v1.1.14 (pre-release).
 
-Known open items: never tested in-game. Test: play with SnakeSkills, quit, start unmodded and
+Known open items: never tested in-game (skill backup or fishing XP); Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
@@ -891,3 +898,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.8 | 2026-10-28 05:30 | Claude Code, ValheimMapMarker North Wisp session | Added: §7e North Wisp 1.10.1 (gravity arc, proximity fuse) and 1.10.2 (burst shared over a routed RPC); `network-objects.md` routed RPC broadcast pattern. |
 | 1.9 | 2026-10-29 04:09 | Claude Code, SnakeWood seat/reach/portals session | Added: vanilla half-log prefab list, scaling vanilla objects through `ZNetView.m_syncInitialScale` / `ZDOVars.s_scaleHash` (`TreeLog.Destroy` passes scale to halves); §7 SnakeWood disguise uses each wood's own tree half log, resized. |
 | 1.10 | 2026-10-29 04:22 | Claude Code, SnakeSkills session | Added: topic file `docs/game/player-save-and-custom-skills.md` (vanilla `Skills.Load` drops unknown skill ids, `Player.m_customData` survives vanilla saves, SkillManager ids); §7f SnakeSkills (Sailing/Ranching/Mining combined, skill backup, config import); SnakeSailing ecosystem row, release scheme and CI notes updated. |
+| 1.11 | 2026-10-30 03:48 | Claude Code, SnakeSkills session | Added: topic file `docs/game/fishing.md` (how vanilla raises Fishing, `FishingFloat.Catch`, fish prefabs and stars, one level per `Skills.Skill.Raise`); §7f SnakeSkills 1.1 fishing XP by fish. Merged the glxkng branch's v1.9 edits (SnakeWood 1.23.116). |
