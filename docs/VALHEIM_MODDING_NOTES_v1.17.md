@@ -899,7 +899,7 @@ lost after starting the game unmodded once.
   a bump and got notched. Now a point only drops if the ring is close to a plane (worst residual ≤
   ¼ of the point's height above it). New Durability Reduction (0.6 at 100): an `UpdatePlacement`
   prefix/postfix gives back the skill's share of wear lost during that call (covers vanilla
-  strikes and Restore terrain). Test build v1.8.<run>.
+  strikes and Restore terrain). Test build v1.8.43.
 
 Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
