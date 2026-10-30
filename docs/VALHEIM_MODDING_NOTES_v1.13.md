@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.12 |
-| **Last updated** | 2026-10-30 04:30 UTC |
-| **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
+| **Version** | 1.13 |
+| **Last updated** | 2026-10-30 04:33 UTC |
+| **Updated by** | Claude Code, Pulsating Earrings session (`claude/project-thread-ufzjcp`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -352,7 +352,8 @@ cost a CI round-trip).
 ## 5. Game systems cheat-sheet (verified by decompile unless noted)
 
 Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demisters, blocking and
-left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, vanilla
+left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage (also max
+eitr, eitr regen and trinkets), vanilla
 effect and sound names, attacks and throws (attack flow, projectile-less throws, holding the
 player still, equip duration), sounds (`ZSFX` volume, positional audio), and network objects
 (destroying them safely, the `ZNetScene.RemoveObjects` error flood), and the character save
@@ -853,8 +854,16 @@ lost after starting the game unmodded once.
   ground off by default, toggle). "Pathing" was read as slope easing in the brush, not route
   finding. Section 7 Landscaping. Disabled while SmarterHoe (`com.jubaroo.smarterhoe`) is loaded.
   Mechanics in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.2.16 (pre-release).
+- **Pulsating Earrings (`Trinkets.cs`, section 8 Trinkets)**, the user's ask (Pulsating Earrings
+  thread, 2026-10-30): a permanent eitr bonus while worn. +25 max eitr via a
+  `Player.GetTotalFoodValue` postfix (works with no eitr food), optional always-on regen % via
+  `SEMan.ModifyEitrRegen` (default 0), a description line. The adrenaline effect is untouched, so
+  ViableTrinkets (reference mod, decompile uploaded by the user) still works. The user chose
+  SnakeSkills over a new repo (sessions can't create repos: `create_repository` returns 403).
+  Branch `claude/project-thread-ufzjcp`, test build v1.2.19 (pre-release); to ship with 1.3.
+  Mechanics in [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md).
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -913,3 +922,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.10 | 2026-10-29 04:22 | Claude Code, SnakeSkills session | Added: topic file `docs/game/player-save-and-custom-skills.md` (vanilla `Skills.Load` drops unknown skill ids, `Player.m_customData` survives vanilla saves, SkillManager ids); §7f SnakeSkills (Sailing/Ranching/Mining combined, skill backup, config import); SnakeSailing ecosystem row, release scheme and CI notes updated. |
 | 1.11 | 2026-10-30 03:48 | Claude Code, SnakeSkills session | Added: topic file `docs/game/fishing.md` (how vanilla raises Fishing, `FishingFloat.Catch`, fish prefabs and stars, one level per `Skills.Skill.Raise`); §7f SnakeSkills 1.1 fishing XP by fish. Merged the glxkng branch's v1.9 edits (SnakeWood 1.23.116). |
 | 1.12 | 2026-10-30 04:30 | Claude Code, SnakeSkills session | Added: topic file `docs/game/terrain-and-hoe.md` (TerrainOp/TerrainComp, zone ownership, writing heights, build stamina, sprint, hoe ghost); §7f SnakeSkills 1.2 Landscaping skill. |
+| 1.13 | 2026-10-30 04:33 | Claude Code, Pulsating Earrings session | Added: max eitr = food total (`GetTotalFoodValue`), eitr regen via `SEMan.ModifyEitrRegen`, trinket slot/prefab names/ViableTrinkets notes in `magic-costs-and-skills.md`; §7f SnakeSkills Pulsating Earrings permanent eitr bonus. |
