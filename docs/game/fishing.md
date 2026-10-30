@@ -36,3 +36,19 @@ All *(verified)* by decompile unless noted.
 - `Skills.Skill.Raise` can gain **at most one level per call**: past `GetNextLevelRequirement()`
   (`floor(level+1)^1.5 × 0.5 + 0.5`) it adds 1 level and sets the accumulator to 0, dropping the
   rest. To give a big amount, call it in small steps (SnakeSkills uses steps of 1).
+
+## Crafting with fish (fillets, Fish 'n' Bread)
+
+- Recipes are `Recipe` ScriptableObjects in `ObjectDB.m_recipes` (not GameObjects, so the asset
+  search doesn't list them); find them by `recipe.m_item.gameObject.name`. Items: `FishRaw` (Raw
+  fish, the fillets), `FishAndBreadUncooked` (needs Anglerfish `Fish9` plus other ingredients).
+- `Recipe.GetAmount(quality, out need, out singleReqItem, craftMultiplier)` is the amount
+  `InventoryGui.DoCrafting` adds (and checks inventory space for). Only for
+  `m_requireOnlyOneIngredient` recipes (fillets) it adds the ingredient's stars:
+  `+ ceil((quality - 1) × m_amount × m_qualityResultAmountMultiplier) + m_extraAmountOnlyOneIngredient`,
+  using `Player.GetFirstRequiredItem` (lowest quality with enough count). Other recipes ignore
+  ingredient stars. The recipe list shows `m_amount × multiplier`, not `GetAmount`.
+- Normal recipes: `HaveRequirementItems` needs enough of one quality (max count over qualities);
+  `ConsumeResources(..., itemQuality -1)` → `Inventory.RemoveItem(name, n, -1)` takes from the
+  first matching stacks in inventory order, any quality.
+

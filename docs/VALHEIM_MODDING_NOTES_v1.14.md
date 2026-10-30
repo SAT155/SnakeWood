@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.13 |
-| **Last updated** | 2026-10-30 04:33 UTC |
-| **Updated by** | Claude Code, Pulsating Earrings session (`claude/project-thread-ufzjcp`) |
+| **Version** | 1.14 |
+| **Last updated** | 2026-10-30 04:45 UTC |
+| **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -815,7 +815,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.2.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.3.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -862,8 +862,14 @@ lost after starting the game unmodded once.
   SnakeSkills over a new repo (sessions can't create repos: `create_repository` returns 403).
   Branch `claude/project-thread-ufzjcp`, test build v1.2.19 (pre-release); to ship with 1.3.
   Mechanics in [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md).
+- **Fish yield (1.3, `Fishing.cs`)**, the user's ask: more fillets with Fishing skill; Fish 'n'
+  Bread should count the Anglerfish's stars, and get more with skill too. `Recipe.GetAmount`
+  postfix: Skill Yield Recipes (`FishRaw, FishAndBreadUncooked`) × (1 + skill × 1, rounded); Star
+  Yield Recipes (`FishAndBreadUncooked`) + (stars − 1) × amount from the first matching fish in
+  the inventory (the one vanilla consumes). Mechanics in [`fishing.md`](game/fishing.md).
+  Released together with the earrings as 1.3, test build v1.3.21 (pre-release).
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -923,3 +929,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.11 | 2026-10-30 03:48 | Claude Code, SnakeSkills session | Added: topic file `docs/game/fishing.md` (how vanilla raises Fishing, `FishingFloat.Catch`, fish prefabs and stars, one level per `Skills.Skill.Raise`); §7f SnakeSkills 1.1 fishing XP by fish. Merged the glxkng branch's v1.9 edits (SnakeWood 1.23.116). |
 | 1.12 | 2026-10-30 04:30 | Claude Code, SnakeSkills session | Added: topic file `docs/game/terrain-and-hoe.md` (TerrainOp/TerrainComp, zone ownership, writing heights, build stamina, sprint, hoe ghost); §7f SnakeSkills 1.2 Landscaping skill. |
 | 1.13 | 2026-10-30 04:33 | Claude Code, Pulsating Earrings session | Added: max eitr = food total (`GetTotalFoodValue`), eitr regen via `SEMan.ModifyEitrRegen`, trinket slot/prefab names/ViableTrinkets notes in `magic-costs-and-skills.md`; §7f SnakeSkills Pulsating Earrings permanent eitr bonus. |
+| 1.14 | 2026-10-30 04:45 | Claude Code, SnakeSkills session | Added: crafting amounts and fish stars (`Recipe.GetAmount`, one-ingredient recipes, which item a craft consumes) to `docs/game/fishing.md`; §7f SnakeSkills 1.3 fish yield. Merged the ufzjcp branch's v1.13. |
