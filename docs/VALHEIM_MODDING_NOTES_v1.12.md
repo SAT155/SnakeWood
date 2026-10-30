@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.11 |
-| **Last updated** | 2026-10-30 03:48 UTC |
+| **Version** | 1.12 |
+| **Last updated** | 2026-10-30 04:30 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -814,7 +814,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.1.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.2.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -833,7 +833,8 @@ lost after starting the game unmodded once.
 - First start (no `com.snakesquad.snakeskills.cfg` yet) copies values from the old .cfg files by
   section and key, parsing them by hand (`ConfigFile` only exposes bound entries). Sailing's
   per-ship entries bind late (`ZNetScene.Awake`), so the parsed old values are kept for them.
-- Config sections: 1 General, 2 Sailing, 3 Sailing Ship Speed, 4 Ranching, 5 Mining.
+- Config sections: 1 General, 2 Sailing, 3 Sailing Ship Speed, 4 Ranching, 5 Mining, 6 Fishing,
+  7 Landscaping. The csproj now references all game Unity modules (SnakeWood's glob target).
 - The repo's old `Sailing/`, `Ranching/`, `Mining/` projects were removed (in git history).
 - **Fishing XP by fish (1.1, `Fishing.cs`)**, the user's ask: harder fish much more rewarding,
   "okay with this being much more experience than vanilla due to fishing being so tedious".
@@ -841,8 +842,20 @@ lost after starting the game unmodded once.
   logged), × (1 + 0.5 per extra star), given in 1-XP `RaiseSkill` steps; reeling XP with a fish
   on is × (1 + fish XP × 0.02). Config section 6 Fishing. Mechanics in
   [`fishing.md`](game/fishing.md). Test build v1.1.14 (pre-release).
+- **Landscaping skill (1.2, `Landscaping.cs`)**, the user's ask: drop SmarterHoe's tools for one
+  vanilla-like hoe whose brush grows and stamina drops with a skill; flatten lone bumps; no sprint
+  on Shift with the hoe; "automatic continuous pathing" for steps too steep, favouring the most
+  cart-accessible route, only inside the hoe's area. Built as: +1 XP per strike; stamina × (1 −
+  0.6 × skill); brush radius up to 2.5× at 100 (Left Alt + wheel picks a size up to that); strike
+  claims all zones (radii survive multiplayer); afterwards level/path/paved strikes lower vertices
+  more than 0.1 m above all 8 neighbours to their average, and path/paved strikes relax steps
+  steeper than 25° between neighbouring vertices, moving only vertices inside the brush (level
+  ground off by default, toggle). "Pathing" was read as slope easing in the brush, not route
+  finding. Section 7 Landscaping. Disabled while SmarterHoe (`com.jubaroo.smarterhoe`) is loaded.
+  Mechanics in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.2.16 (pre-release).
 
-Known open items: never tested in-game (skill backup or fishing XP); Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping); slope easing on
+level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
@@ -899,3 +912,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.9 | 2026-10-29 04:09 | Claude Code, SnakeWood seat/reach/portals session | Added: vanilla half-log prefab list, scaling vanilla objects through `ZNetView.m_syncInitialScale` / `ZDOVars.s_scaleHash` (`TreeLog.Destroy` passes scale to halves); §7 SnakeWood disguise uses each wood's own tree half log, resized. |
 | 1.10 | 2026-10-29 04:22 | Claude Code, SnakeSkills session | Added: topic file `docs/game/player-save-and-custom-skills.md` (vanilla `Skills.Load` drops unknown skill ids, `Player.m_customData` survives vanilla saves, SkillManager ids); §7f SnakeSkills (Sailing/Ranching/Mining combined, skill backup, config import); SnakeSailing ecosystem row, release scheme and CI notes updated. |
 | 1.11 | 2026-10-30 03:48 | Claude Code, SnakeSkills session | Added: topic file `docs/game/fishing.md` (how vanilla raises Fishing, `FishingFloat.Catch`, fish prefabs and stars, one level per `Skills.Skill.Raise`); §7f SnakeSkills 1.1 fishing XP by fish. Merged the glxkng branch's v1.9 edits (SnakeWood 1.23.116). |
+| 1.12 | 2026-10-30 04:30 | Claude Code, SnakeSkills session | Added: topic file `docs/game/terrain-and-hoe.md` (TerrainOp/TerrainComp, zone ownership, writing heights, build stamina, sprint, hoe ghost); §7f SnakeSkills 1.2 Landscaping skill. |

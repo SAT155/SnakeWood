@@ -22,3 +22,4 @@ fix the note and say so in its changelog line.
 | [hover-and-portal-triggers.md](hover-and-portal-triggers.md) | `Player.FindHoverObject` reach and first-hit rule, portal triggers (`TeleportWorldTrigger`, `TeleportWorld.Teleport`), saddle and rug prefab names |
 | [player-save-and-custom-skills.md](player-save-and-custom-skills.md) | Why custom skills vanish after an unmodded load (`Skills.Load`/`IsSkillValid`), `Player.m_customData` as storage vanilla keeps, SkillManager skill ids |
 | [fishing.md](fishing.md) | How vanilla raises Fishing (`FishingFloat.FixedUpdate`, `Catch`), fish prefabs and stars, `RaiseSkill` gains at most one level per call |
+| [terrain-and-hoe.md](terrain-and-hoe.md) | Hoe strikes (`TerrainOp`, `TerrainComp`), zone ownership for edits, writing terrain heights, build stamina, sprint, hoe ghost |
