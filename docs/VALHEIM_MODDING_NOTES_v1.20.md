@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.19 |
-| **Last updated** | 2026-10-31 03:00 UTC |
+| **Version** | 1.20 |
+| **Last updated** | 2026-10-31 03:10 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -815,7 +815,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.10.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.12.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -913,8 +913,18 @@ lost after starting the game unmodded once.
   fitted ground gradient along that line clamped to ±cart slope, level across; consecutive strikes
   ahead chain into one road and facing doesn't matter. **Switchback** = 1.5-1.9; Relax = 1.2-1.4.
   Test build v1.10.47.
+- **1.11** (user: a plain click lacked Shift's cut/fill; chose "flat road at feet" on a decision
+  card). *Click Levels To Feet* (On): level/path/paved strikes without Shift get a slope-0 ramp at
+  the player's foot height (cuts and fills); path strikes now also get the per-strike depth limit.
+- **1.12** (user: Raise ground should make an upward ramp, need no workbench past Landscaping 50,
+  and cost less stone with skill). *Raise Builds Ramps*: the settings copy turns `m_raise` off and
+  a Fill ramp runs from the feet up toward the brush at the cart slope (per-strike limit applies).
+  Workbench: the build menu checks `Piece.m_craftingStation`, so it is cleared (original cached and
+  restored) in the hoe table's `UpdateAvailable` prefix from *Raise Without Workbench Level*;
+  stone: `Piece.Requirement.m_amount` scaled there too (*Raise Stone Reduction* 0.5 at 100, min 1).
+  Both refresh when the hoe's build table updates (re-equip). Test build v1.12.<run>.
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -980,3 +990,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.17 | 2026-10-30 20:45 | Claude Code, SnakeSkills session | Added: `Heightmap.Poke`/`Generate` rebuild order and why a bump test needs a planarity check to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.6-1.8. |
 | 1.18 | 2026-10-30 21:15 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.9 (skill limits on bump size and level depth per strike). |
 | 1.19 | 2026-10-31 03:00 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.10 (ramps from the player's feet), and adding a new config key to change a default for existing users. |
+| 1.20 | 2026-10-31 03:10 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.11-1.12 (plain click levels to feet; Raise ground ramps, workbench-free and cheaper via piece fields). |
