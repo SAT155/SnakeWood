@@ -912,7 +912,7 @@ lost after starting the game unmodded once.
   (default) = ramp starts at the player's feet height and runs toward the brush centre, slope =
   fitted ground gradient along that line clamped to ±cart slope, level across; consecutive strikes
   ahead chain into one road and facing doesn't matter. **Switchback** = 1.5-1.9; Relax = 1.2-1.4.
-  Test build v1.10.<run>.
+  Test build v1.10.47.
 
 Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
