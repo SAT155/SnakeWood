@@ -922,7 +922,7 @@ lost after starting the game unmodded once.
   Workbench: the build menu checks `Piece.m_craftingStation`, so it is cleared (original cached and
   restored) in the hoe table's `UpdateAvailable` prefix from *Raise Without Workbench Level*;
   stone: `Piece.Requirement.m_amount` scaled there too (*Raise Stone Reduction* 0.5 at 100, min 1).
-  Both refresh when the hoe's build table updates (re-equip). Test build v1.12.<run>.
+  Both refresh when the hoe's build table updates (re-equip). Test builds v1.11.51, v1.12.53.
 
 Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
