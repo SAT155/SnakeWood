@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.18 |
-| **Last updated** | 2026-10-30 21:15 UTC |
+| **Version** | 1.19 |
+| **Last updated** | 2026-10-31 03:00 UTC |
 | **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -815,7 +815,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.9.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.10.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -906,8 +906,15 @@ lost after starting the game unmodded once.
   1.5 m (0) to 8 m (100), measured against the vertex's level+smooth delta snapshotted in the
   `TerrainOp.Awake` prefix (after claiming the zones) and clamped in Tidy, which now runs on every
   level strike. Either limit flashes red with a message. Test build v1.9.45.
+- **1.10** (user tested 2026-10-31: running up a too-steep hill with Shift made a sideways
+  switchback "wall" in front instead of a ramp up; ramping downhill was easier walking backwards).
+  New config key *Shift Ramp Mode* (new key so old cfg files pick up the new default): **FromFeet**
+  (default) = ramp starts at the player's feet height and runs toward the brush centre, slope =
+  fitted ground gradient along that line clamped to ±cart slope, level across; consecutive strikes
+  ahead chain into one road and facing doesn't matter. **Switchback** = 1.5-1.9; Relax = 1.2-1.4.
+  Test build v1.10.<run>.
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits); slope easing on
+Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -972,3 +979,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.16 | 2026-10-30 20:15 | Claude Code, SnakeSkills session | Added: ramp along a fitted plane, stopping scroll zoom/rotation in build mode to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.5. |
 | 1.17 | 2026-10-30 20:45 | Claude Code, SnakeSkills session | Added: `Heightmap.Poke`/`Generate` rebuild order and why a bump test needs a planarity check to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.6-1.8. |
 | 1.18 | 2026-10-30 21:15 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.9 (skill limits on bump size and level depth per strike). |
+| 1.19 | 2026-10-31 03:00 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.10 (ramps from the player's feet), and adding a new config key to change a default for existing users. |
