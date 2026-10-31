@@ -23,3 +23,4 @@ fix the note and say so in its changelog line.
 | [player-save-and-custom-skills.md](player-save-and-custom-skills.md) | Why custom skills vanish after an unmodded load (`Skills.Load`/`IsSkillValid`), `Player.m_customData` as storage vanilla keeps, SkillManager skill ids |
 | [fishing.md](fishing.md) | How vanilla raises Fishing (`FishingFloat.FixedUpdate`, `Catch`), fish prefabs and stars, `RaiseSkill` gains at most one level per call |
 | [terrain-and-hoe.md](terrain-and-hoe.md) | Hoe strikes (`TerrainOp`, `TerrainComp`), zone ownership for edits, writing terrain heights, build stamina, sprint, hoe ghost |
+| [projectiles-and-rocks.md](projectiles-and-rocks.md) | Firing projectiles (`FireProjectileBurst`, `Projectile.Setup`), hits and the `m_onHit` hook, `DoAOE` one hit per object, damage totals, `MineRock5`/`MineRock`/`Destructible` damage, Staff of Embers prefab |

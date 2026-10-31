@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.20 |
-| **Last updated** | 2026-10-31 03:10 UTC |
-| **Updated by** | Claude Code, SnakeSkills session (`claude/project-thread-1pnygx`) |
+| **Version** | 1.21 |
+| **Last updated** | 2026-10-31 03:21 UTC |
+| **Updated by** | Claude Code, Ember Blast session (`claude/project-thread-3uu2ef`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -359,7 +359,8 @@ player still, equip duration), sounds (`ZSFX` volume, positional audio), and net
 (destroying them safely, the `ZNetScene.RemoveObjects` error flood), and the character save
 (custom skills lost to unmodded loads, `Player.m_customData`:
 [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
-skill raises ([`fishing.md`](game/fishing.md)). Read the matching file before decompiling the same system again.
+skill raises ([`fishing.md`](game/fishing.md)), and projectiles, AoE and rock damage
+([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -815,7 +816,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.12.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.13.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -924,7 +925,21 @@ lost after starting the game unmodded once.
   stone: `Piece.Requirement.m_amount` scaled there too (*Raise Stone Reduction* 0.5 at 100, min 1).
   Both refresh when the hoe's build table updates (re-equip). Test builds v1.11.51, v1.12.53.
 
-Known open items: never tested in-game (skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.13 Ember Blast** (`EmberBlast.cs`, section 9 Ember Blast; Ember Blast thread, branch
+  `claude/project-thread-3uu2ef`, [SAT155/SnakeSailing#3](https://github.com/SAT155/SnakeSailing/pull/3)
+  stacked on #2). User's ask: Staff of Embers middle click that blows up stone rocks like
+  dynamite, not effective against mobs. The staff (`StaffFireball`) gets a secondary attack
+  cloned from its fireball at `ObjectDB.Awake`/`CopyOtherDB` (eitr × 1.5; original kept and put
+  back when off). `FireProjectileBurst` prefix flags blast attacks (`m_currentAttackIsSecondary`
+  + staff); the `Projectile.Setup` postfix zeroes damage/AoE/push/status/spawn-on-hit and adds an
+  `m_onHit` callback that deals pickaxe damage (150 × Mining damage factor, tier 4) to
+  `MineRock5` (one hit with `m_radius`), `MineRock` areas and rock `Destructible`s within 4 m.
+  Creatures, buildings and trees are never hit; unmodded players see a plain fireball. Optional
+  `fx_dynamite_explosion` with the effect safety check. Each rock area hit gives Mining XP via
+  Mining's patches. Mechanics in [`projectiles-and-rocks.md`](game/projectiles-and-rocks.md).
+  Test build v1.13.58 (pre-release). The SnakeSkills thread was told to use 1.14+ next.
+
+Known open items: never tested in-game (Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -991,3 +1006,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.18 | 2026-10-30 21:15 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.9 (skill limits on bump size and level depth per strike). |
 | 1.19 | 2026-10-31 03:00 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.10 (ramps from the player's feet), and adding a new config key to change a default for existing users. |
 | 1.20 | 2026-10-31 03:10 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.11-1.12 (plain click levels to feet; Raise ground ramps, workbench-free and cheaper via piece fields). |
+| 1.21 | 2026-10-31 03:21 | Claude Code, Ember Blast session | Added: topic file `docs/game/projectiles-and-rocks.md` (`FireProjectileBurst`/`Projectile.Setup`/`OnHit`/`m_onHit`, `DoAOE` one hit per object, pickaxe and chop count in `GetTotalDamage`, `MineRock5.Damage` with `m_radius`, `MineRock`/`Destructible` damage, `StaffFireball` prefab); §7f SnakeSkills 1.13 Ember Blast. |
