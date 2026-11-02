@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.24 |
-| **Last updated** | 2026-11-02 03:20 UTC |
-| **Updated by** | Claude Code, hoe ramp controls session (`claude/project-thread-fvguye`) |
+| **Version** | 1.25 |
+| **Last updated** | 2026-11-02 03:19 UTC |
+| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -823,7 +823,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.18.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.19.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -992,6 +992,12 @@ lost after starting the game unmodded once.
     `com.codepeople.smartbuild.cfg` when `[Smart Hammer]` isn't in the file yet. Blueprints stay in
     `BepInEx/config/SmartBuild/Blueprints`.
   Test build v1.17.68 (pre-release), CI green, untested in-game.
+- **1.19 = 1.18 hoe + 1.17 smart hammer** (fvguye merged into SnakeSailing `claude/project-thread-qwehcw`,
+  #5, 2026-11-02). Only the version lines conflicted. Keys don't clash: the hoe's Ctrl+Z/Ctrl+Y
+  undo/redo only run in hoe build mode, the smart hammer's N/Y/Ctrl+Z only with the hammer.
+  SmartBuild's `TryPlacePiece` prefix returns false with `__result = false` for grids and
+  blueprints and charges its own costs, so the `UpdatePlacement` charging gotcha (1.18) doesn't
+  double-charge there. Test build v1.19.78 (pre-release), untested in-game.
 - **1.18 hoe follow-ups** (hoe ramp controls thread, branch `claude/project-thread-fvguye`, same
   PR #4; 1.16 commits, released as 1.18 because 1.17 was taken). The user, 2026-11-02: tried 1.14
   ("the blueprint plan works very well!"), then asked for Ctrl+Z, decorative plants, smoother ramp
@@ -1101,3 +1107,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.22 | 2026-11-02 00:10 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.14 (vanilla clicks + bumps, Ctrl incline, Alt ramp blueprints with colour progress, new config keys for old modes); user is leaving SnakeSmarterHoe; `terrain-and-hoe.md` sections on TryPlacePiece interception, settings-copy for custom shapes and line previews. |
 | 1.23 | 2026-11-02 03:02 | Claude Code, smart hammer session | Added: topic file `docs/game/build-menu-and-pieces.md` (piece tables, known recipes, `UpdateAvailable`, `SetSelectedPiece`, stub pieces, Jotunn-free UI); §7f SnakeSkills 1.17 smart hammer (SnakeHammer port on the vanilla hammer, N toggle, Y blueprint list); §7d points at it. |
 | 1.24 | 2026-11-02 03:20 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.18 (Ctrl+Z undo, decor plants, Shift rounding, eased plan ends, wheel fix); verified gotcha that `UpdatePlacement` charges stamina/resources/wear after `TryPlacePiece` even when a `PlacePiece` prefix skips placement. Corrected: custom hoe pieces must not charge stamina/durability themselves. |
+| 1.25 | 2026-11-02 03:19 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.19 (hoe 1.18 and smart hammer 1.17 in one build, no key clashes, no double charge). |
