@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.21 |
-| **Last updated** | 2026-10-31 03:21 UTC |
-| **Updated by** | Claude Code, Ember Blast session (`claude/project-thread-3uu2ef`) |
+| **Version** | 1.22 |
+| **Last updated** | 2026-11-02 00:10 UTC |
+| **Updated by** | Claude Code, hoe ramp controls session (`claude/project-thread-fvguye`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -697,6 +697,10 @@ PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 
 ## 7b. SnakeSmarterHoe specifics (as of v1.2.25)
 
+**Status (2026-11-02): the user is moving off SnakeSmarterHoe** (too many features cluttering the
+UI); its ramp blueprints were ported, simplified, to SnakeSkills 1.14 (§7f). New hoe work goes in
+SnakeSkills.
+
 The source is decompiled from Jubaroo's release: **private use only, never publish**. Thunderstore
 author string: "Jubaroo, edits by SAT". Install replaces upstream: same GUID and config file.
 
@@ -816,7 +820,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.13.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.14.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -939,7 +943,32 @@ lost after starting the game unmodded once.
   Mining's patches. Mechanics in [`projectiles-and-rocks.md`](game/projectiles-and-rocks.md).
   Test build v1.13.58 (pre-release). The SnakeSkills thread was told to use 1.14+ next.
 
-Known open items: never tested in-game (Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.14 hoe controls** (hoe ramp controls thread, branch `claude/project-thread-fvguye`,
+  [SAT155/SnakeSailing#4](https://github.com/SAT155/SnakeSailing/pull/4) stacked on #3, 2026-11-02).
+  User: clicking an existing incline raised it further (the 1.11 level-to-feet click / 1.12 raise
+  ramp), so plain and Shift clicks are **vanilla again plus bump flattening**; Ctrl = adjustable
+  incline; Alt = SmarterHoe-style ramp blueprints, but built parts **change colour instead of
+  disappearing**. The user is dropping SnakeSmarterHoe ("too many extra features"; "the more
+  ergonomic, less fuss, the better"), so hoe work goes here and ports stay minimal.
+  - Old modes kept under **new config keys** (`Click`, `Shift Click`, `Raise Click`, default
+    `Vanilla`), since changing a default doesn't touch values already in the user's .cfg. Removed
+    keys: Click Levels To Feet, Ramp Only With Shift, Shift Ramp Mode, Raise Builds Ramps, Ease
+    Slopes On Paths/Level Ground.
+  - `RampTools.cs`: `Incline` (Ctrl held + hoe terrain ghost; anchor = feet, dir = camera forward
+    flattened, follows until the first Ctrl strike then locked while Ctrl stays down; Ctrl + wheel =
+    angle, `Incline Angle` 15°, -45..45; `SetControls` prefix stops Ctrl crouching; preview drawn
+    with pooled `LineRenderer`s, `Sprites/Default`). `RampBlueprints` (points on Alt+click via a
+    `Player.TryPlacePiece` prefix returning false with `__result = false`, so no stamina/stone; only
+    on `Input.GetMouseButtonDown(0)` since holding repeats placement; saved on each zone's
+    TerrainComp ZDO under `SnakeSkills_RampBlueprints` after claiming ownership; Alt+click on a plan
+    lets the strike through with `RampBlueprints.Building` set until the finalizer).
+  - Strikes whose shape is ours (blueprint, incline, raise ramp) copy the settings with
+    `m_level`/`m_raise`/`m_smooth` off (paint kept), then `Tidy` applies `Ramp` (new optional
+    `at(x, z)` → target height + weight for non-plane shapes). Built = ground within 0.3 m of the
+    plan (or at the 8 m limit toward it); the blueprint auto-clears at 100%.
+  Test build v1.14.62 (pre-release), CI green, untested in-game.
+
+Known open items: never tested in-game (1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1007,3 +1036,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.19 | 2026-10-31 03:00 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.10 (ramps from the player's feet), and adding a new config key to change a default for existing users. |
 | 1.20 | 2026-10-31 03:10 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.11-1.12 (plain click levels to feet; Raise ground ramps, workbench-free and cheaper via piece fields). |
 | 1.21 | 2026-10-31 03:21 | Claude Code, Ember Blast session | Added: topic file `docs/game/projectiles-and-rocks.md` (`FireProjectileBurst`/`Projectile.Setup`/`OnHit`/`m_onHit`, `DoAOE` one hit per object, pickaxe and chop count in `GetTotalDamage`, `MineRock5.Damage` with `m_radius`, `MineRock`/`Destructible` damage, `StaffFireball` prefab); §7f SnakeSkills 1.13 Ember Blast. |
+| 1.22 | 2026-11-02 00:10 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.14 (vanilla clicks + bumps, Ctrl incline, Alt ramp blueprints with colour progress, new config keys for old modes); user is leaving SnakeSmarterHoe; `terrain-and-hoe.md` sections on TryPlacePiece interception, settings-copy for custom shapes and line previews. |

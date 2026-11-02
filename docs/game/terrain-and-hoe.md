@@ -74,6 +74,21 @@ in-game.
   (`sum(h*dx)/sum(dx*dx)` per axis) and only lower the point if every ring point is within about a
   quarter of the point's excess from that plane.
 
+## Custom shapes and tools on modifier keys (SnakeSkills 1.14)
+
+- To use a hoe click for something that isn't a strike (laying blueprint points), prefix
+  `Player.TryPlacePiece(Piece piece)` (bool) and return false with `__result = false`: nothing is
+  placed or paid. `PlacePiece` (and so `TerrainOp.Awake`) runs inside `TryPlacePiece`, so a static
+  set in its prefix and cleared in a finalizer is visible to the strike. Holding the button repeats
+  placement; gate one-off actions on `Input.GetMouseButtonDown(0)`.
+- For a strike with your own shape, copy the settings in the `TerrainOp.Awake` prefix with
+  `m_level`/`m_raise`/`m_smooth` off (paint and stone/stamina stay vanilla), claim the zones
+  yourself, and write heights in the postfix (SnakeSkills `TerrainZones.Tidy`).
+- The hoe ghost keeps its `TerrainOp` (`GetComponentInChildren<TerrainOp>(true)` on
+  `m_placementGhost`), handy for telling which tool is selected and its radius (`GetRadius()`).
+- Previews: pooled `LineRenderer`s (`useWorldSpace`, `Sprites/Default` material) redrawn per frame.
+  Ctrl is Crouch by default: a `Player.SetControls` prefix with `ref bool crouch` stops it.
+
 ## Player side
 
 - Stamina per strike: `Player.GetBuildStamina()` = attack stamina × home-item modifiers and
@@ -91,6 +106,6 @@ in-game.
 ## Used by
 
 - SnakeSkills `Landscaping.cs` (1.2): bigger brush by skill, less stamina, bump flattening, cart
-  slope easing, no sprint. See notes §7f.
+  slope easing, no sprint; `RampTools.cs` (1.14): Ctrl incline, Alt ramp blueprints. See notes §7f.
 - SnakeSmarterHoe (notes §7b): its own brush tools; SnakeSkills leaves the hoe alone when it is
   loaded.
