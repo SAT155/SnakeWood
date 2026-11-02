@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.30 |
-| **Last updated** | 2026-11-02 05:00 UTC |
-| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
+| **Version** | 1.31 |
+| **Last updated** | 2026-11-02 05:03 UTC |
+| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -1083,10 +1083,29 @@ lost after starting the game unmodded once.
   hides the tab unless the hammer is out (button inactive, `Tab.m_button = null` so Q/E skips it,
   falls back to list 0). Postfix on `ByUsagePieceList`/`ByMaterialPieceList.GetAvailablePiecesWithTag`
   drops stubs. Thumbnails now render while the hammer is out and become the stub's `m_icon`
-  (`Sprite.Create`). Config `Blueprints Tab` (restart). Release v1.23.92, untested in-game: tab
-  width with five tabs unknown.
+  (`Sprite.Create`). Config `Blueprints Tab` (restart). Release v1.23.92. The user confirmed the
+  tab works and five tabs fit.
 
-Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.24 materials panel + lighting fix** (smart hammer thread, 2026-11-02).
+  - **Lighting bug in 1.23**: after 1.23 (thumbnails rendered whenever the hammer was out) the user
+    saw the player model black, plants overly bright, ground textures blurry/pixelated, then a
+    crash, with no log errors. Likely cause *(unverified)*: the thumbnail rig (a disabled `Camera`
+    plus an always-enabled **directional `Light`** with a one-layer `cullingMask`) stayed in the
+    scene; an extra directional light can be taken as the scene's sun/main light even with a
+    culling mask. **Lesson: never leave an extra Light (or camera) alive in the scene.** 1.24
+    creates the rig per picture, enables the light only around `Camera.Render`, `DestroyImmediate`s
+    rig and clone right after, and renders only while the Y list or build menu is open. Awaiting
+    the user's confirmation.
+  - **Materials panel** (`BlueprintCostPanel.cs`, config `Blueprint Materials Panel`): the build
+    info has only `Hud.m_requirementItems.Length` (6) slots; when a blueprint needs more,
+    `HudRequirementsPatch` hands every material (icon `m_shared.m_icons[0]`, have, need, enough)
+    to an IMGUI grid drawn from `Plugin.OnGUI`, placed beside the info panel (bounds from the
+    `RectTransform` world corners of `m_buildSelection`, `m_pieceDescription` and the slots via
+    `RectTransformUtility.WorldToScreenPoint`, camera null for overlay canvases) or above it when
+    there's no room. Item icons are atlas sprites: `GUI.DrawTextureWithTexCoords` with
+    `sprite.textureRect` / texture size. Release v1.24.95, untested in-game.
+
+Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1163,3 +1182,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.28 | 2026-11-02 04:11 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.22 (smart hammer always on, no toggle key; blueprint list pictures via an off-screen camera on a spare layer). |
 | 1.29 | 2026-11-02 04:39 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.23 (Blueprints tab in the vanilla `BuildUi` build menu, blueprint pictures as icons); `docs/game/build-menu-and-pieces.md` gains the Deep North build menu (BuildUi, IPieceList, TabHandler). |
 | 1.30 | 2026-11-02 05:00 | Claude Code, SnakeWood seat/reach/portals session | Added: the Categories tab lists by usage tag (`Piece.m_usage`, `UsageTagFlags`, `ByUsagePieceList`), not `PieceCategory` (topic file); §7 SnakeWood 1.23.167 under Transportation. |
+| 1.31 | 2026-11-02 05:03 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.24 (blueprint materials panel; 1.23 thumbnail rig left a directional light in the scene and broke lighting, now created and destroyed per picture). |
