@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.29 |
-| **Last updated** | 2026-11-02 04:39 UTC |
-| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
+| **Version** | 1.30 |
+| **Last updated** | 2026-11-02 05:00 UTC |
+| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -610,7 +610,7 @@ compiles but hasn't been tested in-game)*
 
 ---
 
-## 7. SnakeWood specifics (as of v1.23.116)
+## 7. SnakeWood specifics (as of v1.23.167)
 
 Files: `Plugin.cs` (config, migrations), `HoverLogVariant.cs` (19 variants: 7 woods incl.
 Timberwood, the Hover Sled, 12 fish; data + per-log config + tooltip), `HoverLog.cs` (riding,
@@ -648,6 +648,9 @@ Design decisions the user made (keep them):
   looking past your own log, `Extra Reach While Riding` (2 m) beyond vanilla. `PortalByLog`
   sends the rider through when any part of the log's capsule overlaps a portal trigger, so
   portals against a wall work. Both in `HoverLogPortal.cs`.
+- **Build menu (1.23.167):** all logs, fish and the sled carry `Piece.m_usage =
+  UsageTagFlags.Transport`, so they list under **Transportation** in the Categories tab (the user
+  asked). `m_category` stays `Misc`. See [`docs/game/build-menu-and-pieces.md`](game/build-menu-and-pieces.md).
 - **Disguise per wood (1.23):** the user wanted each log to look like its own tree's half log to
   unmodded players (Yggdrasil showed as a plain log because its half log is over 5 m). Now its own
   tree's half log is picked at any size and shrunk through the ZDO scale (above); the modded log no
@@ -691,7 +694,7 @@ model isn't resized. The disguise turn matches `LayFlat` (+X long side → Euler
 logs (Euler(0, -90, 0)), so both sides face the same way *(untested in-game)*.
 
 Known open items: in-game verification of v1.22.54 (unhitch key, floating-team fix, editor
-suggestions, landings) and v1.23.116 (per-wood resized disguise, Ancient Bark as swamp log, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
+suggestions, landings) and v1.23.167 (Transportation tag, per-wood resized disguise, Ancient Bark as swamp log, plain-log seat, Saddle look, riding reach, portal by log, lower hover at rest, fish disguise, passenger grip;
 PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 "Lifetime Fuel" core for the sled, which is off for it now.
 
@@ -1159,3 +1162,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.27 | 2026-11-02 04:04 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.21 (middle click resets the hoe brush to standard size). |
 | 1.28 | 2026-11-02 04:11 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.22 (smart hammer always on, no toggle key; blueprint list pictures via an off-screen camera on a spare layer). |
 | 1.29 | 2026-11-02 04:39 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.23 (Blueprints tab in the vanilla `BuildUi` build menu, blueprint pictures as icons); `docs/game/build-menu-and-pieces.md` gains the Deep North build menu (BuildUi, IPieceList, TabHandler). |
+| 1.30 | 2026-11-02 05:00 | Claude Code, SnakeWood seat/reach/portals session | Added: the Categories tab lists by usage tag (`Piece.m_usage`, `UsageTagFlags`, `ByUsagePieceList`), not `PieceCategory` (topic file); §7 SnakeWood 1.23.167 under Transportation. |

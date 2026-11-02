@@ -80,3 +80,18 @@ Read 2026-11-02 (Decompile of `Hud`, `BuildUi`, `IPieceList`, `RecentPieceList`,
   `m_currentBuildTool.m_availablePieces.Count` changes (`Update`) and on tab/tag change. Clicking
   calls `Player.SetSelectedPiece(piece)` then closes the menu.
 - A placed piece goes to Recent through `BuildUi.AddRecentPiece`.
+
+## Categories tab = usage tags *(verified)*
+
+Read 2026-11-02 (Decompile of `Piece`, `ByUsagePieceList`) by the SnakeWood session.
+
+- The Categories tab's left list (Show All, Misc., Crafting, Building, Transportation, ...) is
+  `ByUsagePieceList`, built from **`Piece.m_usage`** (`Piece.UsageTagFlags`, a `[Flags]` enum with
+  `[DisplayName("$tag_...")]` per value, e.g. `Transport = 0x800`, `Food = 0x1000`, `Meads = 0x2000`,
+  `Feasts = 0x4000`, `Defense = 0x8000`, `Stacks = 0x10000`, `Stairs = 0x20000`, `Doors = 0x40000`),
+  **not** `Piece.m_category`. `UpdateAvailableTags` ORs the flags of `table.m_availablePieces` and
+  shows only tags some piece has; `GetAvailablePiecesWithTag` returns pieces with that flag (plus
+  repair/remove pieces; tag -1 = Show All).
+- `Piece.PieceCategory` (old tab system, still on pieces): `Misc 0, Crafting 1, BuildingWorkbench 2,
+  BuildingStonecutter 3, Furniture 4, DeepNorth 5, Feasts 6, Food 7, Meads 8, Max 9, All 100`.
+- A mod piece with `m_usage = 0` shows only under Show All. SnakeWood sets `Transport`.
