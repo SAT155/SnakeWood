@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.23 |
-| **Last updated** | 2026-11-02 03:02 UTC |
-| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
+| **Version** | 1.24 |
+| **Last updated** | 2026-11-02 03:20 UTC |
+| **Updated by** | Claude Code, hoe ramp controls session (`claude/project-thread-fvguye`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -823,7 +823,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.17.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.18.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -884,8 +884,8 @@ lost after starting the game unmodded once.
   outer half of the brush so partial restores stay smooth; clears paint where fully restored. Built
   like SnakeSmarterHoe's custom pieces: copy of `mud_road_v2` with `TerrainOp`/`ZNetView` removed
   under an inactive root, added to the Hoe's `PieceTable`, shown via the known-recipes set in a
-  `PieceTable.UpdateAvailable` prefix, and `Player.PlacePiece` intercepted (stamina, durability,
-  animation by hand). Details in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.4.30.
+  `PieceTable.UpdateAvailable` prefix, and `Player.PlacePiece` intercepted (animation by hand;
+  stamina and wear are the game's, see the 1.18 gotcha below). Details in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.4.30.
 - **1.5** (user feedback 2026-10-30 20:04: Alt+scroll still zoomed, brush grew with skill, ramps
   went straight up the steepest part; user expected vanilla-like "gentler direction"; asked how to
   get older revisions back to compare). Ramp Mode **Slope** (default): least-squares plane of the
@@ -992,8 +992,45 @@ lost after starting the game unmodded once.
     `com.codepeople.smartbuild.cfg` when `[Smart Hammer]` isn't in the file yet. Blueprints stay in
     `BepInEx/config/SmartBuild/Blueprints`.
   Test build v1.17.68 (pre-release), CI green, untested in-game.
+- **1.18 hoe follow-ups** (hoe ramp controls thread, branch `claude/project-thread-fvguye`, same
+  PR #4; 1.16 commits, released as 1.18 because 1.17 was taken). The user, 2026-11-02: tried 1.14
+  ("the blueprint plan works very well!"), then asked for Ctrl+Z, decorative plants, smoother ramp
+  ends (vanilla Shift-click "adds divots when making ramps"; couldn't decide how, so we picked),
+  edge lines while laying a plan, and reported a camera stutter when sizing the brush.
+  - `TerrainUndo.cs`: before each hoe strike (HoeStrike prefix after `Claim`, Restore terrain via
+    `Landscaping.RecordUndo`) save each vertex's `m_levelDelta`, `m_smoothDelta`,
+    `m_modifiedHeight`, `m_paintMask`, `m_modifiedPaint` within radius + 2; strikes while the
+    button stays held merge into one step. Ctrl+Z writes them back (claim, `Save(false)`,
+    `m_hmap.Poke(0,false)`, `ResetGrass`), saving the current values for Ctrl+Y / Ctrl+Shift+Z.
+    Plant steps destroy the spawned object (`ZNetScene.Destroy` after claiming) and refund wood
+    (`Inventory.AddItem(GameObject, int)`; the 6-argument string overload doesn't exist).
+  - `DecorPlants.cs`: scans `ZNetScene.m_prefabs` once: `TreeBase` = tree; `Destructible` named
+    bush/shrub/fern/reed whose `DropOnDestroyed` drops only wood/resin = bush; skips anything with
+    Piece, Pickable, Plant, ItemDrop, Character, MineRock(5), Container. Ghost = copy with every
+    `MonoBehaviour` and `Rigidbody` destroyed plus a `Piece` (`m_groundOnly`); the `PlacePiece`
+    prefix instantiates the vanilla prefab (`ZNetView.m_persistent` forced true) so unmodded
+    players see it. Icons rendered once: copy on layer 31 at y 6000, orthographic camera + own
+    directional light to a RenderTexture, `ReadPixels` (untested how it looks in-game). Tree wood
+    cost goes in `m_resources` so the game checks and takes it.
+  - Shift rounding (`Shift Rounds Edges`, when `Shift Click` = Vanilla): `TerrainZones.PlanRound`
+    fits h = a + b·u + c·u² along the plane-fit gradient (Cramer on the 3x3 normal equations),
+    level across, our shape instead of vanilla level/smooth. `Ramp.at` carries non-plane shapes.
+  - Alt plans: `Plan.HeightAt` remaps distance along the path with a trapezoid-slope easing
+    (zero slope at both ends over min(4 m, L/4), middle k = 1/(1-e) steeper), waypoint heights kept.
+  - Camera stutter: restoring `GameCamera.m_distance` in a postfix still let the camera move one
+    frame; returning 0 from a `ZInput.GetMouseScrollWheel` prefix fixes it (our code reads
+    `Input.mouseScrollDelta`).
+  - **Gotcha (verified by decompile, Player, 2026-11-02):** `Player.UpdatePlacement` does
+    `if (TryPlacePiece(piece)) { ConsumeResources(piece.m_resources, 0); UseStamina(GetBuildStamina());
+    durability -= GetPlaceDurability(...); m_buildEffect.Create(...) }`, and `TryPlacePiece` (after
+    the placement-status checks) calls `PlacePiece` and returns true. So a `PlacePiece` prefix that
+    returns false **still gets charged** stamina, resources and wear by the game: don't charge them
+    again (Restore terrain did, fixed in 1.18). To charge nothing, prefix `TryPlacePiece` instead.
+    `PlacePiece` itself does the attack animation and `m_placeEffect`, which a skipping prefix must
+    do by hand.
+  Test build v1.18.75 (pre-release), CI green, untested in-game.
 
-Known open items: never tested in-game (1.17 smart hammer and blueprint list, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+Known open items: never tested in-game (1.18 undo, decor plants and their icons, Shift rounding, 1.17 smart hammer and blueprint list, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1063,3 +1100,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.21 | 2026-10-31 03:21 | Claude Code, Ember Blast session | Added: topic file `docs/game/projectiles-and-rocks.md` (`FireProjectileBurst`/`Projectile.Setup`/`OnHit`/`m_onHit`, `DoAOE` one hit per object, pickaxe and chop count in `GetTotalDamage`, `MineRock5.Damage` with `m_radius`, `MineRock`/`Destructible` damage, `StaffFireball` prefab); §7f SnakeSkills 1.13 Ember Blast. |
 | 1.22 | 2026-11-02 00:10 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.14 (vanilla clicks + bumps, Ctrl incline, Alt ramp blueprints with colour progress, new config keys for old modes); user is leaving SnakeSmarterHoe; `terrain-and-hoe.md` sections on TryPlacePiece interception, settings-copy for custom shapes and line previews. |
 | 1.23 | 2026-11-02 03:02 | Claude Code, smart hammer session | Added: topic file `docs/game/build-menu-and-pieces.md` (piece tables, known recipes, `UpdateAvailable`, `SetSelectedPiece`, stub pieces, Jotunn-free UI); §7f SnakeSkills 1.17 smart hammer (SnakeHammer port on the vanilla hammer, N toggle, Y blueprint list); §7d points at it. |
+| 1.24 | 2026-11-02 03:20 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.18 (Ctrl+Z undo, decor plants, Shift rounding, eased plan ends, wheel fix); verified gotcha that `UpdatePlacement` charges stamina/resources/wear after `TryPlacePiece` even when a `PlacePiece` prefix skips placement. Corrected: custom hoe pieces must not charge stamina/durability themselves. |

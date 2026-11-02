@@ -55,9 +55,11 @@ in-game.
   remove `TerrainOp` and `ZNetView`, empty `m_resources`, add it to the Hoe's `PieceTable.m_pieces`.
   It only shows if its `Piece.m_name` is in the known-recipes set passed to
   `PieceTable.UpdateAvailable(knownRecipies, player, ...)` (prefix adds it). Intercept
-  `Player.PlacePiece(piece, pos, rot, doAttack)` with a prefix returning false and do stamina
-  (`GetBuildStamina`), durability, the attack animation (`m_zanim.SetTrigger`) and the effect
-  yourself.
+  `Player.PlacePiece(piece, pos, rot, doAttack)` with a prefix returning false and do the attack
+  animation (`m_zanim.SetTrigger`) and the effect yourself. **Not stamina or durability:** the game
+  takes those (and `m_resources`) in `UpdatePlacement` once `TryPlacePiece` returns true, which it
+  does even when the `PlacePiece` prefix skipped (verified by decompile 2026-11-02; earlier notes
+  said to charge them yourself, which double-charged).
 
 ## Shaping a ramp (SnakeSkills 1.5)
 
@@ -88,6 +90,16 @@ in-game.
   `m_placementGhost`), handy for telling which tool is selected and its radius (`GetRadius()`).
 - Previews: pooled `LineRenderer`s (`useWorldSpace`, `Sprites/Default` material) redrawn per frame.
   Ctrl is Crouch by default: a `Player.SetControls` prefix with `ref bool crouch` stops it.
+
+## Undo and decor (SnakeSkills 1.18)
+
+- Undo = save `m_levelDelta`, `m_smoothDelta`, `m_modifiedHeight`, `m_paintMask`, `m_modifiedPaint`
+  per vertex before the strike, write back later (claim, `Save(false)`, `Poke(0,false)`).
+  `TerrainComp.Initialize()` first if `!m_initialized`.
+- Mouse-wheel modes: return 0 from a `ZInput.GetMouseScrollWheel` prefix (camera zoom and piece
+  rotation read it) and read `Input.mouseScrollDelta` yourself.
+- World plants as hoe pieces: ghost copy without scripts, `PlacePiece` prefix instantiates the
+  vanilla prefab (see notes §7f 1.18).
 
 ## Player side
 
