@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.22 |
-| **Last updated** | 2026-11-02 00:10 UTC |
-| **Updated by** | Claude Code, hoe ramp controls session (`claude/project-thread-fvguye`) |
+| **Version** | 1.23 |
+| **Last updated** | 2026-11-02 03:02 UTC |
+| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -60,7 +60,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
-| **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. See §7f. |
+| **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
 Common conventions across the Valheim repos:
@@ -360,7 +360,7 @@ player still, equip duration), sounds (`ZSFX` volume, positional audio), and net
 (custom skills lost to unmodded loads, `Player.m_customData`:
 [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
 skill raises ([`fishing.md`](game/fishing.md)), and projectiles, AoE and rock damage
-([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)). Read the matching file before decompiling the same system again.
+([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -751,12 +751,15 @@ tags, so switch it to the SnakeWood auto-release scheme if the user wants releas
 
 ## 7d. SnakeHammer specifics
 
-Summary from its README only (no SnakeHammer session's notes yet; the next session there should
-add its own learnings). Private fork of SmartBuild 1.21.0, decompiled; never publish. Jotunn
+Summary from its README only (no SnakeHammer session's notes yet). Private fork of SmartBuild 1.21.0, decompiled; never publish. Jotunn
 dependency (`ValheimModding-Jotunn-2.30.1` in the manifest); builds as netstandard2.1 with C# 11
 "like upstream". Release tags track upstream: `v1.21.<run>` (bump MAJOR.MINOR only to follow a
 newer SmartBuild). Compatibility target is Valheim Plus's placement patches. Placement debugging
 is under `Debug / LogPlacement`.
+
+**Superseded for play by SnakeSkills 1.17's smart hammer (2026-11-02, §7f).** The user asked
+for SnakeHammer inside SnakeSkills on the regular hammer with a hotkey. Smart-hammer work now goes
+in SnakeSailing `SnakeSkills/SmartBuild/`; the SnakeHammer repo stays as the upstream-diff base.
 
 ## 7e. ValheimMapMarker: North Wisp (CoordMarker 1.9.0, package SnakeTography 1.7.x)
 
@@ -820,7 +823,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.14.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.17.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -968,7 +971,29 @@ lost after starting the game unmodded once.
     plan (or at the 8 m limit toward it); the blueprint auto-clears at 100%.
   Test build v1.14.62 (pre-release), CI green, untested in-game.
 
-Known open items: never tested in-game (1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.17 smart hammer** (smart hammer thread, branch `claude/project-thread-qwehcw`,
+  [SAT155/SnakeSailing#5](https://github.com/SAT155/SnakeSailing/pull/5) stacked on #4,
+  2026-11-02; 1.16 is the hoe undo thread's). User: "integrate SnakeHammer into SnakeSkills, use
+  the regular hammer with a hotkey for smart-hammer mode, save blueprints and select from a list".
+  **SnakeSkills now contains decompiled SmartBuild code: never upload it to Thunderstore.**
+  - SnakeHammer's source copied to `SnakeSkills/SmartBuild/` (namespace `SnakeSkills.SmartBuild`,
+    `#nullable disable` + `#pragma warning disable` per file; `MathF` → `Mathf` for net48;
+    locals named `field` renamed, it's a keyword in C# 14 property accessors on CI's SDK).
+  - No Jotunn: Smart Hammer item removed; `SmartHammer.Equipped` = vanilla `Hammer` in hand and
+    smart mode on (`Smart Mode Key`, N). All SmartBuild patches already gated on it. Stubs go in
+    the vanilla hammer's table (Misc tab) only while smart mode is on. `GUIManager.cs` replaces
+    Jotunn's widgets; `BlueprintList.cs` (IMGUI, `Blueprint List Key` Y) searches, picks via
+    `Player.SetSelectedPiece`, deletes, saves. See [`build-menu-and-pieces.md`](game/build-menu-and-pieces.md).
+  - SmartBuild's plugin class is a `MonoBehaviour` added to SnakeSkills' object; it patches its own
+    namespace's classes, and `SnakeSkillsPlugin` patches everything else (no blanket `PatchAll`).
+    Off entirely while `com.codepeople.smartbuild` (SmartBuild or SnakeHammer) is loaded.
+  - Config: section `Smart Hammer` + SmartBuild's as `Smart Hammer - <section>`, bound with
+    `Config.Bind` (not registered with ServerSync, so local per player), imported once from
+    `com.codepeople.smartbuild.cfg` when `[Smart Hammer]` isn't in the file yet. Blueprints stay in
+    `BepInEx/config/SmartBuild/Blueprints`.
+  Test build v1.17.68 (pre-release), CI green, untested in-game.
+
+Known open items: never tested in-game (1.17 smart hammer and blueprint list, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1037,3 +1062,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.20 | 2026-10-31 03:10 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.11-1.12 (plain click levels to feet; Raise ground ramps, workbench-free and cheaper via piece fields). |
 | 1.21 | 2026-10-31 03:21 | Claude Code, Ember Blast session | Added: topic file `docs/game/projectiles-and-rocks.md` (`FireProjectileBurst`/`Projectile.Setup`/`OnHit`/`m_onHit`, `DoAOE` one hit per object, pickaxe and chop count in `GetTotalDamage`, `MineRock5.Damage` with `m_radius`, `MineRock`/`Destructible` damage, `StaffFireball` prefab); §7f SnakeSkills 1.13 Ember Blast. |
 | 1.22 | 2026-11-02 00:10 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.14 (vanilla clicks + bumps, Ctrl incline, Alt ramp blueprints with colour progress, new config keys for old modes); user is leaving SnakeSmarterHoe; `terrain-and-hoe.md` sections on TryPlacePiece interception, settings-copy for custom shapes and line previews. |
+| 1.23 | 2026-11-02 03:02 | Claude Code, smart hammer session | Added: topic file `docs/game/build-menu-and-pieces.md` (piece tables, known recipes, `UpdateAvailable`, `SetSelectedPiece`, stub pieces, Jotunn-free UI); §7f SnakeSkills 1.17 smart hammer (SnakeHammer port on the vanilla hammer, N toggle, Y blueprint list); §7d points at it. |
