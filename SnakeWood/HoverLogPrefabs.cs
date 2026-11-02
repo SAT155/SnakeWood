@@ -245,6 +245,9 @@ public static class HoverLogPrefabs
 		piece.m_description = variant.Describe();
 		piece.m_icon = Icon(variant) ?? templatePiece?.m_icon;
 		piece.m_category = Piece.PieceCategory.Misc;
+		// The build menu's Categories tab lists pieces by usage tag, so the logs and sled show
+		// under Transportation (beside the cart and boats).
+		piece.m_usage = Piece.UsageTagFlags.Transport;
 		piece.m_craftingStation = workbench;
 		if (templatePiece != null)
 		{

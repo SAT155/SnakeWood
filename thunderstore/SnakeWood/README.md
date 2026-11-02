@@ -13,7 +13,7 @@ fish size (`Fish Show As Fish`). `Vanilla Disguise` turns this off.
 
 ## The logs
 
-All are under the hammer's **Misc** tab. Each one is that wood's
+All are in the hammer menu under **Transportation** (Categories tab) and **Misc**. Each one is that wood's
 raw log, floating on a coloured glow, with a little saddle made from the wood's build piece.
 
 Each log has to be built at a better, more upgraded crafting station the further into the game
