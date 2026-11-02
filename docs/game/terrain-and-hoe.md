@@ -98,8 +98,10 @@ in-game.
   `TerrainComp.Initialize()` first if `!m_initialized`.
 - Mouse-wheel modes: return 0 from a `ZInput.GetMouseScrollWheel` prefix (camera zoom and piece
   rotation read it) and read `Input.mouseScrollDelta` yourself.
-- World plants as hoe pieces: ghost copy without scripts, `PlacePiece` prefix instantiates the
-  vanilla prefab (see notes §7f 1.18).
+- World plants as hoe pieces: ghost copy without scripts **or colliders** (the placement ray hits a
+  ghost's colliders, so the preview climbs on top of itself), `PlacePiece` prefix instantiates the
+  vanilla prefab (see notes §7f 1.18/1.20). Runtime build-menu icons: render on black and on white
+  and derive alpha from the difference (opaque shaders don't write alpha); force LOD 0.
 
 ## Player side
 

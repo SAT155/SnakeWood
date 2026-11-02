@@ -54,4 +54,4 @@ relies on (`Player`, `Sadle`, `IDoodadController`, `ZSyncTransform`) after a gam
 `tools/make_icon.py` redraws the icon (`SnakeWood/icon.png`, also the build-menu icon, and
 `thunderstore/SnakeWood/icon.png`).
 
-Notes for future Claude Code sessions (environment, CI, game APIs, the SnakeSquad repos): [`docs/VALHEIM_MODDING_NOTES_v1.25.md`](docs/VALHEIM_MODDING_NOTES_v1.25.md) (the version is in the filename; the newest version is the current one).
+Notes for future Claude Code sessions (environment, CI, game APIs, the SnakeSquad repos): [`docs/VALHEIM_MODDING_NOTES_v1.26.md`](docs/VALHEIM_MODDING_NOTES_v1.26.md) (the version is in the filename; the newest version is the current one).
