@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.9 |
-| **Last updated** | 2026-10-29 04:09 UTC |
-| **Updated by** | Claude Code, SnakeWood seat/reach/portals session (`claude/project-thread-glxkng`) |
+| **Version** | 1.29 |
+| **Last updated** | 2026-11-02 04:39 UTC |
+| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -60,7 +60,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
-| **SnakeSailing** | Maintained forks of blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods, updated for Valheim 1.0+/Ashlands. | Matrix CI builds all three. Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** so each mod is one DLL. Removed upstream's hard block on ValheimPlus (now a warning). |
+| **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
 Common conventions across the Valheim repos:
@@ -75,9 +75,10 @@ Common conventions across the Valheim repos:
   the mod's folders); a manual workflow_dispatch always does. Bump the manifest (and the
   `PluginVersion` const) for feature releases.
   - Uses it: **SnakeWood**, **SnakeSmarterHoe**, **SnakeHammer** *(verified in their build.yml)*.
-  - **SnakeSailing**: switched in [SAT155/SnakeSailing#1](https://github.com/SAT155/SnakeSailing/pull/1)
-    (draft, 2026-10-24). With no manifest, MAJOR.MINOR comes from a root `VERSION` file and each
-    mod's `ModVersion` is listed in the release notes. Until merged it still releases on tags only.
+  - **SnakeSailing**: [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
+    (draft, 2026-10-29, supersedes #1) copies SnakeWood's workflow for SnakeSkills (manifest
+    `thunderstore/SnakeSkills/manifest.json`); a manual run on a non-default branch makes a
+    **pre-release** (test build v1.0.10). Until merged, the default branch still releases on tags only.
   - **ValheimMapMarker**: switched in [SAT155/ValheimMapMarker#1](https://github.com/SAT155/ValheimMapMarker/pull/1)
     (draft, 2026-10-25): MAJOR.MINOR from `thunderstore/SnakeTography/manifest.json`, PATCH = run
     number via `PACKAGE_VERSION` (read by `thunderstore/package.py`); releases on default-branch
@@ -173,7 +174,7 @@ as `::error::` lines by the build step.
 ## 3. CI: building without the game
 
 `.github/workflows/build.yml` (same shape in SnakeWood, SnakeSmarterHoe, SnakePolearms,
-ValheimMapMarker; SnakeSailing and ValheimMapMarker use a matrix):
+ValheimMapMarker, SnakeSailing (SnakeSkills); ValheimMapMarker uses a matrix):
 
 1. `actions/setup-dotnet@v4` with `8.0.x`.
 2. Install SteamCMD (`lib32gcc-s1`, tarball from steamcdn), then
@@ -351,10 +352,15 @@ cost a CI round-trip).
 ## 5. Game systems cheat-sheet (verified by decompile unless noted)
 
 Deeper per-system notes live in [`docs/game/`](game/README.md): mist and demisters, blocking and
-left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage, vanilla
+left-hand items (shields, hand models, hotbar use), stamina/eitr/skills/spirit damage (also max
+eitr, eitr regen and trinkets), vanilla
 effect and sound names, attacks and throws (attack flow, projectile-less throws, holding the
 player still, equip duration), sounds (`ZSFX` volume, positional audio), and network objects
-(destroying them safely, the `ZNetScene.RemoveObjects` error flood). Read the matching file before decompiling the same system again.
+(destroying them safely, the `ZNetScene.RemoveObjects` error flood), and the character save
+(custom skills lost to unmodded loads, `Player.m_customData`:
+[`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
+skill raises ([`fishing.md`](game/fishing.md)), and projectiles, AoE and rock damage
+([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -691,6 +697,10 @@ PR #3); FrozenKing boss key; a race timer HUD was suggested. Possibly a
 
 ## 7b. SnakeSmarterHoe specifics (as of v1.2.25)
 
+**Status (2026-11-02): the user is moving off SnakeSmarterHoe** (too many features cluttering the
+UI); its ramp blueprints were ported, simplified, to SnakeSkills 1.14 (§7f). New hoe work goes in
+SnakeSkills.
+
 The source is decompiled from Jubaroo's release: **private use only, never publish**. Thunderstore
 author string: "Jubaroo, edits by SAT". Install replaces upstream: same GUID and config file.
 
@@ -741,12 +751,15 @@ tags, so switch it to the SnakeWood auto-release scheme if the user wants releas
 
 ## 7d. SnakeHammer specifics
 
-Summary from its README only (no SnakeHammer session's notes yet; the next session there should
-add its own learnings). Private fork of SmartBuild 1.21.0, decompiled; never publish. Jotunn
+Summary from its README only (no SnakeHammer session's notes yet). Private fork of SmartBuild 1.21.0, decompiled; never publish. Jotunn
 dependency (`ValheimModding-Jotunn-2.30.1` in the manifest); builds as netstandard2.1 with C# 11
 "like upstream". Release tags track upstream: `v1.21.<run>` (bump MAJOR.MINOR only to follow a
 newer SmartBuild). Compatibility target is Valheim Plus's placement patches. Placement debugging
 is under `Debug / LogPlacement`.
+
+**Superseded for play by SnakeSkills 1.17's smart hammer (2026-11-02, §7f).** The user asked
+for SnakeHammer inside SnakeSkills on the regular hammer with a hotkey. Smart-hammer work now goes
+in SnakeSailing `SnakeSkills/SmartBuild/`; the SnakeHammer repo stays as the upstream-diff base.
 
 ## 7e. ValheimMapMarker: North Wisp (CoordMarker 1.9.0, package SnakeTography 1.7.x)
 
@@ -810,6 +823,271 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
+## 7f. SnakeSkills (SnakeSailing repo, 1.22.x)
+
+From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
+(draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
+lost after starting the game unmodded once.
+
+- One plugin `com.snakesquad.snakeskills` (`SnakeSkills/`: `Plugin.cs`, `Sailing.cs`,
+  `Ranching.cs`, `Mining.cs`, `SkillBackup.cs`, `ConfigImport.cs`). Each skill file is the old
+  mod as a static class with `Init(plugin)`; game logic unchanged. One ServerSync `ConfigSync`.
+- Same skill names, so SkillManager gives the same ids (`Skill.fromName` = abs stable hash of
+  the English name) and old levels carry over. Don't rename a skill.
+- **Skill backup**: why and how in
+  [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md). Levels lost before
+  SnakeSkills can't come back; the backup starts at the first save with it.
+- `BepInIncompatibility` on the old GUIDs (`org.bepinex.plugins.sailing/ranching/mining`):
+  SnakeSkills stays unloaded while any of them is installed.
+- First start (no `com.snakesquad.snakeskills.cfg` yet) copies values from the old .cfg files by
+  section and key, parsing them by hand (`ConfigFile` only exposes bound entries). Sailing's
+  per-ship entries bind late (`ZNetScene.Awake`), so the parsed old values are kept for them.
+- Config sections: 1 General, 2 Sailing, 3 Sailing Ship Speed, 4 Ranching, 5 Mining, 6 Fishing,
+  7 Landscaping. The csproj now references all game Unity modules (SnakeWood's glob target).
+- The repo's old `Sailing/`, `Ranching/`, `Mining/` projects were removed (in git history).
+- **Fishing XP by fish (1.1, `Fishing.cs`)**, the user's ask: harder fish much more rewarding,
+  "okay with this being much more experience than vanilla due to fishing being so tedious".
+  Catch XP per fish prefab from a config list (Perch 10 … Magmafish 150, unlisted fish 60 and
+  logged), × (1 + 0.5 per extra star), given in 1-XP `RaiseSkill` steps; reeling XP with a fish
+  on is × (1 + fish XP × 0.02). Config section 6 Fishing. Mechanics in
+  [`fishing.md`](game/fishing.md). Test build v1.1.14 (pre-release).
+- **Landscaping skill (1.2, `Landscaping.cs`)**, the user's ask: drop SmarterHoe's tools for one
+  vanilla-like hoe whose brush grows and stamina drops with a skill; flatten lone bumps; no sprint
+  on Shift with the hoe; "automatic continuous pathing" for steps too steep, favouring the most
+  cart-accessible route, only inside the hoe's area. Built as: +1 XP per strike; stamina × (1 −
+  0.6 × skill); brush radius up to 2.5× at 100 (Left Alt + wheel picks a size up to that); strike
+  claims all zones (radii survive multiplayer); afterwards level/path/paved strikes lower vertices
+  more than 0.1 m above all 8 neighbours to their average, and path/paved strikes relax steps
+  steeper than 25° between neighbouring vertices, moving only vertices inside the brush (level
+  ground off by default, toggle). "Pathing" was read as slope easing in the brush, not route
+  finding. Section 7 Landscaping. Disabled while SmarterHoe (`com.jubaroo.smarterhoe`) is loaded.
+  Mechanics in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.2.16 (pre-release).
+- **Pulsating Earrings (`Trinkets.cs`, section 8 Trinkets)**, the user's ask (Pulsating Earrings
+  thread, 2026-10-30): a permanent eitr bonus while worn. +25 max eitr via a
+  `Player.GetTotalFoodValue` postfix (works with no eitr food), optional always-on regen % via
+  `SEMan.ModifyEitrRegen` (default 0), a description line. The adrenaline effect is untouched, so
+  ViableTrinkets (reference mod, decompile uploaded by the user) still works. The user chose
+  SnakeSkills over a new repo (sessions can't create repos: `create_repository` returns 403).
+  Branch `claude/project-thread-ufzjcp`, test build v1.2.19 (pre-release); to ship with 1.3.
+  Mechanics in [`magic-costs-and-skills.md`](game/magic-costs-and-skills.md).
+- **Fish yield (1.3, `Fishing.cs`)**, the user's ask: more fillets with Fishing skill; Fish 'n'
+  Bread should count the Anglerfish's stars, and get more with skill too. `Recipe.GetAmount`
+  postfix: Skill Yield Recipes (`FishRaw, FishAndBreadUncooked`) × (1 + skill × 1, rounded); Star
+  Yield Recipes (`FishAndBreadUncooked`) + (stars − 1) × amount from the first matching fish in
+  the inventory (the one vanilla consumes). Mechanics in [`fishing.md`](game/fishing.md).
+  Released together with the earrings as 1.3, test build v1.3.21 (pre-release).
+- **1.4 hoe changes** (user's asks 2026-10-30 17:40-17:50): slope easing ("ramping") only while
+  Shift is held; *Shift Ramp Style* Fill (default: only raises, so a ramp is built up against a
+  cliff, the user's screenshot was a cliff face), Cut, Spread. **Restore terrain** piece
+  (`RestoreTerrain.cs`): from Landscaping 25, free (no stone/workbench), moves `TerrainComp` deltas
+  toward 0 (generated height), per strike ≤ 2→20 m³ and 0.5→2 m depth by skill, falloff over the
+  outer half of the brush so partial restores stay smooth; clears paint where fully restored. Built
+  like SnakeSmarterHoe's custom pieces: copy of `mud_road_v2` with `TerrainOp`/`ZNetView` removed
+  under an inactive root, added to the Hoe's `PieceTable`, shown via the known-recipes set in a
+  `PieceTable.UpdateAvailable` prefix, and `Player.PlacePiece` intercepted (animation by hand;
+  stamina and wear are the game's, see the 1.18 gotcha below). Details in [`terrain-and-hoe.md`](game/terrain-and-hoe.md). Test build v1.4.30.
+- **1.5** (user feedback 2026-10-30 20:04: Alt+scroll still zoomed, brush grew with skill, ramps
+  went straight up the steepest part; user expected vanilla-like "gentler direction"; asked how to
+  get older revisions back to compare). Ramp Mode **Slope** (default): least-squares plane of the
+  brush read before the strike; if ≤ cart slope the ramp follows it, else it runs across the hill
+  at the cart slope (angle acos(max/|G|) off the gradient), the side closer to the camera's facing;
+  points move onto it fully inside 60% of the radius, fading out. **Relax** = old neighbour
+  relaxation. Config to compare: Ramp Only With Shift Off + Relax + Spread = 1.2/1.3; Relax + Fill
+  = 1.4; Hoe Changes Off = vanilla. Ramp style default back to Spread. Brush Size is an absolute,
+  unsynced config value. Alt+wheel restores `GameCamera.m_distance` (UpdateCamera) and
+  `Player.m_placeRotation` (UpdatePlacement) after the frame. Test build v1.5.33.
+- **1.6** (user: "I love it now"): middle click resets Brush Size to the default (biggest the skill
+  allows); control hints appended to the hoe pieces' descriptions in the build menu. Test build v1.6.36.
+- **1.7** (user: bumps left after a strike, asked for a dim red flash when the hoe can't do
+  something): ghost tints dim red for 0.6 s plus a TopLeft message when the brush is at the ±8 m
+  delta limit or there's a rock (MineRock/MineRock5) in it. Test build v1.7.39.
+- **1.8** (user: jagged bumps on plain level/lowering strikes, nowhere near the limit; then asked
+  for less hoe wear with skill). Cause: the bump pass compared each point with the mean of its
+  ring, so the lip where a level strike meets lower ground (and the top edge of a cut) counted as
+  a bump and got notched. Now a point only drops if the ring is close to a plane (worst residual ≤
+  ¼ of the point's height above it). New Durability Reduction (0.6 at 100): an `UpdatePlacement`
+  prefix/postfix gives back the skill's share of wear lost during that call (covers vanilla
+  strikes and Restore terrain). Test build v1.8.43.
+- **1.9** (user: the red flash should also show when a bump, or ground to level, is too far for
+  the current skill). Skill Limits (On): bumps taller than 0.5 m (Landscaping 0) to 3 m (100) above
+  their ring's plane are left alone; one level ground / Shift ramp strike moves a vertex at most
+  1.5 m (0) to 8 m (100), measured against the vertex's level+smooth delta snapshotted in the
+  `TerrainOp.Awake` prefix (after claiming the zones) and clamped in Tidy, which now runs on every
+  level strike. Either limit flashes red with a message. Test build v1.9.45.
+- **1.10** (user tested 2026-10-31: running up a too-steep hill with Shift made a sideways
+  switchback "wall" in front instead of a ramp up; ramping downhill was easier walking backwards).
+  New config key *Shift Ramp Mode* (new key so old cfg files pick up the new default): **FromFeet**
+  (default) = ramp starts at the player's feet height and runs toward the brush centre, slope =
+  fitted ground gradient along that line clamped to ±cart slope, level across; consecutive strikes
+  ahead chain into one road and facing doesn't matter. **Switchback** = 1.5-1.9; Relax = 1.2-1.4.
+  Test build v1.10.47.
+- **1.11** (user: a plain click lacked Shift's cut/fill; chose "flat road at feet" on a decision
+  card). *Click Levels To Feet* (On): level/path/paved strikes without Shift get a slope-0 ramp at
+  the player's foot height (cuts and fills); path strikes now also get the per-strike depth limit.
+- **1.12** (user: Raise ground should make an upward ramp, need no workbench past Landscaping 50,
+  and cost less stone with skill). *Raise Builds Ramps*: the settings copy turns `m_raise` off and
+  a Fill ramp runs from the feet up toward the brush at the cart slope (per-strike limit applies).
+  Workbench: the build menu checks `Piece.m_craftingStation`, so it is cleared (original cached and
+  restored) in the hoe table's `UpdateAvailable` prefix from *Raise Without Workbench Level*;
+  stone: `Piece.Requirement.m_amount` scaled there too (*Raise Stone Reduction* 0.5 at 100, min 1).
+  Both refresh when the hoe's build table updates (re-equip). Test builds v1.11.51, v1.12.53.
+
+- **1.13 Ember Blast** (`EmberBlast.cs`, section 9 Ember Blast; Ember Blast thread, branch
+  `claude/project-thread-3uu2ef`, [SAT155/SnakeSailing#3](https://github.com/SAT155/SnakeSailing/pull/3)
+  stacked on #2). User's ask: Staff of Embers middle click that blows up stone rocks like
+  dynamite, not effective against mobs. The staff (`StaffFireball`) gets a secondary attack
+  cloned from its fireball at `ObjectDB.Awake`/`CopyOtherDB` (eitr × 1.5; original kept and put
+  back when off). `FireProjectileBurst` prefix flags blast attacks (`m_currentAttackIsSecondary`
+  + staff); the `Projectile.Setup` postfix zeroes damage/AoE/push/status/spawn-on-hit and adds an
+  `m_onHit` callback that deals pickaxe damage (150 × Mining damage factor, tier 4) to
+  `MineRock5` (one hit with `m_radius`), `MineRock` areas and rock `Destructible`s within 4 m.
+  Creatures, buildings and trees are never hit; unmodded players see a plain fireball. Optional
+  `fx_dynamite_explosion` with the effect safety check. Each rock area hit gives Mining XP via
+  Mining's patches. Mechanics in [`projectiles-and-rocks.md`](game/projectiles-and-rocks.md).
+  Test build v1.13.58 (pre-release). The SnakeSkills thread was told to use 1.14+ next.
+
+- **1.14 hoe controls** (hoe ramp controls thread, branch `claude/project-thread-fvguye`,
+  [SAT155/SnakeSailing#4](https://github.com/SAT155/SnakeSailing/pull/4) stacked on #3, 2026-11-02).
+  User: clicking an existing incline raised it further (the 1.11 level-to-feet click / 1.12 raise
+  ramp), so plain and Shift clicks are **vanilla again plus bump flattening**; Ctrl = adjustable
+  incline; Alt = SmarterHoe-style ramp blueprints, but built parts **change colour instead of
+  disappearing**. The user is dropping SnakeSmarterHoe ("too many extra features"; "the more
+  ergonomic, less fuss, the better"), so hoe work goes here and ports stay minimal.
+  - Old modes kept under **new config keys** (`Click`, `Shift Click`, `Raise Click`, default
+    `Vanilla`), since changing a default doesn't touch values already in the user's .cfg. Removed
+    keys: Click Levels To Feet, Ramp Only With Shift, Shift Ramp Mode, Raise Builds Ramps, Ease
+    Slopes On Paths/Level Ground.
+  - `RampTools.cs`: `Incline` (Ctrl held + hoe terrain ghost; anchor = feet, dir = camera forward
+    flattened, follows until the first Ctrl strike then locked while Ctrl stays down; Ctrl + wheel =
+    angle, `Incline Angle` 15°, -45..45; `SetControls` prefix stops Ctrl crouching; preview drawn
+    with pooled `LineRenderer`s, `Sprites/Default`). `RampBlueprints` (points on Alt+click via a
+    `Player.TryPlacePiece` prefix returning false with `__result = false`, so no stamina/stone; only
+    on `Input.GetMouseButtonDown(0)` since holding repeats placement; saved on each zone's
+    TerrainComp ZDO under `SnakeSkills_RampBlueprints` after claiming ownership; Alt+click on a plan
+    lets the strike through with `RampBlueprints.Building` set until the finalizer).
+  - Strikes whose shape is ours (blueprint, incline, raise ramp) copy the settings with
+    `m_level`/`m_raise`/`m_smooth` off (paint kept), then `Tidy` applies `Ramp` (new optional
+    `at(x, z)` → target height + weight for non-plane shapes). Built = ground within 0.3 m of the
+    plan (or at the 8 m limit toward it); the blueprint auto-clears at 100%.
+  Test build v1.14.62 (pre-release), CI green, untested in-game.
+
+- **1.17 smart hammer** (smart hammer thread, branch `claude/project-thread-qwehcw`,
+  [SAT155/SnakeSailing#5](https://github.com/SAT155/SnakeSailing/pull/5) stacked on #4,
+  2026-11-02; 1.16 is the hoe undo thread's). User: "integrate SnakeHammer into SnakeSkills, use
+  the regular hammer with a hotkey for smart-hammer mode, save blueprints and select from a list".
+  **SnakeSkills now contains decompiled SmartBuild code: never upload it to Thunderstore.**
+  - SnakeHammer's source copied to `SnakeSkills/SmartBuild/` (namespace `SnakeSkills.SmartBuild`,
+    `#nullable disable` + `#pragma warning disable` per file; `MathF` → `Mathf` for net48;
+    locals named `field` renamed, it's a keyword in C# 14 property accessors on CI's SDK).
+  - No Jotunn: Smart Hammer item removed; `SmartHammer.Equipped` = vanilla `Hammer` in hand and
+    smart mode on (`Smart Mode Key`, N). All SmartBuild patches already gated on it. Stubs go in
+    the vanilla hammer's table (Misc tab) only while smart mode is on. `GUIManager.cs` replaces
+    Jotunn's widgets; `BlueprintList.cs` (IMGUI, `Blueprint List Key` Y) searches, picks via
+    `Player.SetSelectedPiece`, deletes, saves. See [`build-menu-and-pieces.md`](game/build-menu-and-pieces.md).
+  - SmartBuild's plugin class is a `MonoBehaviour` added to SnakeSkills' object; it patches its own
+    namespace's classes, and `SnakeSkillsPlugin` patches everything else (no blanket `PatchAll`).
+    Off entirely while `com.codepeople.smartbuild` (SmartBuild or SnakeHammer) is loaded.
+  - Config: section `Smart Hammer` + SmartBuild's as `Smart Hammer - <section>`, bound with
+    `Config.Bind` (not registered with ServerSync, so local per player), imported once from
+    `com.codepeople.smartbuild.cfg` when `[Smart Hammer]` isn't in the file yet. Blueprints stay in
+    `BepInEx/config/SmartBuild/Blueprints`.
+  Test build v1.17.68 (pre-release), CI green, untested in-game.
+- **1.19 = 1.18 hoe + 1.17 smart hammer** (fvguye merged into SnakeSailing `claude/project-thread-qwehcw`,
+  #5, 2026-11-02). Only the version lines conflicted. Keys don't clash: the hoe's Ctrl+Z/Ctrl+Y
+  undo/redo only run in hoe build mode, the smart hammer's N/Y/Ctrl+Z only with the hammer.
+  SmartBuild's `TryPlacePiece` prefix returns false with `__result = false` for grids and
+  blueprints and charges its own costs, so the `UpdatePlacement` charging gotcha (1.18) doesn't
+  double-charge there. Test build v1.19.78 (pre-release), untested in-game.
+- **1.18 hoe follow-ups** (hoe ramp controls thread, branch `claude/project-thread-fvguye`, same
+  PR #4; 1.16 commits, released as 1.18 because 1.17 was taken). The user, 2026-11-02: tried 1.14
+  ("the blueprint plan works very well!"), then asked for Ctrl+Z, decorative plants, smoother ramp
+  ends (vanilla Shift-click "adds divots when making ramps"; couldn't decide how, so we picked),
+  edge lines while laying a plan, and reported a camera stutter when sizing the brush.
+  - `TerrainUndo.cs`: before each hoe strike (HoeStrike prefix after `Claim`, Restore terrain via
+    `Landscaping.RecordUndo`) save each vertex's `m_levelDelta`, `m_smoothDelta`,
+    `m_modifiedHeight`, `m_paintMask`, `m_modifiedPaint` within radius + 2; strikes while the
+    button stays held merge into one step. Ctrl+Z writes them back (claim, `Save(false)`,
+    `m_hmap.Poke(0,false)`, `ResetGrass`), saving the current values for Ctrl+Y / Ctrl+Shift+Z.
+    Plant steps destroy the spawned object (`ZNetScene.Destroy` after claiming) and refund wood
+    (`Inventory.AddItem(GameObject, int)`; the 6-argument string overload doesn't exist).
+  - `DecorPlants.cs`: scans `ZNetScene.m_prefabs` once: `TreeBase` = tree; `Destructible` named
+    bush/shrub/fern/reed whose `DropOnDestroyed` drops only wood/resin = bush; skips anything with
+    Piece, Pickable, Plant, ItemDrop, Character, MineRock(5), Container. Ghost = copy with every
+    `MonoBehaviour` and `Rigidbody` destroyed plus a `Piece` (`m_groundOnly`); the `PlacePiece`
+    prefix instantiates the vanilla prefab (`ZNetView.m_persistent` forced true) so unmodded
+    players see it. Icons rendered once: copy on layer 31 at y 6000, orthographic camera + own
+    directional light to a RenderTexture, `ReadPixels` (untested how it looks in-game). Tree wood
+    cost goes in `m_resources` so the game checks and takes it.
+  - Shift rounding (`Shift Rounds Edges`, when `Shift Click` = Vanilla): `TerrainZones.PlanRound`
+    fits h = a + b·u + c·u² along the plane-fit gradient (Cramer on the 3x3 normal equations),
+    level across, our shape instead of vanilla level/smooth. `Ramp.at` carries non-plane shapes.
+  - Alt plans: `Plan.HeightAt` remaps distance along the path with a trapezoid-slope easing
+    (zero slope at both ends over min(4 m, L/4), middle k = 1/(1-e) steeper), waypoint heights kept.
+  - Camera stutter: restoring `GameCamera.m_distance` in a postfix still let the camera move one
+    frame; returning 0 from a `ZInput.GetMouseScrollWheel` prefix fixes it (our code reads
+    `Input.mouseScrollDelta`).
+  - **Gotcha (verified by decompile, Player, 2026-11-02):** `Player.UpdatePlacement` does
+    `if (TryPlacePiece(piece)) { ConsumeResources(piece.m_resources, 0); UseStamina(GetBuildStamina());
+    durability -= GetPlaceDurability(...); m_buildEffect.Create(...) }`, and `TryPlacePiece` (after
+    the placement-status checks) calls `PlacePiece` and returns true. So a `PlacePiece` prefix that
+    returns false **still gets charged** stamina, resources and wear by the game: don't charge them
+    again (Restore terrain did, fixed in 1.18). To charge nothing, prefix `TryPlacePiece` instead.
+    `PlacePiece` itself does the attack animation and `m_placeEffect`, which a skipping prefix must
+    do by hand.
+  Test build v1.18.75 (pre-release), CI green, untested in-game.
+- **1.20 decor plant fixes** (hoe thread; SnakeSailing fvguye fast-forwarded to qwehcw first, so it
+  contains the smart hammer). The user tested 1.19.78: many bushes/trees "not working", no icons,
+  Ashlands tree previews ~10 m in the air; asked for Valheim Plus Advanced Building/Editing Mode.
+  - Icons were blank: opaque shaders write no usable alpha, so the render is done twice (black and
+    white background), alpha = 1 − mean(white − black), colour = black / alpha; `LODGroup.ForceLOD(0)`
+    on the copy; fallback = a Cultivator sapling icon. (Still untested whether the render shows.)
+  - Floating previews: the ghost kept the tree's colliders, so the placement ray hit the ghost
+    itself; all colliders are now stripped from decor ghosts.
+  - Hoe-planted plants get ZDO bool `SnakeSkills_DecorPlant` and a `Piece` added at runtime on spawn
+    and on every load (`ZNetView.Awake` postfix, which already has the ZDO): the hammer removes them
+    (refunding `m_resources`) and piece editors (V+ Advanced Editing Mode) can select them;
+    world-grown plants stay plain. V+ Advanced Building Mode moves the vanilla ghost, so it should
+    work unchanged. Neither V+ mode is verified.
+  - A `TryPlacePiece` postfix logs `Decor plants: <ghost> not placed (<m_placementStatus>)`, and a
+    failed spawn is logged. "Not working" details from the user are still pending.
+  Test build v1.20.83 (pre-release), CI green.
+- **1.21**: middle click now resets the hoe brush to the standard size (1.0x); before it jumped to
+  the biggest size, which the user reported. Release v1.21.90. The hammer thread merged it into
+  qwehcw and released 1.22 from there; further hoe work builds on qwehcw.
+
+- **1.22 smart hammer follow-ups** (smart hammer thread, SnakeSailing `claude/project-thread-qwehcw`,
+  2026-11-02). The user tested 1.20: "hammer is working!" Then: the N toggle "doesn't really make
+  sense", asked for pictures in the blueprint list and a Blueprints tab in the build menu.
+  - **No smart mode**: `SmartHammer.Equipped` = `Plugin.Active` + vanilla `Hammer` in hand; the
+    `Smart Mode Key` entry was removed (the `Smart Hammer` On/Off switch still disables it all).
+    SmartBuild's keys only act when pressed, so it's harmless always-on.
+  - **Pictures** (`BlueprintThumbnails.cs`, config `Blueprint List Pictures`): the stub is cloned
+    with `ZNetView.m_forceDisableInit` set at y = -5000, renderers moved to an unused layer (highest
+    unnamed one ≥ 8, fallback 31), `LODGroup.ForceLOD(0)`, photographed by a disabled camera and a
+    directional light whose `cullingMask` is only that layer (`Camera.Render` into a 128 px
+    RenderTexture, `ReadPixels`), clone destroyed the same frame. One per frame while the list is
+    open; cached per session and dropped on save/delete.
+  - Release v1.22.89, untested in-game.
+
+- **1.23 Blueprints tab** (smart hammer thread, SnakeSailing `claude/project-thread-qwehcw`,
+  2026-11-02). The user's Categories/Materials/Recent/Favorites build menu is **vanilla** Deep North
+  `BuildUi` (not Valheim Plus) *(verified)*; see `docs/game/build-menu-and-pieces.md`.
+  `SmartBuild/BuildMenuTab.cs`: postfix on `BuildUi.Awake` copies the last tab button into
+  `m_tabContainer` (new `onClick` → `SelectPieceList(4)`, label set by reflection on the TMP text,
+  `Localize` component destroyed), appends a vanilla `RecentPieceList` to `m_pieceLists`, the button
+  to `m_tabButtons`, and a `TabHandler.Tab` to `m_tabHandler.m_tabs` (Q/E). Prefix on
+  `UpdatePieceButtons` refills that list with the stub names (A to Z); prefix on `OpenBuildMenu`
+  hides the tab unless the hammer is out (button inactive, `Tab.m_button = null` so Q/E skips it,
+  falls back to list 0). Postfix on `ByUsagePieceList`/`ByMaterialPieceList.GetAvailablePiecesWithTag`
+  drops stubs. Thumbnails now render while the hammer is out and become the stub's `m_icon`
+  (`Sprite.Create`). Config `Blueprints Tab` (restart). Release v1.23.92, untested in-game: tab
+  width with five tabs unknown.
+
+Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
+join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
+SnakeSkills on GitHub if the user wants.
+
 ---
 
 ## 8. Working with this user
@@ -861,3 +1139,23 @@ attacks, hand model position in the right hand, standing still while charging, d
 | 1.7 | 2026-10-28 04:17 | Claude Code, SnakeWood seat/reach/portals session | Added: topic file `docs/game/hover-and-portal-triggers.md` (`FindHoverObject` first-hit and reach rules, `TeleportWorldTrigger` only fires for the player's collider, `TeleportWorld.Teleport` refusals, saddle and rug prefab names); §5 riding note links it; §2 test builds from a PR branch by dispatching Build; §7 SnakeWood 1.23 (plain log default, Saddle style, riding reach, portal by log, lower hover at rest, fish disguised as fish, passenger grip). |
 | 1.8 | 2026-10-28 05:30 | Claude Code, ValheimMapMarker North Wisp session | Added: §7e North Wisp 1.10.1 (gravity arc, proximity fuse) and 1.10.2 (burst shared over a routed RPC); `network-objects.md` routed RPC broadcast pattern. |
 | 1.9 | 2026-10-29 04:09 | Claude Code, SnakeWood seat/reach/portals session | Added: vanilla half-log prefab list, scaling vanilla objects through `ZNetView.m_syncInitialScale` / `ZDOVars.s_scaleHash` (`TreeLog.Destroy` passes scale to halves); §7 SnakeWood disguise uses each wood's own tree half log, resized. |
+| 1.10 | 2026-10-29 04:22 | Claude Code, SnakeSkills session | Added: topic file `docs/game/player-save-and-custom-skills.md` (vanilla `Skills.Load` drops unknown skill ids, `Player.m_customData` survives vanilla saves, SkillManager ids); §7f SnakeSkills (Sailing/Ranching/Mining combined, skill backup, config import); SnakeSailing ecosystem row, release scheme and CI notes updated. |
+| 1.11 | 2026-10-30 03:48 | Claude Code, SnakeSkills session | Added: topic file `docs/game/fishing.md` (how vanilla raises Fishing, `FishingFloat.Catch`, fish prefabs and stars, one level per `Skills.Skill.Raise`); §7f SnakeSkills 1.1 fishing XP by fish. Merged the glxkng branch's v1.9 edits (SnakeWood 1.23.116). |
+| 1.12 | 2026-10-30 04:30 | Claude Code, SnakeSkills session | Added: topic file `docs/game/terrain-and-hoe.md` (TerrainOp/TerrainComp, zone ownership, writing heights, build stamina, sprint, hoe ghost); §7f SnakeSkills 1.2 Landscaping skill. |
+| 1.13 | 2026-10-30 04:33 | Claude Code, Pulsating Earrings session | Added: max eitr = food total (`GetTotalFoodValue`), eitr regen via `SEMan.ModifyEitrRegen`, trinket slot/prefab names/ViableTrinkets notes in `magic-costs-and-skills.md`; §7f SnakeSkills Pulsating Earrings permanent eitr bonus. |
+| 1.14 | 2026-10-30 04:45 | Claude Code, SnakeSkills session | Added: crafting amounts and fish stars (`Recipe.GetAmount`, one-ingredient recipes, which item a craft consumes) to `docs/game/fishing.md`; §7f SnakeSkills 1.3 fish yield. Merged the ufzjcp branch's v1.13. |
+| 1.15 | 2026-10-30 18:00 | Claude Code, SnakeSkills session | Added: custom hoe pieces without a TerrainOp, generated height = zero delta, restoring and paint, ±8 m delta clamp to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.4 (Restore terrain, Shift ramps). |
+| 1.16 | 2026-10-30 20:15 | Claude Code, SnakeSkills session | Added: ramp along a fitted plane, stopping scroll zoom/rotation in build mode to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.5. |
+| 1.17 | 2026-10-30 20:45 | Claude Code, SnakeSkills session | Added: `Heightmap.Poke`/`Generate` rebuild order and why a bump test needs a planarity check to `docs/game/terrain-and-hoe.md`; §7f SnakeSkills 1.6-1.8. |
+| 1.18 | 2026-10-30 21:15 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.9 (skill limits on bump size and level depth per strike). |
+| 1.19 | 2026-10-31 03:00 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.10 (ramps from the player's feet), and adding a new config key to change a default for existing users. |
+| 1.20 | 2026-10-31 03:10 | Claude Code, SnakeSkills session | Added: §7f SnakeSkills 1.11-1.12 (plain click levels to feet; Raise ground ramps, workbench-free and cheaper via piece fields). |
+| 1.21 | 2026-10-31 03:21 | Claude Code, Ember Blast session | Added: topic file `docs/game/projectiles-and-rocks.md` (`FireProjectileBurst`/`Projectile.Setup`/`OnHit`/`m_onHit`, `DoAOE` one hit per object, pickaxe and chop count in `GetTotalDamage`, `MineRock5.Damage` with `m_radius`, `MineRock`/`Destructible` damage, `StaffFireball` prefab); §7f SnakeSkills 1.13 Ember Blast. |
+| 1.22 | 2026-11-02 00:10 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.14 (vanilla clicks + bumps, Ctrl incline, Alt ramp blueprints with colour progress, new config keys for old modes); user is leaving SnakeSmarterHoe; `terrain-and-hoe.md` sections on TryPlacePiece interception, settings-copy for custom shapes and line previews. |
+| 1.23 | 2026-11-02 03:02 | Claude Code, smart hammer session | Added: topic file `docs/game/build-menu-and-pieces.md` (piece tables, known recipes, `UpdateAvailable`, `SetSelectedPiece`, stub pieces, Jotunn-free UI); §7f SnakeSkills 1.17 smart hammer (SnakeHammer port on the vanilla hammer, N toggle, Y blueprint list); §7d points at it. |
+| 1.24 | 2026-11-02 03:20 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.18 (Ctrl+Z undo, decor plants, Shift rounding, eased plan ends, wheel fix); verified gotcha that `UpdatePlacement` charges stamina/resources/wear after `TryPlacePiece` even when a `PlacePiece` prefix skips placement. Corrected: custom hoe pieces must not charge stamina/durability themselves. |
+| 1.25 | 2026-11-02 03:19 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.19 (hoe 1.18 and smart hammer 1.17 in one build, no key clashes, no double charge). |
+| 1.26 | 2026-11-02 03:50 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.20 (decor icons via black/white render alpha, ghost colliders stripped against floating previews, hoe-planted plants become pieces via a ZDO flag and a `ZNetView.Awake` postfix). |
+| 1.27 | 2026-11-02 04:04 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.21 (middle click resets the hoe brush to standard size). |
+| 1.28 | 2026-11-02 04:11 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.22 (smart hammer always on, no toggle key; blueprint list pictures via an off-screen camera on a spare layer). |
+| 1.29 | 2026-11-02 04:39 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.23 (Blueprints tab in the vanilla `BuildUi` build menu, blueprint pictures as icons); `docs/game/build-menu-and-pieces.md` gains the Deep North build menu (BuildUi, IPieceList, TabHandler). |

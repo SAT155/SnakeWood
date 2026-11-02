@@ -22,6 +22,40 @@ North Wisp session. All *(verified)* by decompile unless noted.
 - `Attack.GetAttackEitr(character, weapon)` = `m_attackEitr − m_attackEitr × 0.33 × skill factor`
   (a third off at skill 100), the same discount as stamina.
 - Player overrides `UseEitr`, `HaveEitr`, `GetMaxEitr` (Character's defaults are no-ops / 0).
+- **Max eitr is food only** (decompiled 2026-10-30, Pulsating Earrings session): `Player.UpdateFood`
+  (about once a second, or forced when eating) calls private
+  `GetTotalFoodValue(out float hp, out float stamina, out float eitr)` (hp starts at `m_baseHP`,
+  stamina at `m_baseStamina`, eitr at **0**, then adds each `Food.m_eitr`) and passes the totals to
+  `SetMaxHealth`/`SetMaxStamina`/`SetMaxEitr(eitr, flashBar)`. A postfix with `ref float eitr`
+  raises max eitr like food does (bar flashes up) and drops it within a second when the condition
+  ends. `SetMaxEitr` clamps current `m_eitr`.
+- **Eitr regen** in `Player.UpdateStats`: `(m_eiterRegen + (1 − eitr/max) × m_eiterRegen) ×
+  blocking factor`, × a multiplier that starts at 1 and goes through
+  `SEMan.ModifyEitrRegen(ref float eitrMultiplier)` (each SE's `ModifyEitrRegen`; `SE_Stats` adds
+  `m_eitrRegenMultiplier − 1` when > 1, else multiplies). Waits `m_eitrRegenDelay` (1 s) after use.
+- `Player.GetEquipmentEitrRegenModifier()` sums `m_shared.m_eitrRegenModifier` over chest, legs,
+  helmet, shoulder, both hands and utility: **not the trinket slot**, so setting that field on a
+  trinket does nothing.
+
+## Trinkets (Deep North)
+
+- Slot: `Humanoid.m_trinketItem` (protected; publicized), item type
+  `ItemDrop.ItemData.ItemType.Trinket`. Its `m_equipStatusEffect` is applied like other gear
+  (`UpdateEquipmentStatusEffects`); the trinket's own effect is `m_shared.m_fullAdrenalineSE`,
+  fired when adrenaline reaches `m_shared.m_maxAdrenaline` (`Player.GetMaxAdrenaline` adds it).
+- Prefab names (from the ViableTrinkets mod, not asset-searched): `TrinketBronzeHealth`,
+  `TrinketBronzeStamina`, `TrinketIronHealth`, `TrinketIronStamina`, `TrinketChitinSwim`,
+  `TrinketSilverDamage`, `TrinketSilverResist`, `TrinketBlackDamageHealth`, `TrinketBlackStamina`,
+  **`TrinketCarapaceEitr` (Pulsating Earrings; adrenaline SE = eitr regen)**,
+  `TrinketScaleStaminaDamage`, `TrinketFlametalEitr` (Jormundling), `TrinketFlametalStaminaHealth`
+  (Brimstone), `TrinketBloodGoldStamina` (Witch Crown), `TrinketBloodGoldHealth` (Neckstabber).
+- Test "is X worn": `player.m_trinketItem?.m_dropPrefab?.name == "<prefab>"`.
+- ViableTrinkets (CoachPotatoes, GUID `devon752.ViableTrinkets`) edits each trinket's
+  `m_fullAdrenalineSE` (an `SE_Stats`) and `m_maxAdrenaline` in `ObjectDB.Awake`/`CopyOtherDB`
+  postfixes; it never adds a permanent bonus, so permanent effects patched elsewhere stack with it.
+- Item descriptions: prefab `m_shared` is shared by reference with items in inventories, so
+  appending to `m_shared.m_description` at `ObjectDB.Awake` changes every tooltip. Keep the
+  original per `SharedData` so config changes don't stack lines.
 
 ## Skills
 
