@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.27 |
-| **Last updated** | 2026-11-02 04:04 UTC |
-| **Updated by** | Claude Code, hoe ramp controls session (SnakeSkills 1.21) |
+| **Version** | 1.28 |
+| **Last updated** | 2026-11-02 04:11 UTC |
+| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -823,7 +823,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.21.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.22.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -1055,7 +1055,22 @@ lost after starting the game unmodded once.
   the biggest size, which the user reported. Release v1.21.90. The hammer thread merged it into
   qwehcw and released 1.22 from there; further hoe work builds on qwehcw.
 
-Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.17 smart hammer and blueprint list, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.22 smart hammer follow-ups** (smart hammer thread, SnakeSailing `claude/project-thread-qwehcw`,
+  2026-11-02). The user tested 1.20: "hammer is working!" Then: the N toggle "doesn't really make
+  sense", asked for pictures in the blueprint list and a Blueprints tab in the build menu.
+  - **No smart mode**: `SmartHammer.Equipped` = `Plugin.Active` + vanilla `Hammer` in hand; the
+    `Smart Mode Key` entry was removed (the `Smart Hammer` On/Off switch still disables it all).
+    SmartBuild's keys only act when pressed, so it's harmless always-on.
+  - **Pictures** (`BlueprintThumbnails.cs`, config `Blueprint List Pictures`): the stub is cloned
+    with `ZNetView.m_forceDisableInit` set at y = -5000, renderers moved to an unused layer (highest
+    unnamed one ≥ 8, fallback 31), `LODGroup.ForceLOD(0)`, photographed by a disabled camera and a
+    directional light whose `cullingMask` is only that layer (`Camera.Render` into a 128 px
+    RenderTexture, `ReadPixels`), clone destroyed the same frame. One per frame while the list is
+    open; cached per session and dropped on save/delete.
+  - Blueprints tab: pending (identifying what draws the user's Categories/Materials/Recent/Favorites
+    build menu). Release v1.22.89, untested in-game.
+
+Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1129,3 +1144,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.25 | 2026-11-02 03:19 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.19 (hoe 1.18 and smart hammer 1.17 in one build, no key clashes, no double charge). |
 | 1.26 | 2026-11-02 03:50 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.20 (decor icons via black/white render alpha, ghost colliders stripped against floating previews, hoe-planted plants become pieces via a ZDO flag and a `ZNetView.Awake` postfix). |
 | 1.27 | 2026-11-02 04:04 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.21 (middle click resets the hoe brush to standard size). |
+| 1.28 | 2026-11-02 04:11 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.22 (smart hammer always on, no toggle key; blueprint list pictures via an off-screen camera on a spare layer). |
