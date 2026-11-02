@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.28 |
-| **Last updated** | 2026-11-02 04:11 UTC |
+| **Version** | 1.29 |
+| **Last updated** | 2026-11-02 04:39 UTC |
 | **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -1067,8 +1067,21 @@ lost after starting the game unmodded once.
     directional light whose `cullingMask` is only that layer (`Camera.Render` into a 128 px
     RenderTexture, `ReadPixels`), clone destroyed the same frame. One per frame while the list is
     open; cached per session and dropped on save/delete.
-  - Blueprints tab: pending (identifying what draws the user's Categories/Materials/Recent/Favorites
-    build menu). Release v1.22.89, untested in-game.
+  - Release v1.22.89, untested in-game.
+
+- **1.23 Blueprints tab** (smart hammer thread, SnakeSailing `claude/project-thread-qwehcw`,
+  2026-11-02). The user's Categories/Materials/Recent/Favorites build menu is **vanilla** Deep North
+  `BuildUi` (not Valheim Plus) *(verified)*; see `docs/game/build-menu-and-pieces.md`.
+  `SmartBuild/BuildMenuTab.cs`: postfix on `BuildUi.Awake` copies the last tab button into
+  `m_tabContainer` (new `onClick` → `SelectPieceList(4)`, label set by reflection on the TMP text,
+  `Localize` component destroyed), appends a vanilla `RecentPieceList` to `m_pieceLists`, the button
+  to `m_tabButtons`, and a `TabHandler.Tab` to `m_tabHandler.m_tabs` (Q/E). Prefix on
+  `UpdatePieceButtons` refills that list with the stub names (A to Z); prefix on `OpenBuildMenu`
+  hides the tab unless the hammer is out (button inactive, `Tab.m_button = null` so Q/E skips it,
+  falls back to list 0). Postfix on `ByUsagePieceList`/`ByMaterialPieceList.GetAvailablePiecesWithTag`
+  drops stubs. Thumbnails now render while the hammer is out and become the stub's `m_icon`
+  (`Sprite.Create`). Config `Blueprints Tab` (restart). Release v1.23.92, untested in-game: tab
+  width with five tabs unknown.
 
 Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
@@ -1145,3 +1158,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.26 | 2026-11-02 03:50 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.20 (decor icons via black/white render alpha, ghost colliders stripped against floating previews, hoe-planted plants become pieces via a ZDO flag and a `ZNetView.Awake` postfix). |
 | 1.27 | 2026-11-02 04:04 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.21 (middle click resets the hoe brush to standard size). |
 | 1.28 | 2026-11-02 04:11 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.22 (smart hammer always on, no toggle key; blueprint list pictures via an off-screen camera on a spare layer). |
+| 1.29 | 2026-11-02 04:39 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.23 (Blueprints tab in the vanilla `BuildUi` build menu, blueprint pictures as icons); `docs/game/build-menu-and-pieces.md` gains the Deep North build menu (BuildUi, IPieceList, TabHandler). |

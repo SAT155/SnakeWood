@@ -50,3 +50,33 @@ field, toggle) with game sprites (`woodpanel_trophys`, `button`, `text_field`, `
 and fonts `AveriaSerifLibre-Regular`/`-Bold` (`Resources.FindObjectsOfTypeAll<Font>`), on a
 ScreenSpaceOverlay canvas (sortingOrder 2000) under the root object `GuiRoot`'s child `GUI`.
 SnakeSkills' `SmartBuild/GUIManager.cs` is a drop-in copy of the calls SmartBuild used.
+
+## The Deep North build menu: `BuildUi` *(verified)*
+
+Read 2026-11-02 (Decompile of `Hud`, `BuildUi`, `IPieceList`, `RecentPieceList`,
+`BuildUiPieceButton`, `TabHandler`).
+
+- The menu with tabs **Categories / Materials / Recent / Favorites**, a left list (Show All, Misc.,
+  Crafting, Building, ...), F to search and stars for favorites is vanilla: `Hud.m_buildUi`
+  (`BuildUi : MonoBehaviour`), opened by `BuildUi.OpenBuildMenu()`, closed by `Hud.CloseBuildUi()`.
+  A tool's `PieceTable.m_hideAdvancedMenu` gives the simple menu without tabs/tags.
+- Tabs: `BuildUi.Awake` fills `m_pieceLists` (`List<IPieceList>`) with `ByUsagePieceList("$hud_byusage")`,
+  `ByMaterialPieceList`, `RecentPieceList` (`m_maxRecentPieces` 50), `FavoritePieceList`, and wires
+  each child of `m_tabContainer` (a `Button`) to `SelectPieceList(childIndex)`. Tab index = list
+  index. Q/E (`TabLeft`/`TabRight`) come from `m_tabHandler` (`TabHandler.m_tabs`, a list of
+  `Tab { m_button, m_page, m_default, m_onClick }`); cycling invokes the tab's `m_button.onClick`
+  and skips tabs whose `m_button` is null. `SelectPieceList` calls
+  `m_tabHandler.SetActiveTabWithoutInvokingOnClick(i)`, which indexes `m_tabs[i]` (so a list
+  index without a `Tab` throws). A tab's `Selected` child is shown for the active tab.
+- `IPieceList`: `DisplayName`, `ShowTags`, `CanCustomizeTags`, `TagCount`, `TagSeparatorIndex`,
+  `GetTagDisplayName(i)`, `GetTagIdByIndex(i)`, `GetAvailablePiecesWithTag(tagId, table, resultOut)`,
+  `UpdateAvailableTags(table)`. `RecentPieceList` has no tags and returns pieces of
+  `table.m_availablePieces` whose **`gameObject.name`** is in its name list, in list order;
+  `AddPiece(name)` inserts at the front, `Reset()` clears. Only `m_recentPieceList` and
+  `m_favoritePieceList` are saved (`SaveToBinary`), so an extra list is session-only.
+- `UpdatePieceButtons()` (private) asks the current list for pieces and sets up pooled
+  `BuildUiPieceButton`s (`Setup(piece, ui)`: icon = `piece.m_icon` into private `m_icon` Image,
+  favorite star, search terms from `m_name` and resource names). It reruns when
+  `m_currentBuildTool.m_availablePieces.Count` changes (`Update`) and on tab/tag change. Clicking
+  calls `Player.SetSelectedPiece(piece)` then closes the menu.
+- A placed piece goes to Recent through `BuildUi.AddRecentPiece`.
