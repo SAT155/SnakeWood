@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.31 |
-| **Last updated** | 2026-11-02 05:03 UTC |
-| **Updated by** | Claude Code, smart hammer session (`claude/project-thread-qwehcw`) |
+| **Version** | 1.32 |
+| **Last updated** | 2026-11-03 04:49 UTC |
+| **Updated by** | Claude Code, hoe ramp controls session (`claude/project-thread-fvguye`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -826,7 +826,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.22.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.25.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -1104,6 +1104,15 @@ lost after starting the game unmodded once.
     `RectTransformUtility.WorldToScreenPoint`, camera null for overlay canvases) or above it when
     there's no room. Item icons are atlas sprites: `GUI.DrawTextureWithTexCoords` with
     `sprite.textureRect` / texture size. Release v1.24.95, untested in-game.
+- **1.25 decor previews follow the cursor** (hoe thread, 2026-11-03). The user saw tree/bush
+  previews stuck at their feet. *(verified by decompile)* `SetupPlacementGhost` puts a new ghost at
+  the player's position; `UpdatePlacementGhost` then moves it only through the clip branch
+  (`(m_groundPiece || m_clipGround) && heightmap`, or `m_clipEverything`: position = hit point) or by
+  lining up the ghost's enabled colliders with the hit point. A ghost with **no colliders** and no
+  clip flag is never moved. Fix: decor ghosts set `m_clipEverything = true`. A ray miss hides the
+  ghost (vanilla). The user's Valheim Plus has `noInvalidPlacementRestriction = true`, which turns
+  `Invalid` (e.g. `m_groundOnly` off-ground) into `Valid`, so plants can go on rocks/buildings there.
+  Release v1.25.97.
 
 Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
@@ -1183,3 +1192,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.29 | 2026-11-02 04:39 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.23 (Blueprints tab in the vanilla `BuildUi` build menu, blueprint pictures as icons); `docs/game/build-menu-and-pieces.md` gains the Deep North build menu (BuildUi, IPieceList, TabHandler). |
 | 1.30 | 2026-11-02 05:00 | Claude Code, SnakeWood seat/reach/portals session | Added: the Categories tab lists by usage tag (`Piece.m_usage`, `UsageTagFlags`, `ByUsagePieceList`), not `PieceCategory` (topic file); §7 SnakeWood 1.23.167 under Transportation. |
 | 1.31 | 2026-11-02 05:03 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.24 (blueprint materials panel; 1.23 thumbnail rig left a directional light in the scene and broke lighting, now created and destroyed per picture). |
+| 1.32 | 2026-11-03 04:49 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.25 (decor ghosts without colliders never leave the player's feet unless a clip flag is set; how `UpdatePlacementGhost` positions ghosts; V+ noInvalidPlacementRestriction). |

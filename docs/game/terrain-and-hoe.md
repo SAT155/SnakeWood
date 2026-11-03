@@ -102,6 +102,10 @@ in-game.
   ghost's colliders, so the preview climbs on top of itself), `PlacePiece` prefix instantiates the
   vanilla prefab (see notes §7f 1.18/1.20). Runtime build-menu icons: render on black and on white
   and derive alpha from the difference (opaque shaders don't write alpha); force LOD 0.
+- Ghost positioning *(verified)*: a new ghost starts at the player's feet; `UpdatePlacementGhost`
+  puts it on the hit point only for clip pieces (`m_groundPiece`/`m_clipGround` on terrain, or
+  `m_clipEverything`), otherwise it lines up enabled colliders with the hit point. A collider-less
+  ghost needs `m_clipEverything = true` or it never moves.
 
 ## Player side
 
