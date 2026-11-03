@@ -55,9 +55,11 @@ in-game.
   remove `TerrainOp` and `ZNetView`, empty `m_resources`, add it to the Hoe's `PieceTable.m_pieces`.
   It only shows if its `Piece.m_name` is in the known-recipes set passed to
   `PieceTable.UpdateAvailable(knownRecipies, player, ...)` (prefix adds it). Intercept
-  `Player.PlacePiece(piece, pos, rot, doAttack)` with a prefix returning false and do stamina
-  (`GetBuildStamina`), durability, the attack animation (`m_zanim.SetTrigger`) and the effect
-  yourself.
+  `Player.PlacePiece(piece, pos, rot, doAttack)` with a prefix returning false and do the attack
+  animation (`m_zanim.SetTrigger`) and the effect yourself. **Not stamina or durability:** the game
+  takes those (and `m_resources`) in `UpdatePlacement` once `TryPlacePiece` returns true, which it
+  does even when the `PlacePiece` prefix skipped (verified by decompile 2026-11-02; earlier notes
+  said to charge them yourself, which double-charged).
 
 ## Shaping a ramp (SnakeSkills 1.5)
 
@@ -73,6 +75,37 @@ in-game.
   that mean and gets notched, which looks like jagged bumps. Also fit the ring's slope
   (`sum(h*dx)/sum(dx*dx)` per axis) and only lower the point if every ring point is within about a
   quarter of the point's excess from that plane.
+
+## Custom shapes and tools on modifier keys (SnakeSkills 1.14)
+
+- To use a hoe click for something that isn't a strike (laying blueprint points), prefix
+  `Player.TryPlacePiece(Piece piece)` (bool) and return false with `__result = false`: nothing is
+  placed or paid. `PlacePiece` (and so `TerrainOp.Awake`) runs inside `TryPlacePiece`, so a static
+  set in its prefix and cleared in a finalizer is visible to the strike. Holding the button repeats
+  placement; gate one-off actions on `Input.GetMouseButtonDown(0)`.
+- For a strike with your own shape, copy the settings in the `TerrainOp.Awake` prefix with
+  `m_level`/`m_raise`/`m_smooth` off (paint and stone/stamina stay vanilla), claim the zones
+  yourself, and write heights in the postfix (SnakeSkills `TerrainZones.Tidy`).
+- The hoe ghost keeps its `TerrainOp` (`GetComponentInChildren<TerrainOp>(true)` on
+  `m_placementGhost`), handy for telling which tool is selected and its radius (`GetRadius()`).
+- Previews: pooled `LineRenderer`s (`useWorldSpace`, `Sprites/Default` material) redrawn per frame.
+  Ctrl is Crouch by default: a `Player.SetControls` prefix with `ref bool crouch` stops it.
+
+## Undo and decor (SnakeSkills 1.18)
+
+- Undo = save `m_levelDelta`, `m_smoothDelta`, `m_modifiedHeight`, `m_paintMask`, `m_modifiedPaint`
+  per vertex before the strike, write back later (claim, `Save(false)`, `Poke(0,false)`).
+  `TerrainComp.Initialize()` first if `!m_initialized`.
+- Mouse-wheel modes: return 0 from a `ZInput.GetMouseScrollWheel` prefix (camera zoom and piece
+  rotation read it) and read `Input.mouseScrollDelta` yourself.
+- World plants as hoe pieces: ghost copy without scripts **or colliders** (the placement ray hits a
+  ghost's colliders, so the preview climbs on top of itself), `PlacePiece` prefix instantiates the
+  vanilla prefab (see notes §7f 1.18/1.20). Runtime build-menu icons: render on black and on white
+  and derive alpha from the difference (opaque shaders don't write alpha); force LOD 0.
+- Ghost positioning *(verified)*: a new ghost starts at the player's feet; `UpdatePlacementGhost`
+  puts it on the hit point only for clip pieces (`m_groundPiece`/`m_clipGround` on terrain, or
+  `m_clipEverything`), otherwise it lines up enabled colliders with the hit point. A collider-less
+  ghost needs `m_clipEverything = true` or it never moves.
 
 ## Player side
 
@@ -91,6 +124,6 @@ in-game.
 ## Used by
 
 - SnakeSkills `Landscaping.cs` (1.2): bigger brush by skill, less stamina, bump flattening, cart
-  slope easing, no sprint. See notes §7f.
+  slope easing, no sprint; `RampTools.cs` (1.14): Ctrl incline, Alt ramp blueprints. See notes §7f.
 - SnakeSmarterHoe (notes §7b): its own brush tools; SnakeSkills leaves the hoe alone when it is
   loaded.

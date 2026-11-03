@@ -24,3 +24,4 @@ fix the note and say so in its changelog line.
 | [fishing.md](fishing.md) | How vanilla raises Fishing (`FishingFloat.FixedUpdate`, `Catch`), fish prefabs and stars, `RaiseSkill` gains at most one level per call |
 | [terrain-and-hoe.md](terrain-and-hoe.md) | Hoe strikes (`TerrainOp`, `TerrainComp`), zone ownership for edits, writing terrain heights, build stamina, sprint, hoe ghost |
 | [projectiles-and-rocks.md](projectiles-and-rocks.md) | Firing projectiles (`FireProjectileBurst`, `Projectile.Setup`), hits and the `m_onHit` hook, `DoAOE` one hit per object, damage totals, `MineRock5`/`MineRock`/`Destructible` damage, Staff of Embers prefab |
+| [build-menu-and-pieces.md](build-menu-and-pieces.md) | Piece tables and the build menu (`UpdateKnownRecipesList`, `UpdateAvailable`, known recipes), selecting a piece from code (`SetSelectedPiece`), stub pieces, Jotunn-free UI widgets |
