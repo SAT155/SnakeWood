@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.32 |
-| **Last updated** | 2026-11-03 04:49 UTC |
-| **Updated by** | Claude Code, hoe ramp controls session (`claude/project-thread-fvguye`) |
+| **Version** | 1.33 |
+| **Last updated** | 2026-11-03 22:40 UTC |
+| **Updated by** | Claude Code, SnakePolearms release session (`claude/project-thread-82185b`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -86,10 +86,11 @@ Common conventions across the Valheim repos:
     branch makes a **pre-release** (how a session hands the user a test build to import). The
     user wants releases with the zip attached directly: r2modman imports it with no extra
     extract step, unlike the double-zipped CI artifact.
-  - **SnakePolearms**: still releases only on a pushed `v*` tag, which sessions can't push (§2),
-    so it ships as CI artifacts. Switching them needs a session with push access
-    to those repos (the SnakeWood session's `add_repo` with push was refused by the permission
-    check; ask the user).
+  - **SnakePolearms**: switched in [SAT155/SnakePolearms#1](https://github.com/SAT155/SnakePolearms/pull/1)
+    (draft, 2026-11-03; SnakeWood's release/package jobs and `package.py` copied verbatim with
+    the name swapped). Until it's merged, the default branch still releases only on `v*` tags;
+    a manual dispatch on the PR branch already releases (first release **v1.1.7**, 2026-11-03,
+    built from unchanged 1.1.0 code; the user's new PC had no way to get the mod before).
 - **Default branches are `claude/...` branches and differ per repo** (check with
   `git remote show origin | grep "HEAD branch"`): SnakeWood `claude/exciting-mendel-fudt8s`,
   SnakeSailing `claude/charming-noether-raq5zn`, SnakeSmarterHoe `claude/jolly-fermi-in181p`,
@@ -749,8 +750,8 @@ only when a `Player` uses a weapon with `m_skillType == Polearms`, primary attac
 Known open items: **never tested in-game** (1.0.0 and 1.1.0 only built green in CI). Vanilla
 atgeir primary's `m_attackAngle` / `m_attackRayWidth` / `m_multiHit` are prefab values, still
 unknown. If the fan is narrow, piercing comes almost entirely from the transpiler. `Log Hits`
-(Debug) shows what happens. There's no release path yet: `build.yml` releases only on `v*`
-tags, so switch it to the SnakeWood auto-release scheme if the user wants releases.
+(Debug) shows what happens. Releases: SnakeWood scheme since PR #1 (see §1); first GitHub
+release v1.1.7.
 
 ## 7d. SnakeHammer specifics
 
@@ -1193,3 +1194,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.30 | 2026-11-02 05:00 | Claude Code, SnakeWood seat/reach/portals session | Added: the Categories tab lists by usage tag (`Piece.m_usage`, `UsageTagFlags`, `ByUsagePieceList`), not `PieceCategory` (topic file); §7 SnakeWood 1.23.167 under Transportation. |
 | 1.31 | 2026-11-02 05:03 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.24 (blueprint materials panel; 1.23 thumbnail rig left a directional light in the scene and broke lighting, now created and destroyed per picture). |
 | 1.32 | 2026-11-03 04:49 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.25 (decor ghosts without colliders never leave the player's feet unless a clip flag is set; how `UpdatePlacementGhost` positions ghosts; V+ noInvalidPlacementRestriction). |
+| 1.33 | 2026-11-03 22:40 | Claude Code, SnakePolearms release session | SnakePolearms now uses the SnakeWood auto-release scheme (PR #1, draft); first GitHub release v1.1.7 (§1, §7c). |
