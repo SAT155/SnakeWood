@@ -1245,6 +1245,10 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   formula made Neck 7.4 vs Troll 0.0). Probe confirmed: main camera is HDR deferred with
   PostProcessingBehaviour, SunShafts, AmplifyOcclusion; fog is Exponential; EnvMan day values
   matched what the minigame read.
+  1.5.19: trolls, crypt draugr, Fenring/Ulv caves, goblin villages and infested-mine seekers come
+  from locations (CreatureSpawner in location prefabs, which aren't loaded until placed), not
+  the world spawn tables, so a per-biome Location Monsters list adds them at modest weights (the
+  user asked not to overweight them).
 
 ## 8. Working with this user
 
