@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.35 |
-| **Last updated** | 2026-11-04 03:16 UTC |
+| **Version** | 1.36 |
+| **Last updated** | 2026-11-04 03:26 UTC |
 | **Updated by** | Claude Code, SnakewaySurfer session (`claude/project-thread-9zfoi6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.2.x)
+## 7g. SnakewaySurfer (1.3.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1167,6 +1167,15 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   track slams a log (a pivot rotating 155°) across the outer lane when the runner is
   `speed × 0.5 + 2.5` m away; a troll stretched to the track's width drops in over it, feet in
   the outer lanes (blocked), middle lane needs a slide. Per-biome `Giants` config. Release v1.2.4.
+- **1.2.4 test (user screenshots):** the minigame rendered fine (own camera, pictures, the
+  player's avatar with gear all work; Standard shader exists for the land), rewards worked
+  (+1.25 Run levels, Carrot Soup). Problems: a troll waiting 9 m up looked like it floated;
+  vanilla rocks (`rock4_forest` etc.) are ~20 m mounds and covered the track; flat cube land
+  looked "eerily flat"; the borrowed `stone_floor_2x2` material read almost white; no coin sound.
+  1.3: side land is a generated hill mesh (Perlin, flat for 2.5 m off the track edge, per-biome
+  amplitude blended over 40 m), scenery sits on it and is pushed out by its renderer bounds,
+  the troll leaps in from beside the track, track `_Color` × 0.6, coin sound falls back
+  through `sfx_pickup|sfx_pickable_pick|sfx_gui_button`. Release v1.3.5.
 - Open questions to watch in the first test: whether Valheim's own sun also lights layer 30
   (stage may look too bright), whether `Shader.Find("Standard")` exists for the land colours,
   how the cloned player animator looks, and whether the borrowed `stone_floor_2x2` material
@@ -1249,3 +1258,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.33 | 2026-11-03 22:40 | Claude Code, SnakePolearms release session | SnakePolearms now uses the SnakeWood auto-release scheme (PR #1, draft); first GitHub release v1.1.7 (§1, §7c). |
 | 1.34 | 2026-11-04 02:40 | Claude Code, SnakewaySurfer session | Added: SnakewaySurfer (ecosystem row, default branch, auto-release, §7g); topic file `docs/game/player-anim-input-visuals.md` (synced `forward_speed` via `UpdateWalking`, `TakeInput`/`SetControls` locks, Console/Menu, `SetHelmetItem` ZDO sync, `Inventory.AddItem` overloads, `Skill.Raise` one level per call, private camera scene); tree/rock/log names and Deep North enemy/food localization keys in `asset-names.md`. |
 | 1.35 | 2026-11-04 03:16 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.1–1.2 (food wear-off lowers health, `RequireComponent`-aware stripping, 2D sounds from `ZSFX` clips, per-biome fog/ambient, troll set pieces); sound prefab names in `asset-names.md`. |
+| 1.36 | 2026-11-04 03:26 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.2.4 test results (what renders fine, vanilla rocks are huge, borrowed floor material too bright) and 1.3 (hill mesh, scenery push-out, leaping troll). |
