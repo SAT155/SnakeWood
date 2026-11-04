@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.7.x)
+## 7g. SnakewaySurfer (1.10.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1282,6 +1282,35 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   `surfsup` the latest. Landmarks (nests, bone piles, totem poles, Dvergr props) appear beside
   the track near their creatures; pickables line the track edge. Boss ideas doc: the user's
   Claude Doc "SnakewaySurfer boss fights". Not yet tested in-game.
+- **1.8–1.10 (user's answers in the boss doc):**
+  - **Lives:** three strikes, with 1.6 s of invulnerability after a hit (the Lives setting).
+  - **Moder:** grabbing a bolt pauses the run and you aim a ballista for 3.5 s. A miss wastes
+    it, as the user wanted.
+  - **Arenas:** take on the boss's tint. With Boss Landmarks off, the fog gets thicker.
+  - **1.9, the Elder's branches:** root walls between the lanes, so lane changes are blocked
+    inside (`CanSwitch`). Some branches end in a root wall. Sliding under a torch root burns
+    that branch's wall.
+  - **1.9, star tricks:** each star lap adds one move per boss (`BossDef.StarMoves`). A move that
+    pauses the boss must raise `m_bossAttackTimer` itself, and the caller keeps the larger value.
+  - **1.10, landmarks:**
+    - The boss's own ZoneSystem location is a backdrop. It sits at a fixed distance ahead,
+      0.85 / fog density clamped to 32–95 m, and stays behind the boss. It rises out of the
+      ground as you arrive.
+    - The path flattens and the land rises into walls (per-boss `Walls`). Torches line the path
+      (`piece_groundtorch_*`, one light per pair).
+    - The arena's look ramps over its first 40 m and out over the next stretch's first 40 m, like
+      the biome blends. `Segment.PrevBoss` covers arena after arena.
+    - See `docs/game/locations-and-custom-items.md`.
+  - **1.10, boss rush:** after the 3-star lap, every reachable boss in a row (`Segment.Rush`), with
+    no checkpoints. `Following()` must stay free of side effects, because `BossHit` calls it to
+    look ahead.
+  - **1.10, the reward:** a full six-boss rush gives Golden Surfer Shoes, a trinket cloned from
+    TrinketBronzeStamina:
+    - +15% movement, and full adrenaline adds +5% speed and 2.5x stamina regen.
+    - The model and icon are gilded, with a generic winged emblem. The user asked for a Nike
+      swoosh, which is a trademark, so it isn't used.
+    - Given once per character. If the bag is full, the shoes are owed and given when a run ends.
+  - Not yet tested in-game.
 
 ## 8. Working with this user
 
