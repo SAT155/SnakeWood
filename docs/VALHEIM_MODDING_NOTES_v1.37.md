@@ -1195,6 +1195,18 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   once. The user asked to keep the classic stiff log swing now and then: 30 % of swing trolls.
   Untested in-game: whether creature attack triggers play from the picture animator, the
   Fade water variant exists in the build, and hand paths resolve.
+- **1.4.6 test → 1.4.7–1.4.11:** a borrowed build-piece material (`stone_floor_2x2`) on a
+  generated mesh was invisible from most angles / glaring white: use only its `mainTexture` on
+  the Standard shader (track now double-sided too). Weapon `attach` pictures instantiated with
+  `Instantiate(x, hand, false)` came out enormous: creature hand bones carry big scale, and
+  `VisEquipment` keeps the item's **world** size, so set `localScale = item attach lossyScale ×
+  fit scale / hand.lossyScale`. Fitting every monster to 2.2 m made abominations tiny and
+  greylings big: keep real size, only shrink (max scale 1, cap 4.2 m). Monsters idle until they
+  notice you, then play `BaseAI.m_alertedEffects` and `FootStep.m_effects` sounds. Enter on
+  `surfsup` could also open the chat (stealing keys): `Chat.Update` prefix skipped while
+  surfing. Land tries the Heightmap material's 2D textures by property name (logged once; may
+  be texture arrays). Debug: `Invincible`, `Game Speed`. Short creatures (< 0.75 × jump
+  height) can be jumped over.
 - Open questions to watch in the first test: whether Valheim's own sun also lights layer 30
   (stage may look too bright), whether `Shader.Find("Standard")` exists for the land colours,
   how the cloned player animator looks, and whether the borrowed `stone_floor_2x2` material
