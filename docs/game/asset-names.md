@@ -57,3 +57,24 @@ its components: ValheimMapMarker skips any prefab with a MonoBehaviour other tha
 `ZSyncTransform`, `ZSFX`, `TimedDestruction`, `LightFlicker`, `LightLod`, `CamShaker`,
 `EffectFade`, `Billboard`, `LineConnect`, `RandomAnimation`, or with a collider, and logs it.
 
+
+## Trees, rocks, logs, creatures and foods (2026-11-04, SnakewaySurfer session)
+
+GameObject names found by asset search (not all are `ZNetScene` prefabs; resolve with
+`GetPrefab` and skip misses): trees `Beech1`, `Beech_small1/2`, `Oak1`, `Bush01`, `FirTree`,
+`FirTree_small`, `FirTree_oldLog`, `FirTree_oldLog_deepnorth`, `Pinetree_01`, `Pinetree_Snow`,
+`Pinetree_Snow_dead`, `SnowFirTree`, `SwampTree1`, `SwampTree2`, `SwampTree2_darkland`,
+`Birch1/2`, `Birch1_aut/2_aut`, `YggaShoot1/2/3`, `YggaShoot_small1`, `AshlandsTree1/3/4/5/6`,
+`AshlandsTreeStump1/2/3`, `stubbe`; rocks `Rock_3/4/7`, `rock1_mountain`, `rock2_mountain`,
+`rock3_mountain`, `rock1_mistlands`, `rock2_heath`, `rock4_heath`, `rock4_forest`,
+`rock4_coast`, `rock3_ice`; logs `SwampTree1_log`, `SwampTree2_log`, `PineTree_Snow_log_XL_half`
+plus the `*_log_half` list in the main notes; `HelmetDverger`, `Coins`, `piece_sharpstakes`.
+
+Deep North creature and food prefab names are still unknown, but their **localization keys**
+are known, and `Character.m_name` / `ItemDrop.m_itemData.m_shared.m_name` hold them, so look
+prefabs up by key: enemies `$enemy_frysling`, `jotun_warrior` (Krigen), `jotun_witch` (Hexen),
+`kvastur`, `moose`, `seal`, `trollfrost` (Gammeltroll), `blobfrost`, `writhan`, `bjorn` (Bear),
+`unbjorn` (Vile), `dvergr_deepnorth`, `goblin_deepnorth`, `elaking`, `barka`, `mistile`; foods
+`$item_sealsoup`, `smokedmoosemeat`, `moose_meat_cooked`, `meatballsmashedpoteitr`,
+`oatmeallingonberryjam` (Oatmeal), `blubber_cooked`, `feastdeepnorth`. Full lists: search
+`^"(enemy_|item_)` in the Decompile workflow's `assets` input.

@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.33 |
-| **Last updated** | 2026-11-03 22:40 UTC |
-| **Updated by** | Claude Code, SnakePolearms release session (`claude/project-thread-82185b`) |
+| **Version** | 1.34 |
+| **Last updated** | 2026-11-04 02:40 UTC |
+| **Updated by** | Claude Code, SnakewaySurfer session (`claude/project-thread-9zfoi6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -61,6 +61,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
 | **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
+| **SnakewaySurfer** (`snakewaysurfer`, default branch `claude/project-thread-9zfoi6`) | Original mod (2026-11-04): console command `surfsup` starts a client-side 3-lane endless runner through all eight biomes; others see the player running in place in a Dverger circlet. Rewards Run XP and one biome food. ~1.4k lines. | Client-only, vanilla-server safe. Good example of a private scene (own camera + layer 30 + stripped prefab pictures), vanilla-synced animation/helmet overrides. See §7g. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
 Common conventions across the Valheim repos:
@@ -74,7 +75,9 @@ Common conventions across the Valheim repos:
   Docs- or CI-only pushes don't release (the release job diffs `github.event.before..sha` against
   the mod's folders); a manual workflow_dispatch always does. Bump the manifest (and the
   `PluginVersion` const) for feature releases.
-  - Uses it: **SnakeWood**, **SnakeSmarterHoe**, **SnakeHammer** *(verified in their build.yml)*.
+  - Uses it: **SnakeWood**, **SnakeSmarterHoe**, **SnakeHammer** *(verified in their build.yml)*, and
+    **SnakewaySurfer** from its first push (2026-11-04; the session's branch became the default
+    branch of the new empty repo, so every push that changes the mod releases; first v1.0.2).
   - **SnakeSailing**: [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
     (draft, 2026-10-29, supersedes #1) copies SnakeWood's workflow for SnakeSkills (manifest
     `thunderstore/SnakeSkills/manifest.json`); a manual run on a non-default branch makes a
@@ -95,7 +98,9 @@ Common conventions across the Valheim repos:
   `git remote show origin | grep "HEAD branch"`): SnakeWood `claude/exciting-mendel-fudt8s`,
   SnakeSailing `claude/charming-noether-raq5zn`, SnakeSmarterHoe `claude/jolly-fermi-in181p`,
   SnakePolearms `claude/valheim-polearm-pierce-mod-ts6xtu`, SnakeHammer
-  `claude/project-thread-55fg1l`, ValheimMapMarker `main`. A session's designated branch can
+  `claude/project-thread-55fg1l`, ValheimMapMarker `main`, SnakewaySurfer
+  `claude/project-thread-9zfoi6`. A brand-new empty repo takes the first branch pushed as its
+  default, and `add_repo` with push access went through for it. A session's designated branch can
   differ from the default; then changes go in through a PR and release when it's merged. For a
   test build before the merge, dispatch SnakeWood's **Build** workflow on the PR branch: the
   release job runs for any workflow_dispatch and tags `--target` that commit *(verified,
@@ -361,7 +366,7 @@ player still, equip duration), sounds (`ZSFX` volume, positional audio), and net
 (custom skills lost to unmodded loads, `Player.m_customData`:
 [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
 skill raises ([`fishing.md`](game/fishing.md)), and projectiles, AoE and rock damage
-([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)). Read the matching file before decompiling the same system again.
+([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)), synced animation floats, input locks, helmet overrides, `Inventory.AddItem`, `Skill.Raise` and private camera scenes ([`player-anim-input-visuals.md`](game/player-anim-input-visuals.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -1120,6 +1125,35 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
+## 7g. SnakewaySurfer (1.0.x)
+
+New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
+first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
+
+- `surfsup` (console, `Terminal.InitTerminal` postfix) refuses while attached, in water, off the
+  ground, dead or teleporting, closes the console, and starts `SurfGame`.
+- The track lives 4000 m above the player on layer 30, drawn by our own camera (main camera
+  mask 0 meanwhile, HUD root hidden every `LateUpdate`). Everything on it is a picture
+  (`Pictures.MakePicture`: copy under an inactive holder, strip MonoBehaviours in several passes,
+  then ZNetView, joints, colliders, rigidbodies, audio). Nothing is networked.
+- Monsters and foods are configured by **localization key** and resolved through
+  `Character.m_name` / `m_shared.m_name`, because Deep North prefab names aren't known;
+  unknown names are skipped and logged once per run. Pictures are fitted into a lane by a
+  world-aligned wrapper scaled to the renderer bounds (half logs are upright: rotate 90° on Z).
+- The real character: `Character.UpdateWalking` postfix writes `forward_speed = m_runSpeed`
+  (running in place for everyone), `Player.SetupVisEquipment` postfix sets `HelmetDverger`,
+  `Player.TakeInput`/`SetControls` lock it, `Menu.Update` is skipped while playing. Any health
+  loss ends the game at once.
+- Rewards (`Rewards.cs`): Run XP = distance / biome length × `Run Levels Per Biome` (default 1)
+  levels' worth, fed one level at a time; one random food from the furthest biome if the run
+  lasted ≥ 30 s and 30 real minutes passed since the last (`m_customData`
+  `SnakewaySurfer_LastFoodUtc`). The defaults were the session's picks; the user hasn't
+  confirmed them.
+- Open questions to watch in the first test: whether Valheim's own sun also lights layer 30
+  (stage may look too bright), whether `Shader.Find("Standard")` exists for the land colours,
+  how the cloned player animator looks, and whether the borrowed `stone_floor_2x2` material
+  tiles well.
+
 ---
 
 ## 8. Working with this user
@@ -1195,3 +1229,4 @@ SnakeSkills on GitHub if the user wants.
 | 1.31 | 2026-11-02 05:03 | Claude Code, smart hammer session | Added: §7f SnakeSkills 1.24 (blueprint materials panel; 1.23 thumbnail rig left a directional light in the scene and broke lighting, now created and destroyed per picture). |
 | 1.32 | 2026-11-03 04:49 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.25 (decor ghosts without colliders never leave the player's feet unless a clip flag is set; how `UpdatePlacementGhost` positions ghosts; V+ noInvalidPlacementRestriction). |
 | 1.33 | 2026-11-03 22:40 | Claude Code, SnakePolearms release session | SnakePolearms now uses the SnakeWood auto-release scheme (PR #1, draft); first GitHub release v1.1.7 (§1, §7c). |
+| 1.34 | 2026-11-04 02:40 | Claude Code, SnakewaySurfer session | Added: SnakewaySurfer (ecosystem row, default branch, auto-release, §7g); topic file `docs/game/player-anim-input-visuals.md` (synced `forward_speed` via `UpdateWalking`, `TakeInput`/`SetControls` locks, Console/Menu, `SetHelmetItem` ZDO sync, `Inventory.AddItem` overloads, `Skill.Raise` one level per call, private camera scene); tree/rock/log names and Deep North enemy/food localization keys in `asset-names.md`. |
