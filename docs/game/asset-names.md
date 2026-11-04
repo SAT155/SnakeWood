@@ -89,3 +89,23 @@ others: `sfx_jump`, `sfx_land`, `sfx_dodge`, `sfx_perfect_dodge`, `sfx_footstep`
 `sfx_troll_attack_hit`, `sfx_troll_footstep`, plus `sfx_<creature>_death/_hit/_footstep` for
 most creatures (`greyling`, `greydwarf`, `troll`, `draugr`, `wolf`, `goblin`, `seeker_brute`,
 `charred`, `moose`, `jotunwarrior`, `kvastur`, `gameltroll`, ...).
+
+## Landmarks, pickables, boss items (2026-11-04, SnakewaySurfer session)
+
+Asset search for `Pickable_`, `Spawner_`, totems, nests, ruins and boss names found (GameObject
+names; most are ZNetScene prefabs, `Spawner_*` are mostly invisible creature spawners):
+creature homes `Spawner_GreydwarfNest`, `BonePileSpawner`, `BonePileSpawner_swamp`,
+`Spawner_DraugrPile`, `VoltureNest`; fuling village pieces `goblin_totempole`, `goblin_banner`,
+`goblin_fence`, `goblin_pole`, `goblin_trashpile`, `goblin_strawpile`, `goblin_bed`; Dvergr props
+`dvergrprops_crate`, `_crate_long`, `_barrel`, `_lantern`, `_lantern_standing`, `_banner`,
+`_table`, `_chair`, `_shelf`, `_pickaxe`, `_wood_*`; pickables `Pickable_Dandelion`,
+`_Mushroom`, `_Mushroom_yellow`, `_Mushroom_blue`, `_Mushroom_Magecap`, `_Mushroom_JotunPuffs`,
+`_Thistle`, `_Flint`, `_Stone`, `_Branch`, `_Branch_Snow`, `_SeedCarrot`, `_SeedTurnip`,
+`_SeedOnion`, `_Barley_Wild`, `_Flax_Wild`, `_Obsidian`, `_DragonEgg`, `_RoyalJelly`,
+`_DvergrLantern`, `_Tar`, `_Tin`, `_SurtlingCoreStand`, `_Charredskull`, `_Ashstone`,
+`_SmokePuff`, `_Snowball`, `_Fiddlehead`, `_VoltureEgg`; statues `StatueDeer`, `StatueSeed`,
+`Statue_Thor`, `Statue_Freya` (with `_broken` variants); ruins `Ruin1`–`3`, `SwampRuin1`–`2`,
+`StoneTowerRuins03`–`10`, `CharredRuins*`. Weapons/items: `Thunderstone`, `SurtlingCore`,
+`MaceIron`, `BoltIron`, `BoltBone`, `BoltBlackmetal`, `BoltCarapace`, `ArrowFrost`, `BombLava`,
+`BombBile`. See [world-progress-keys.md](world-progress-keys.md) for boss and summoning names.
+

@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.5.x)
+## 7g. SnakewaySurfer (1.7.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1268,6 +1268,20 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   `m_enableObject` on). Dvergr lines come from `NpcTalk.m_randomGreets`/`m_randomTalk`
   (localization keys; the game shows them with `Chat.SetNpcText`). The quiz answers are in the
   project files (snakewaysurfer/schemas.md). Ashlands is on hold until the user gets there.
+- **1.7 (bosses, gate, checkpoints, scenery):** the run is a list of stretches (SurfBoss.cs):
+  biome, then its boss arena in the same biome, then the next biome. Only bosses already beaten
+  in the world are fought, and the lap only reaches one biome past the furthest one
+  (`defeated_*` keys, see `docs/game/world-progress-keys.md`; "Ignore Boss Gate" under Debug
+  bypasses). A biome with a boss stays open until you hold the game's summoning amount (items
+  replace some coin runs); then the stretch is closed at a ground-tile edge and everything laid
+  out past it is removed and rebuilt, so stretch ends never need to be known ahead (biome blends
+  run over the first 40 m of a stretch, from the previous one). Bosses: three hits, landed by
+  grabbing their weakness from the track; moves are marked strikes, walls, rows to jump or
+  slide, the boss's own projectile and shockwaves. A win saves `biome:stars` in
+  `Player.m_customData` per world; `surfsup [biome] [stars]` picks a saved checkpoint, plain
+  `surfsup` the latest. Landmarks (nests, bone piles, totem poles, Dvergr props) appear beside
+  the track near their creatures; pickables line the track edge. Boss ideas doc: the user's
+  Claude Doc "SnakewaySurfer boss fights". Not yet tested in-game.
 
 ## 8. Working with this user
 
