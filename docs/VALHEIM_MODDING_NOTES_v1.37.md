@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.4.x)
+## 7g. SnakewaySurfer (1.5.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1207,7 +1207,24 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   surfing. Land tries the Heightmap material's 2D textures by property name (logged once; may
   be texture arrays). Debug: `Invincible`, `Game Speed`. Short creatures (< 0.75 × jump
   height) can be jumped over.
-- Open questions to watch in the first test: whether Valheim's own sun also lights layer 30
+- **1.5 (user: wrong creatures per biome, rarity, no fog, lighting off, behaviours):**
+  creatures come from the game's spawn tables: `Resources.FindObjectsOfTypeAll<SpawnSystemList>()`
+  → `m_spawners` (`SpawnSystem.SpawnData`: `m_prefab`, `m_biome` flags, `m_enabled`,
+  `m_maxSpawned`, `m_spawnInterval`, `m_spawnChance`, `m_groupSizeMin/Max`, `m_spawnAtDay/Night`,
+  `m_requiredEnvironments`, `m_requiredGlobalKey`), weight = chance × max / interval (night-only
+  and weather-only × 0.35). `Heightmap.Biome`: Meadows 1, Swamp 2, Mountain 4, BlackForest 8,
+  Plains 0x10, AshLands 0x20, DeepNorth 0x40, Ocean 0x100, Mistlands 0x200. **EnvMan never sets
+  `RenderSettings.fogMode`** (only colour/density), so forcing exponential-squared likely hit a
+  stripped shader variant: keep the world's mode. Per-biome look from `EnvMan.m_biomes`
+  (`BiomeEnvSetup.m_biome`, `m_environments` of `EnvEntry` {`m_environment`, `m_weight`,
+  `m_env`}) → `EnvSetup` day values (`m_fogDensityDay`, `m_fogColorDay`, `m_ambColorDay`,
+  `m_sunColorDay`, `m_lightIntensityDay`). The world sun (`EnvMan.m_dirLight`) is switched off
+  in our camera's `OnPreCull`. Real creature height = root `CapsuleCollider` height × scale.
+  `MonsterAI.m_sleeping` / `m_wakeupEffects` and the animator bool `sleeping` (abomination
+  ambush). Attack visuals: particle prefabs in `Attack.m_triggerEffect/m_startEffect`.
+  `surfprobe` console command logs weather, fog, sun, cameras, post-process volumes, terrain
+  shader properties and nearby creature sizes for in-game sampling. Release v1.5.14.
+ whether Valheim's own sun also lights layer 30
   (stage may look too bright), whether `Shader.Find("Standard")` exists for the land colours,
   how the cloned player animator looks, and whether the borrowed `stone_floor_2x2` material
   tiles well.
