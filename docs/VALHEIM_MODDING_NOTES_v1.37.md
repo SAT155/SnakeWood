@@ -1249,6 +1249,13 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   from locations (CreatureSpawner in location prefabs, which aren't loaded until placed), not
   the world spawn tables, so a per-biome Location Monsters list adds them at modest weights (the
   user asked not to overweight them).
+  1.5.20: creatures are placed by their root (a character's pivot is at its feet), not by the
+  render bounds of the unanimated copy (bind-pose bounds float or sink them); the straddling giant
+  keeps its proportions. `forward_speed` is the real ground speed in m/s (`Character` sets it from
+  velocity; `CharacterAnimEvent` changes `m_animator.speed` during attacks; `Character.Awake`
+  scales enemies by `Game.m_enemySpeedSize` and world level). `surfcompare` puts the picture beside
+  a live creature, copies its animator floats/ints/bools and cross-fades to its state each frame,
+  and logs both bounds and clip names: the way to check sizes and animations in-game.
 
 ## 8. Working with this user
 
