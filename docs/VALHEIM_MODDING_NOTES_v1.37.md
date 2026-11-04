@@ -1256,6 +1256,18 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   scales enemies by `Game.m_enemySpeedSize` and world level). `surfcompare` puts the picture beside
   a live creature, copies its animator floats/ints/bools and cross-fades to its state each frame,
   and logs both bounds and clip names: the way to check sizes and animations in-game.
+- **1.6 (user quiz, creature by creature):** each creature has tags in the Creature Schemas
+  setting (Schemas.cs; SurfSchemas.cs is a partial of SurfGame): formations (swarm, herd, line,
+  crosser), gaits (charger, waiter, switcher), attacks (sweep, gas2/gas3, smash, slams, lob, fire,
+  tar, bomb, tickdrop, shooter, flyshooter, leaper, headleap), and chaser/behind/helper/talk. The
+  user's rule: any lane about to be hit is marked on the ground first (Sprites/Default quads,
+  pulsing orange). Star loop: after Loop Biomes (6 = up to the Mistlands) the run goes back to the
+  Meadows with 1, 2, then 3 stars; star looks come from `LevelEffects` read before stripping
+  (`m_levelSetups[level-2]`: transform scale, a copy of `m_mainRender.sharedMaterials[0]` with
+  `_Hue`/`_Saturation`/`_Value` and optional `_EmissionColor`, `m_baseEnableObject` off,
+  `m_enableObject` on). Dvergr lines come from `NpcTalk.m_randomGreets`/`m_randomTalk`
+  (localization keys; the game shows them with `Chat.SetNpcText`). The quiz answers are in the
+  project files (snakewaysurfer/schemas.md). Ashlands is on hold until the user gets there.
 
 ## 8. Working with this user
 
