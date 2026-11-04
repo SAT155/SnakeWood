@@ -42,3 +42,49 @@ in-game yet unless marked.
 - Copying a build piece's shader onto a generated mesh drew nothing (or white); the Standard
   shader with the piece's main texture works. Generated meshes: don't add back faces that share
   vertices with the front (the normals cancel and it goes black).
+
+## Real terrain shape, paint mask and grass (SnakewaySurfer 1.11)
+
+These were read from the decompiled game code on 2026-11-04. *(verified)* means it was seen in
+that code. None of it has been checked in-game yet.
+
+### Terrain shape
+
+- `WorldGenerator.instance.GetBiomeHeight(biome, wx, wy, out Color mask)` *(verified)*:
+  - Returns the height in metres: the biome formula's value times `GetHeightMultiplier()`, which
+    is 200.
+  - Sea level is 30 m. River beds come out at 0.128–0.14, so about 26–28 m.
+  - Each biome has its own private formula: `GetMeadowsHeight`, `GetForestHeight`,
+    `GetMarshHeight`, `GetSnowMountainHeight`, `GetPlainsHeight`, `GetMistlandsHeight`, and the
+    Ashlands and Deep North ones. Each builds on `GetBaseHeight` and `AddRivers`.
+  - `mask` is `Color.black` (alpha 1) except in the Mistlands (alpha from the hill factor),
+    Ashlands (alpha is lava) and Deep North.
+- `GetHeight(wx, wy)` is `GetBiomeHeight(GetBiome(wx, wy), …)`. Calling `GetBiomeHeight` with a
+  fixed biome forces that biome's look, even at a border. *(verified)*
+
+### Paint mask
+
+- The Heightmap paint mask starts as `HeightmapBuilder`'s `m_baseMask`, which holds the
+  generator's mask, before terrain mods. *(verified)*
+- Its alpha is the vegetation mask: `GetVegetationMask`, with `m_paintMaskClearVegetation` =
+  (0,0,0,0) and `m_paintMaskNothing` = (0,0,0,1). In the Ashlands the alpha is lava, and in the
+  Mistlands it's the cliff and rock look. *(verified)*
+- So a custom mesh with a constant mask alpha of 1 loses the Mistlands textures. SnakewaySurfer
+  gives each tile its own small mask texture through a `MaterialPropertyBlock`, and sets
+  `_WaterLevel` per tile.
+
+### Grass
+
+- `ClutterSystem.m_clutter` holds the `Clutter` entries *(verified)*. The fields:
+  - `m_biome` (a flags field), `m_instanced`, `m_prefab`, `m_amount` per 8 m patch.
+  - Quality scales the amount: Low is a quarter, Med a half, High all of it, then times
+    `m_amountScale`.
+  - `m_onUncleared` / `m_onCleared`, `m_min/maxVegetation`, `m_scaleMin/Max`,
+    `m_min/maxTilt`, `m_min/maxAlt` (measured above `m_waterLevel`), `m_snapToWater`,
+    `m_terrainTilt`, `m_randomOffset`, `m_min/maxOceanDepth`.
+  - `m_inForest` with `m_forestTresholdMin/Max`, using `WorldGenerator.GetForestFactor`.
+  - Fractal placement: `Utils.Fbm(pos * 0.01 * m_fractalScale + (m_fractalOffset, 0, 0), 3,
+    1.6, 0.7)` checked against `m_fractalTresholdMin/Max`.
+- `InstanceRenderer` keeps `m_mesh`, `m_material` and `m_scale`, plus up to 1023 matrices. It
+  draws with `Graphics.DrawMeshInstanced(…, layer "InstanceRenderer")` for every camera, so a
+  private scene has to draw the mesh itself on its own layer. *(verified)*

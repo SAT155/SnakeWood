@@ -1311,6 +1311,16 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
       swoosh, which is a trademark, so it isn't used.
     - Given once per character. If the bag is full, the shoes are owed and given when a run ends.
   - Not yet tested in-game.
+- **1.11 (user: "make the terrain more true to the game"):**
+  - Each biome borrows a ring, 170 m in radius and ±90 m across, of this world's real ground. It
+    is the nearest spot where the whole ring is that biome and above water.
+  - The track runs round the ring, and heights are taken relative to the ring's centre line,
+    using `GetBiomeHeight` with the biome forced.
+  - The generator's paint mask is applied per tile.
+  - The game's grass grows by `ClutterSystem` rules and is drawn instanced.
+  - The track stays a hoe-painted path, dirt or paved; the user asked for that, and it was already
+    the case since 1.5.17.
+  - See `docs/game/camera-weather-terrain-look.md`. Not yet tested in-game.
 
 ## 8. Working with this user
 
