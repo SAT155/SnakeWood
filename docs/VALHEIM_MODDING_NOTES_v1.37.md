@@ -1237,6 +1237,14 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   the land and track copies of a loaded `Heightmap.m_material` with biome vertex colours and a
   small `_ClearedMaskTex` (track = dirt or paved path; Track Style stone = old floor texture).
   See docs/game/camera-weather-terrain-look.md. Not yet seen in-game.
+  1.5.18 (user's log): the per-biome spawn lists held mod and late-game creatures with one
+  entry per biome (JotunWarrior, Elaking, JotunWitch, Skeleton, Charred in every biome), which the
+  per-entry 4-biome filter misses. Now a prefab found in 4+ biomes is kept only where it's at
+  least twice as common as its rarest biome, and strays under 10% of their home weight are
+  dropped. Weight = spawn cap x clamp(sqrt(chance x 600/interval), 0.25, 1.5) (the old rate
+  formula made Neck 7.4 vs Troll 0.0). Probe confirmed: main camera is HDR deferred with
+  PostProcessingBehaviour, SunShafts, AmplifyOcclusion; fog is Exponential; EnvMan day values
+  matched what the minigame read.
 
 ## 8. Working with this user
 
