@@ -78,3 +78,14 @@ prefabs up by key: enemies `$enemy_frysling`, `jotun_warrior` (Krigen), `jotun_w
 `$item_sealsoup`, `smokedmoosemeat`, `moose_meat_cooked`, `meatballsmashedpoteitr`,
 `oatmeallingonberryjam` (Oatmeal), `blubber_cooked`, `feastdeepnorth`. Full lists: search
 `^"(enemy_|item_)` in the Decompile workflow's `assets` input.
+
+## Player and UI sounds (2026-11-04, SnakewaySurfer session)
+
+Asset search `^sfx_…(jump|land|step|hit|pickup|ui|gui|dodge|levelup|swing|…)$` found, among
+others: `sfx_jump`, `sfx_land`, `sfx_dodge`, `sfx_perfect_dodge`, `sfx_footstep`,
+`sfx_footstep_run`, `sfx_footstep_mud_run`, `sfx_footstep_snow_run`, `sfx_footstep_ice_run`,
+`sfx_pickup`, `sfx_pickable_pick`, `sfx_gui_button`, `sfx_levelup`, `sfx_eat`, `sfx_hit`,
+`sfx_wood_hit`, `sfx_rock_hit`, `sfx_tree_fall`, `sfx_unarmed_swing`, `sfx_club_swing`,
+`sfx_troll_attack_hit`, `sfx_troll_footstep`, plus `sfx_<creature>_death/_hit/_footstep` for
+most creatures (`greyling`, `greydwarf`, `troll`, `draugr`, `wolf`, `goblin`, `seeker_brute`,
+`charred`, `moose`, `jotunwarrior`, `kvastur`, `gameltroll`, ...).

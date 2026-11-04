@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.34 |
-| **Last updated** | 2026-11-04 02:40 UTC |
+| **Version** | 1.35 |
+| **Last updated** | 2026-11-04 03:16 UTC |
 | **Updated by** | Claude Code, SnakewaySurfer session (`claude/project-thread-9zfoi6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.0.x)
+## 7g. SnakewaySurfer (1.2.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1149,6 +1149,24 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   lasted ≥ 30 s and 30 real minutes passed since the last (`m_customData`
   `SnakewaySurfer_LastFoodUtc`). The defaults were the session's picks; the user hasn't
   confirmed them.
+- **First test (1.0.2, user, 2026-11-04):** the run ended after ~11 s every time with "hit in
+  the real world". Health also drops when **food wears off** (it follows the shrinking max
+  health down), so a plain "health went down" check misfires. 1.1 counts a drop only if health
+  ends below max health − 0.5, and logs every trigger. Also, stripping a creature copy logged
+  `Can't remove Humanoid (Script) because CharacterDrop (Script) depends on it`: destroy only
+  components that no remaining component lists in `[RequireComponent]` (reflection on
+  `RequireComponent.m_Type0..2`), pass after pass.
+- **1.1 sounds:** clips from vanilla `sfx_*` prefabs' `ZSFX.m_audioClips` (+ `m_minPitch/
+  m_maxPitch/m_minVol/m_maxVol`), played on our own 2D `AudioSource`s with the prefab
+  source's `outputAudioMixerGroup` (so the game's volume sliders apply). Prefabs not in
+  `ZNetScene` are found once through `Resources.FindObjectsOfTypeAll<ZSFX>()` by root name.
+  Names used are in `docs/game/asset-names.md`. Not yet heard in-game.
+- **1.2 (user feedback: too bright, no fog):** own sun 1.1 → 0.45, ambient = sky × 0.45,
+  exponential-squared `RenderSettings` fog per biome (0.009 Plains to 0.04 Mistlands) set only
+  during our camera's render. Black Forest troll set pieces (user's idea): a troll beside the
+  track slams a log (a pivot rotating 155°) across the outer lane when the runner is
+  `speed × 0.5 + 2.5` m away; a troll stretched to the track's width drops in over it, feet in
+  the outer lanes (blocked), middle lane needs a slide. Per-biome `Giants` config. Release v1.2.4.
 - Open questions to watch in the first test: whether Valheim's own sun also lights layer 30
   (stage may look too bright), whether `Shader.Find("Standard")` exists for the land colours,
   how the cloned player animator looks, and whether the borrowed `stone_floor_2x2` material
@@ -1230,3 +1248,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.32 | 2026-11-03 04:49 | Claude Code, hoe ramp controls session | Added: §7f SnakeSkills 1.25 (decor ghosts without colliders never leave the player's feet unless a clip flag is set; how `UpdatePlacementGhost` positions ghosts; V+ noInvalidPlacementRestriction). |
 | 1.33 | 2026-11-03 22:40 | Claude Code, SnakePolearms release session | SnakePolearms now uses the SnakeWood auto-release scheme (PR #1, draft); first GitHub release v1.1.7 (§1, §7c). |
 | 1.34 | 2026-11-04 02:40 | Claude Code, SnakewaySurfer session | Added: SnakewaySurfer (ecosystem row, default branch, auto-release, §7g); topic file `docs/game/player-anim-input-visuals.md` (synced `forward_speed` via `UpdateWalking`, `TakeInput`/`SetControls` locks, Console/Menu, `SetHelmetItem` ZDO sync, `Inventory.AddItem` overloads, `Skill.Raise` one level per call, private camera scene); tree/rock/log names and Deep North enemy/food localization keys in `asset-names.md`. |
+| 1.35 | 2026-11-04 03:16 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.1–1.2 (food wear-off lowers health, `RequireComponent`-aware stripping, 2D sounds from `ZSFX` clips, per-biome fog/ambient, troll set pieces); sound prefab names in `asset-names.md`. |
