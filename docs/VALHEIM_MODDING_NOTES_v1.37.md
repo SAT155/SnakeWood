@@ -1231,6 +1231,13 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 
 ---
 
+- **Later 1.5.x (user: vanilla screenshots, "make it look like the game"):** Use Game Camera
+  draws the private stage through the game's own camera (culling mask set to the stage layer,
+  moved in a `GameCamera.LateUpdate` postfix) for its post effects and sky; Game Terrain gives
+  the land and track copies of a loaded `Heightmap.m_material` with biome vertex colours and a
+  small `_ClearedMaskTex` (track = dirt or paved path; Track Style stone = old floor texture).
+  See docs/game/camera-weather-terrain-look.md. Not yet seen in-game.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
