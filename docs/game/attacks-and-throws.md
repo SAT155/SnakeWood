@@ -72,3 +72,15 @@ item (e.g. the Wisplight) turned weapon needs `m_equipDuration = 0`.
   local camera shake, scaled by distance, ignored if weaker than the current shake.
 - Check `character.m_nview.IsValid()` before acting on a creature from `GetAllCharacters()`.
 
+
+## Reading a creature's attacks from its prefab *(from field names; used by SnakewaySurfer 1.4, not yet confirmed in-game)*
+
+- A monster's attacks are weapon items it spawns with: `Humanoid.m_defaultItems`,
+  `m_randomWeapon` and `m_randomSets[].m_items` (all `GameObject[]` with `ItemDrop`). Each item's
+  `m_itemData.m_shared.m_attack` gives `m_attackAnimation` (the animator trigger `Attack.Start`
+  fires through `ZSyncAnimation`), `m_attackType` (`Projectile` + `m_attackProjectile` = ranged),
+  `m_startEffect`/`m_triggerEffect` (sounds).
+- The visible weapon is the item's `attach` (or `attach_skin`) child on the `VisEquipment`
+  joint; bows (`ItemType.Bow`) go to `m_leftHand`, others to `m_rightHand`.
+  `m_shared.m_animationState` is the stance the animator reads (`statef`/`statei`).
+- `Character.m_walkSpeed`/`m_runSpeed`/`m_flying` tell slow from fast creatures.

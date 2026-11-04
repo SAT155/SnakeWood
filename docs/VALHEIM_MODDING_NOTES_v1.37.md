@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.36 |
-| **Last updated** | 2026-11-04 03:26 UTC |
+| **Version** | 1.37 |
+| **Last updated** | 2026-11-04 03:45 UTC |
 | **Updated by** | Claude Code, SnakewaySurfer session (`claude/project-thread-9zfoi6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.3.x)
+## 7g. SnakewaySurfer (1.4.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1176,6 +1176,25 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   amplitude blended over 40 m), scenery sits on it and is pushed out by its renderer bounds,
   the troll leaps in from beside the track, track `_Color` × 0.6, coin sound falls back
   through `sfx_pickup|sfx_pickable_pick|sfx_gui_button`. Release v1.3.5.
+- **1.4 (user feedback on 1.3.5: flat swamp, fake troll swing, too much XP):** creature
+  attacks are read before stripping (`CreatureInfo`, `Creatures.cs`): weapon items from
+  `Humanoid.m_defaultItems`/`m_randomWeapon`/`m_randomSets`, each with `m_attack.m_attackAnimation`
+  (set as an animator trigger on the picture), `m_attackType == Projectile` +
+  `m_attackProjectile` (ranged), the item's `attach` child (pictured onto the hand found by
+  `VisEquipment.m_rightHand`/`m_leftHand` path; bows left), `m_animationState` → `statef`/
+  `statei`, and the first ZSFX prefab of `m_startEffect`/`m_triggerEffect` as the attack sound.
+  Ranged monsters fire a pictured projectile (fallback `Stone`, plus a small point light) that
+  flies at 9 + 0.6 × biome m/s toward the runner's lane at firing time (slide under or change
+  lane). Monsters move by type (`m_runSpeed ≥ 7` = fast: charge at 0.6 × run speed; others walk).
+  The road rolls (Perlin, amplitude 0.4 + 0.55 × biomes, × 0.35 in the Swamp), the track is a
+  generated strip mesh, every thing is placed at `RoadY(z) +` its own height. Swamp: land dips
+  under a road-following water strip (Standard shader set to Fade by hand) 0.3 m above the
+  track, islands further out. Ground: a procedural tileable value-noise texture tinted by the
+  biome colour (the terrain shader needs splat maps, so it can't be borrowed). Run XP default
+  1 → 0.25 levels per biome, with a `Balance Version` entry that rewrites an untouched old 1
+  once. The user asked to keep the classic stiff log swing now and then: 30 % of swing trolls.
+  Untested in-game: whether creature attack triggers play from the picture animator, the
+  Fade water variant exists in the build, and hand paths resolve.
 - Open questions to watch in the first test: whether Valheim's own sun also lights layer 30
   (stage may look too bright), whether `Shader.Find("Standard")` exists for the land colours,
   how the cloned player animator looks, and whether the borrowed `stone_floor_2x2` material
@@ -1259,3 +1278,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.34 | 2026-11-04 02:40 | Claude Code, SnakewaySurfer session | Added: SnakewaySurfer (ecosystem row, default branch, auto-release, §7g); topic file `docs/game/player-anim-input-visuals.md` (synced `forward_speed` via `UpdateWalking`, `TakeInput`/`SetControls` locks, Console/Menu, `SetHelmetItem` ZDO sync, `Inventory.AddItem` overloads, `Skill.Raise` one level per call, private camera scene); tree/rock/log names and Deep North enemy/food localization keys in `asset-names.md`. |
 | 1.35 | 2026-11-04 03:16 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.1–1.2 (food wear-off lowers health, `RequireComponent`-aware stripping, 2D sounds from `ZSFX` clips, per-biome fog/ambient, troll set pieces); sound prefab names in `asset-names.md`. |
 | 1.36 | 2026-11-04 03:26 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.2.4 test results (what renders fine, vanilla rocks are huge, borrowed floor material too bright) and 1.3 (hill mesh, scenery push-out, leaping troll). |
+| 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
