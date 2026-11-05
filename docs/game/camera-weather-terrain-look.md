@@ -103,7 +103,6 @@ that code. None of it has been checked in-game yet.
   the `Thunder` component.
 - `Thunder`: `m_strikeIntervalMin/Max`, `m_thunderDelayMin/Max`, `m_flashEffect` and
   `m_thunderEffect` (EffectLists). There is no `LightningFlash` class.
-- A boss location's weather: `EnvZone.m_environment` on the location prefab (Eikthyrnir uses
-  its own "Eikthyr" environment).
+- A boss location's weather: `EnvZone.m_environment` on the location prefab.
 - Copies of `m_psystems` parented to your own camera work as private weather. Turn their
   particle collision off, and put them on your layer.
