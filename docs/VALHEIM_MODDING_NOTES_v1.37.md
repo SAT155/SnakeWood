@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.12.x)
+## 7g. SnakewaySurfer (1.14.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1344,6 +1344,43 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - **Summoning:** the items circle, then the `OfferingBowl` start effects play, then the done
     effects play and the boss scales up.
   - See `docs/game/locations-and-custom-items.md` and `asset-names.md`. Not yet tested in-game.
+- **1.13 (the user tested 1.12):**
+  - **The 1.12 LodHide fix did nothing.** `_LodHideDistance` is not a material property
+    (`HasProperty` is false); Heightmap only sets it per renderer, for distant LODs. Heightmap
+    sets only `_ClearedMaskTex`, `_depth` and `_LodHideDistance`, and `RenderGroupSystem` only
+    turns registered renderers on and off. Why `Custom/Heightmap` draws nothing on the stage is
+    still unknown.
+  - **Workaround:** copy each slice of the terrain material's `_DiffuseArrayTex` (a
+    Texture2DArray) into a Texture2D with `Graphics.CopyTexture`, one mip at a time, without
+    `Apply`. Average each slice (Blit to an 8x8 RT, then ReadPixels). Pick the slice closest in
+    HSV to the biome's ground colour, and put it on the Standard shader.
+  - Only Eikthyr chases (the user: "only Eikthyr should be that way"). The other bosses wait
+    ahead.
+- **1.14 (the user's design asks):**
+  - **No pop-up text during a run.** It now uses contextual cues:
+    - The HUD shows the summoning item's icon (`m_shared.m_icons[0]`, drawn from the sprite's
+      `textureRect` with `GUI.DrawTextureWithTexCoords`) with a count, and the boss's health
+      bar.
+    - The lane marks are coloured: red means get out of the lane, amber means jump, blue means
+      slide.
+    - Getting hit shows a red vignette and plays `Player.m_hitEffects` as 2D sounds.
+  - **Sprint, block and parry, as the user asked:**
+    - Blocking takes stamina; a parry does not. Stamina recharges over time.
+    - Block sounds come from `currentBlocker.m_shared.m_blockEffect`, and the parry sound from
+      `m_perfectBlockEffect`. `GetCurrentBlocker` is private, so they're reached through
+      Traverse.
+    - Sound names confirmed: `sfx_perfectblock`, `sfx_metal_shield_blocked`,
+      `sfx_wood_blocked`, `sfx_footstep_water`, `sfx_land_water` and `sfx_land_tar`.
+  - **Run XP:** vanilla raises Run by factor 1 once per second of running (in `Player`,
+    through `m_runSkillImproveTimer`). The minigame now gives real XP: 0.5 per second, at most
+    300 s. Before, it gave fractions of a level, which is far too much at a high skill (the
+    user).
+  - **Boss hits take timing:** Eikthyr's spears are thrown and must be timed to his weaving.
+    Moder's ballista bolt flies at 45 m/s to the aimed point.
+  - **Spawns:** weights are capped at max 6 (leeches have max 10). Giants come only as set
+    pieces. Melee packs spread out instead of a conga line. Bats come in swarms that are a
+    nuisance (they cost no life). Swamp water gets ripples and splashing steps.
+  - Not yet tested in-game.
 
 ## 8. Working with this user
 
