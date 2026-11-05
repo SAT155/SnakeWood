@@ -1399,7 +1399,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   0.06 s, with forks), a point light burst with `cullingMask = 1 << layer`, the scene flash, and
   `fx_Lightning` at 2× size. Scaling an effect copy only grows its particles when each
   `ParticleSystem.main.scalingMode` is `Hierarchy`. Antlers glow and spark during the wind-up.
-- **1.16 (v1.16.37–38, 2026-11-05): the ocean crossing** (the user's design: a longboat
+- **1.16 (v1.16.37–39, 2026-11-05): the ocean crossing** (the user's design: a longboat
   top-down shooter between the Mountains and the Plains, a storm with big rolling waves and a
   serpent mini-boss in the middle, wind that's always on and shifts). Not yet tested in-game.
   - **Flow:** a `Sea` segment is inserted by `Following` before the Plains (only when the
