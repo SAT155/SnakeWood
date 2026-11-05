@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.14.x)
+## 7g. SnakewaySurfer (1.15.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1381,6 +1381,18 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     pieces. Melee packs spread out instead of a conga line. Bats come in swarms that are a
     nuisance (they cost no life). Swamp water gets ripples and splashing steps.
   - Not yet tested in-game.
+- **1.15:**
+  - **Start menu:** a grid of biome × star checkpoint buttons drawn with IMGUI. While it's up,
+    set the cursor free with `Cursor.lockState`/`visible` in OnGUI, which runs after
+    GameCamera's capture.
+  - **Parry duel:** most bosses are hurt by parrying their close-in swings. Heavy blows can't be
+    blocked, only parried.
+  - **Fireplace pictures need their flames turned on:** a lifeless copy of a torch keeps its
+    flames on inactive `*enabled*` children, so activate those.
+  - **Boss deaths:** play `Character.m_deathEffects` minus the `Ragdoll` prefab, which needs
+    physics, and topple the model.
+  - **Gas clouds:** a runtime `ParticleSystem` with a generated puff texture. Vanilla gas prefab
+    names: `blob_aoe`, `blob_attack_aoe`, `bonemass_aoe`, `poisoncloud`, `shaman_attack_aoe`.
 
 ## 8. Working with this user
 
