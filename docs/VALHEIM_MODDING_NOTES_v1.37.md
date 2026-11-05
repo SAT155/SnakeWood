@@ -1393,6 +1393,12 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     physics, and topple the model.
   - **Gas clouds:** a runtime `ParticleSystem` with a generated puff texture. Vanilla gas prefab
     names: `blob_aoe`, `blob_attack_aoe`, `bonemass_aoe`, `poisoncloud`, `shaman_attack_aoe`.
+- **1.15.1–1.15.2 (v1.15.34–35, 2026-11-05):** summoning sounds at 55% (user: too loud).
+  Eikthyr's lightning (user: needs bigger effects): a procedural bolt per blow (two
+  `LineRenderer`s on `Sprites/Default`, white core plus wide tinted glow, re-jagged every
+  0.06 s, with forks), a point light burst with `cullingMask = 1 << layer`, the scene flash, and
+  `fx_Lightning` at 2× size. Scaling an effect copy only grows its particles when each
+  `ParticleSystem.main.scalingMode` is `Hierarchy`. Antlers glow and spark during the wind-up.
 
 ## 8. Working with this user
 
