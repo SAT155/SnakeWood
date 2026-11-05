@@ -61,7 +61,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
 | **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
-| **SnakewaySurfer** (`snakewaysurfer`, default branch `claude/project-thread-9zfoi6`) | Original mod (2026-11-04): console command `surfsup` starts a client-side 3-lane endless runner through all eight biomes; others see the player running in place in a Dverger circlet. Rewards Run XP and one biome food. ~1.9k lines. | Client-only, vanilla-server safe. Good example of a private scene (own camera + layer 30 + stripped prefab pictures), vanilla-synced animation/helmet overrides. See §7g. |
+| **SnakewaySurfer** (`snakewaysurfer`, default branch `claude/project-thread-9zfoi6`) | Original mod (2026-11-04): console command `surfsup` starts a client-side 3-lane endless runner through all eight biomes; others see the player running in place in a Dverger circlet. Rewards Run XP and one biome food. Boss fights, star laps, and (1.16) an ocean crossing by longship. ~18k lines. | Client-only, vanilla-server safe. Good example of a private scene (own camera + layer 30 + stripped prefab pictures), vanilla-synced animation/helmet overrides. See §7g. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
 Common conventions across the Valheim repos:
@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.15.x)
+## 7g. SnakewaySurfer (1.16.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1399,6 +1399,48 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   0.06 s, with forks), a point light burst with `cullingMask = 1 << layer`, the scene flash, and
   `fx_Lightning` at 2× size. Scaling an effect copy only grows its particles when each
   `ParticleSystem.main.scalingMode` is `Hierarchy`. Antlers glow and spark during the wind-up.
+- **1.16 (v1.16.37–38, 2026-11-05): the ocean crossing** (the user's design: a longboat
+  top-down shooter between the Mountains and the Plains, a storm with big rolling waves and a
+  serpent mini-boss in the middle, wind that's always on and shifts). Not yet tested in-game.
+  - **Flow:** a `Sea` segment is inserted by `Following` before the Plains (only when the
+    Plains are in the lap). Beating Moder saves checkpoint (4, stars), which now starts on a
+    short `Shore` coast; reaching the far beach saves a per-world "landed" list in
+    `m_customData`, which opens a direct Plains start. Pre-1.16 progress past the Plains
+    counts as landed. The start menu gets an Ocean column.
+  - **Coast:** the road and land sink over 70 m into the sea (`RoadY` and `LandAt` wrap a
+    shore weight; the land beside the track holds up longer, giving a bay with headlands).
+    When the arena before it closes, the ground tiles on the slope are rebuilt. The terrain
+    shader's `_WaterLevel` set per renderer (property block) to our sea height gives wet
+    sand at the waterline.
+  - **Sea:** one 73×73 grid that follows the boat, its heights worked out in stage space every
+    frame (swell plus rolling waves), so the waves stay put while the grid snaps. The outer
+    ring is pushed 8× out to reach the horizon. Standard shader in Transparent mode with a
+    generated normal map, its UV offset including the grid's position. Foam (wake, wind
+    streaks, crests, surf, reef breakers) is one mesh of flat quads on `Sprites/Default`.
+  - **The game's own ship rules, from the decompile:** `Ship.GetWindAngleFactor` is
+    `Lerp(0.7, 1, 1 − |d|) × (1 − LerpStep(0.75, 0.8, d))` with `d = dot(windDir, −forward)`
+    (best abeam, 70% running, nothing within about 37° of the wind). Sail force scales with
+    `Lerp(0.25, 1, windIntensity)`. The sail furls by moving `m_sailBottomTransform` between
+    `m_sailFurledPosition`, `m_sailMidfurledPosition` and `m_sailUnfurledPosition`. The mast
+    turns to `LookRotation(−Lerp(w, normalize(w − fwd), 0.5 + dot(fwd, w) × 0.5), up)`, where
+    `w = Cross(Cross(windDir, up), up)`. `ShipControlls.m_attachPoint` and
+    `m_attachAnimation` give the helm. The sail cloth (MagicaCloth) is stripped from
+    pictures.
+  - **Assets used:** `VikingShip`, `Serpent`, `Leviathan` (Animator triggers `shake` and
+    `dive`; `m_reactionEffects` and `m_leaveEffects`), `Hatchling`, `Deathsquito`, `Seagal`,
+    `TurretBoltWood`, `fx_turret_fire`, `TrophySerpent`, and the sea stacks `rock4_coast`,
+    `RockFinger` and `RockThumb`. The sounds are `AudioMan.m_oceanAudio` and `m_windAudio`
+    (AudioClips) looped on our own AudioSources through `m_ambientMixer`, and
+    `sfx_serpent_*`. The HUD wind rose reuses `Hud.m_shipWindIcon`, `m_shipRudderIcon`,
+    `m_fullSail`, `m_halfSail` and `m_rudderSlow` sprites.
+  - **Cues instead of text:** red streaks and rings on the water for lunges, spit, lightning
+    and the serpent coming up under the keel. A pale band shows the safe way to meet the next
+    rolling wave, and it turns red while you're side on. The wind arrow is bright when it fills
+    the sail. Lines of reef surf mark the channel's edges.
+  - **Pitfalls:** names clash across partial-class files (`BoltSpeed` and `FireBallista`
+    already existed for Moder). A wave that travels with a fast ship never arrives: make
+    following seas faster than the ship and drop waves left far behind. A wave raised from one
+    point needs a lateral falloff, or it spans the whole sea.
 
 ## 8. Working with this user
 
