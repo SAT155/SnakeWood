@@ -84,3 +84,19 @@ item (e.g. the Wisplight) turned weapon needs `m_equipDuration = 0`.
   joint; bows (`ItemType.Bow`) go to `m_leftHand`, others to `m_rightHand`.
   `m_shared.m_animationState` is the stance the animator reads (`statef`/`statei`).
 - `Character.m_walkSpeed`/`m_runSpeed`/`m_flying` tell slow from fast creatures.
+
+## When the blow lands (SnakewaySurfer 1.12)
+
+- The hit is the `OnAttackTrigger` animation event, not the start of the clip. For pictures
+  (copies without scripts) read it from `clip.events`: the first `functionName ==
+  "OnAttackTrigger"` gives the seconds from the clip's start to the blow. Find the clip
+  through `GetNext/GetCurrentAnimatorClipInfo(0)` a frame after `SetTrigger`, and divide by
+  `state.speed * speedMultiplier * animator.speed`.
+- Attack triggers are often random variants: `Attack.m_attackRandomAnimations` gives triggers
+  like `attack0`, `attack1`. The GoblinBrute's animator has no plain `attack` trigger, so look
+  for name+digit when the exact trigger isn't a parameter.
+- Effects: `Attack` has `m_startEffect`, `m_triggerEffect`, `m_hitEffect`,
+  `m_hitTerrainEffect`, `m_trailStartEffect`, `m_burstEffect`, `m_spawnOnTrigger` and
+  `m_attackProjectile`. `SharedData` has its own `m_startEffect`, `m_triggerEffect` and
+  `m_hitEffect`. A projectile's or spawned object's own EffectLists (hit/spawn) carry
+  the impact look, such as Yagluth's meteors.

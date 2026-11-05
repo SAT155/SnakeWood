@@ -23,6 +23,13 @@ seen in the decompiled code. Nothing here has been tried in-game yet.
   `ZNetView` registers, then strip the components (as SnakewaySurfer's `Pictures.MakePicture`
   does). A location holds its pieces as child objects, so the copy shows them.
 
+## Altar summoning effects (SnakewaySurfer 1.12)
+
+`OfferingBowl` on a boss location (private fields, use reflection): `m_spawnBossStartEffects`
+(sparkles and sound as the items are given), `m_spawnBossDoneffects` (the game's spelling; as
+the boss appears) and `m_spawnBossDelay` (float, seconds between them). Load the location's
+soft reference first (above).
+
 ## Adding an item (no Jotunn)
 
 - `ObjectDB.Awake` calls the private `UpdateRegisters()`, which rebuilds `m_itemByHash` (by

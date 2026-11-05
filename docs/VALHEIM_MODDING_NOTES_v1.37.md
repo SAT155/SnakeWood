@@ -1125,7 +1125,7 @@ level ground and big brushes may feel off; Deep North fish prefab names. Test: p
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
 
-## 7g. SnakewaySurfer (1.10.x)
+## 7g. SnakewaySurfer (1.12.x)
 
 New repo `SAT155/SnakewaySurfer` (2026-11-04, the user named it; the session called it SnakeSurf
 first). Built green in CI (release v1.0.2); **untested in-game**. Files in `SnakewaySurfer/`.
@@ -1321,6 +1321,29 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - The track stays a hoe-painted path, dirt or paved; the user asked for that, and it was already
     the case since 1.5.17.
   - See `docs/game/camera-weather-terrain-look.md`. Not yet tested in-game.
+- **1.12 (user tested 1.11; chose "boss chases, camera faces back"):**
+  - **Missing ground textures (cyan ground):** the shader clips terrain within
+    `_LodHideDistance` of `_NetRefPos` (the player). Our stage is 4000 m straight above the player,
+    so it was inside that distance. Fix: set `_LodHideDistance` to 0 on our materials and in each
+    tile's property block. See `docs/game/camera-weather-terrain-look.md`.
+  - **Attack timing:** read from the clips' `OnAttackTrigger` animation events, since our copies
+    don't fire events. Learned per animator and trigger. Triggers are often random variants
+    (`attack0`/`attack1`): the GoblinBrute has no plain `attack` trigger, which is why brutes never
+    animated. See `docs/game/attacks-and-throws.md`.
+  - **Boss chase** (`SurfChase.cs`):
+    - The boss runs 12–20 m behind you, and the camera swings round over the side to look back.
+      Left and right follow the screen while it faces back.
+    - Lane strikes show a red band that rides along with you for 1.1–1.6 s, then land with the
+      boss's own effects.
+    - Waves and bars race up from behind with negative `Thing.Speed`, so the movement check is
+      now `!= 0`. Things behind are kept for 90 m instead of 25 m.
+    - The Elder's branches open lanes −1 and 3 on ground flattened beside the track, with
+      TentaRoot vines.
+  - **Boss weather:** the boss location's `EnvZone.m_environment`, with its `m_psystems` cloned
+    under our camera. Thunder and lightning flash for Eikthyr.
+  - **Summoning:** the items circle, then the `OfferingBowl` start effects play, then the done
+    effects play and the boss scales up.
+  - See `docs/game/locations-and-custom-items.md` and `asset-names.md`. Not yet tested in-game.
 
 ## 8. Working with this user
 

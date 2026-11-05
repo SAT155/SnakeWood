@@ -109,3 +109,18 @@ creature homes `Spawner_GreydwarfNest`, `BonePileSpawner`, `BonePileSpawner_swam
 `MaceIron`, `BoltIron`, `BoltBone`, `BoltBlackmetal`, `BoltCarapace`, `ArrowFrost`, `BombLava`,
 `BombBile`. See [world-progress-keys.md](world-progress-keys.md) for boss and summoning names.
 
+
+## Boss effects (2026-11-05, SnakewaySurfer session)
+
+- Lightning and storm: `fx_Lightning`, `lightningAOE`, `sfx_thunder`, `sfx_distant thunder`.
+- Eikthyr: `fx_eikthyr_stomp`, `fx_eikthyr_forwardshockwave`, `sfx_eikthyr_attack`.
+- The Elder: `TentaRoot` (the vine creature), `fx_gdking_rootspawn`, `vfx_gdking_stomp`,
+  `sfx_tentaroot_attack`, `sfx_gdking_stomp`, `sfx_gdking_shoot_trigger`, `gd_king_rootspawn`,
+  `gdking_root_projectile`.
+- Bonemass: `fx_Bonemass_aoe_start`, `sfx_Bonemass_throw_trigger`, `sfx_Bonemass_punch_start`;
+  attacks punch, aoe, spawn.
+- Yagluth (GoblinKing) attacks: nova, taunt, beam (`projectile_beam`), cast1 (`spawn_meteors`).
+- Moder (Dragon) attacks: `attack_breath`, `attack_iceball`.
+- Environments: `Eikthyr`, `ThunderStorm`, `GDKing`, `DeepForest Mist`, `Bonemass`,
+  `SwampRain`, `Moder`, `SnowStorm`, `GoblinKing`, `Heath clear`, `Queen`,
+  `Mistlands_thunder`.

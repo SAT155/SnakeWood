@@ -32,6 +32,12 @@ in-game yet unless marked.
   Material(m_material)` and sets `_ClearedMaskTex` to its `m_paintMask` texture, plus a
   property block with `_depth` and `_LodHideDistance`. The mesh carries vertex colours
   (`SetColors`) and uv0 (`SetUVs(0)`) that address the paint mask.
+- **The shader hides terrain near the player.** `_LodHideDistance` is set per renderer
+  (property block). For distant LODs it is `GetLodHideDistance()`, NearSimulationDistance × the
+  zone diagonal. Ground within that distance of the global `_NetRefPos` (the player) is clipped.
+  A private scene straight above the player (SnakewaySurfer's stage, 4000 m up) falls inside it
+  and draws cyan or nothing. Set `_LodHideDistance` to 0 on the material and in the block. Also
+  give `_depth` a float array of 4 (`SetFloatArray`).
 - The vertex colour picks the biome's ground textures: `public static Color32
   Heightmap.GetBiomeColor(Biome)`. Swamp (255,0,0,0), Mountain and DeepNorth (0,255,0,0),
   BlackForest (0,0,255,0), Plains (0,0,0,255), AshLands (255,0,0,255), Mistlands
@@ -88,3 +94,16 @@ that code. None of it has been checked in-game yet.
 - `InstanceRenderer` keeps `m_mesh`, `m_material` and `m_scale`, plus up to 1023 matrices. It
   draws with `Graphics.DrawMeshInstanced(…, layer "InstanceRenderer")` for every camera, so a
   private scene has to draw the mesh itself on its own layer. *(verified)*
+
+## Weather from an environment (SnakewaySurfer 1.12)
+
+- `EnvMan.instance.GetEnv(name)` gives an `EnvSetup`. Day values: `m_fogDensityDay`,
+  `m_fogColorDay`, `m_ambColorDay`, `m_sunColorDay`, `m_lightIntensityDay`. Rain, snow and ash
+  are `m_psystems` (GameObject[]); `m_psystemsOutsideOnly`; `m_envObject` holds extras such as
+  the `Thunder` component.
+- `Thunder`: `m_strikeIntervalMin/Max`, `m_thunderDelayMin/Max`, `m_flashEffect` and
+  `m_thunderEffect` (EffectLists). There is no `LightningFlash` class.
+- A boss location's weather: `EnvZone.m_environment` on the location prefab (Eikthyrnir uses
+  its own "Eikthyr" environment).
+- Copies of `m_psystems` parented to your own camera work as private weather. Turn their
+  particle collision off, and put them on your layer.
