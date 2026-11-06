@@ -1671,6 +1671,21 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   text itself. Assets: `Hugin`, `Munin`, `Ravens`, `sfx_raven_flap/kaw/poof/teleport`,
   `fx_raven_despawn`, `vfx_raven_feathers/land`.
 
+- **1.16.57 (2026-11-06): portal loading screen, first-run dream, dreamlike menu,
+  `surfprogress` (SurfDream.cs, SurfMenu.cs).** Not yet tested in-game. **`Hud` loading
+  screen** (public): `m_loadingScreen` (CanvasGroup), `m_loadingProgress` (respawn picture and
+  tips), `m_sleepingProgress` (holds `SleepText`), `m_teleportingProgress` (the portal swirl).
+  `Hud.UpdateBlackScreen` (from `Hud.Update`) fades the CanvasGroup to 1 while the player is
+  dead, teleporting, sleeping or the game shuts down, and otherwise back to 0 (deactivating it at
+  0). A mod can show it by setting `alpha` and the progress objects in LateUpdate each frame,
+  then setting alpha 0 and deactivating it when done. **`SleepText`**: `m_textField` (the ZZZ),
+  `m_dreamField` (TMP), `m_dreamTexts` (`DreamTexts.m_texts`: `m_text`, `m_chanceToDream`,
+  `m_trueKeys`, `m_falseKeys`). Its OnEnable also calls `Game.CollectResourcesCheck` and
+  `CinematicsManager.OnSleep`, so the mod copies `m_dreamField` onto the loading screen instead of
+  turning the sleep screen on. The dream fades are 1.5 s in, about 6.4 s shown, 1.5 s out.
+  Sounds found: `sfx_OpenPortal`, `sfx_demister_start`, `sfx_runestone_activate/interact`,
+  `sfx_gui_select`, `sfx_gui_inventory_open/close`, `sfx_gui_biomefound`.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
