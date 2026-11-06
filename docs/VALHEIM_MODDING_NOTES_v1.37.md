@@ -1616,6 +1616,26 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     `Music_Haldor`, `Music_Haldor2`, `Music_Hildir`, `Music_BogWitch`.
   - **HUD rich text:** `GUI.Label` with `richText` colours the shadow pass too, so the shadow
     is drawn from the plain string and only the top pass carries the `<color>` tag.
+- **1.16.52 (2026-11-06): each biome's places beside the track (SurfSights.cs).** Not yet
+  tested in-game. ZoneSystem location prefab names (loaded via `ZoneLocation.m_prefab.Load()`,
+  pictured, pushed back from the track, trees in their footprint cleared):
+  - Meadows `WoodHouse1`-`13`, `WoodFarm1`, `WoodVillage1/2`, `StoneTowerRuins04/05`,
+    `StoneCircle`, `Dolmen01/02/03`, `ShipSetting01/02/03`, `Runestone_Meadows/Boars`.
+    Black Forest `StoneTowerRuins03/07/08/09/10`, `StoneHouse3/4`, `Ruin1/2`,
+    `Greydwarf_camp1`, `Crypt2/3/4`, `TrollCave02`, `Runestone_Greydwarfs/BlackForest`.
+    Swamp `SwampHut1`-`5`, `SwampRuin1/2`, `SwampWell1`, `StoneTowerRuins07/08/09/10_sunk`,
+    `InfestedTree01`. Mountains `MountainGrave01`, `MountainWell1`, `DrakeNest01`,
+    `StoneTower1/3`, `Waymarker01/02`. Plains `StoneHenge1`-`6`, `GoblinCamp2`,
+    `TarPit1/2/3`, `Ruin3`. Mistlands `Mistlands_Giant1/2`, `Mistlands_GuardTower1/2/3_new`
+    (+ `_ruined_new`), `Mistlands_Swords1/2/3`, `Mistlands_Statue1/2`, `Mistlands_StatueGroup1`,
+    `Mistlands_Excavation1/2/3`, `Mistlands_RoadPost1`, `Mistlands_Harbour1`,
+    `Mistlands_Lighthouse1_new`, `Mistlands_Viaduct1/2`, `Mistlands_RockSpire1`,
+    `Mistlands_DvergrTownEntrance1/2`. Ashlands `CharredRuins1`-`4/9/12`-`17/23`-`25`,
+    `CharredRuins_new01`-`05`, `CharredTowerRuins1/2/3`, `MorgenHole1/2/3`. Also
+    `ShipWreck01`-`04`, `Runestone_<Biome>` for each biome. (From an asset scan of GameObject
+    names; not every name is certain to be a ZoneSystem location, so the code tries a group.)
+  - Renderers over 45 m across are hidden (water planes, decals, mist volumes) before the
+    bounds push.
 
 ## 8. Working with this user
 
