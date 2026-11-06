@@ -1441,6 +1441,38 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     already existed for Moder). A wave that travels with a fast ship never arrives: make
     following seas faster than the ship and drop waves left far behind. A wave raised from one
     point needs a lateral falloff, or it spans the whole sea.
+- **1.16.40–42 (2026-11-06): the user's playtest batches.** .40: Bonemass gas billows up far
+  ahead, slow wind-ups are learned from each creature's clip, the slide is the game's dodge
+  roll, holding block drains stamina and slows you, Blocking and Dodge XP. .41: the Elder's
+  maze of six paths, swamp archers, crypts and fire vents, weaving leeches, snowy Mountains.
+  .42: Moder and the bow (below). Not yet tested in-game.
+  - **Moder:** her animator needs the bool `flying`, the triggers `fly_takeoff` and
+    `fly_land`, and the bool `onGround`. Her attacks are `dragon_spit_shotgun`
+    (`attack_iceball`, which fires `dragon_ice_projectile`), `dragon_coldbreath`
+    (`attack_breath`), and the bite, claw and taunt. Her volley lands as rows of crystals,
+    each row leaving one lane free. The crystals are `Pickable_MountainCaveCrystal` pictures
+    that burst with `fx_crystal_destruction`.
+  - **Bow:** `Hud.UpdateCrosshair` scales `m_crosshairBow` by `Lerp(1, 0.15, draw)` and
+    colours it `Lerp(clear, yellow, draw)`. Mouse sensitivity and invert are the static
+    `PlayerController.m_mouseSens` and `m_invertMouse`. `ZInput` lives in `assembly_utils`,
+    and `ilspycmd -t` against `assembly_valheim` can't decompile it. `Projectile` moves by
+    `m_vel += down × m_gravity × dt`, with `m_drag` and `m_hitEffects`. To hit along the
+    arrow's path, test each frame's segment against a sphere and against the boss's skinned
+    mesh bounds. Checking only the end point misses arrows that visibly pass through.
+  - **Weapons in the avatar's hands:** `VisEquipment.m_leftHand` and `m_rightHand` are the
+    joints. The item's `attach` child goes under the joint at its own world scale (bows go in
+    the left hand). The avatar's stance comes from `statef` and `statei`, set from the item's
+    `m_animationState`. When `m_attackChainLevels > 1`, `Attack.Start` triggers
+    `m_attackAnimation + level`, and the chain resets after 0.2 s without an attack.
+    `Character.Stagger` triggers `stagger`. Vanilla has no silver atgeir: the atgeirs are
+    Wood, Bronze, Iron, Blackmetal, HimminAfl and the Gold variants.
+  - **Rendering pitfalls:** a mesh with a NaN vertex gets "abnormal mesh bounds" and is
+    culled (the sea vanished near the coast), so set fixed bounds and sanitise the heights.
+    The terrain shader drew our path strip nearly black, so the default path is now the
+    `TerrainSlice` dirt texture on a plain lit material. Lane marks in the Swamp have to be
+    raised by the water depth, or they sit under the water.
+  - **Pitfall:** a private method with the same signature in two partial-class files fails
+    the build (`BossAttackFor`). Check new names against the other files before pushing.
 
 ## 8. Working with this user
 
