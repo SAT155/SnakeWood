@@ -1535,6 +1535,22 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - **Iron gates:** three `Kind.High` things on empty GameObjects with no Label (so they can't
     be blocked), not collidable until the gate drops. It drops when it is
     `m_speed * 1.5 + 6` m ahead with no corner between, over 0.45 s, with slide markers.
+- **1.16.47 (2026-11-06): frost caves, the third dungeon (SurfCave.cs).** Not yet tested in-game.
+  - **Kit:** the frost cave rooms are `Room.Theme.Cave` (4; `CaveHildir` is 0x400). Their
+    parts include `caverock_rockbun`, `caverock_curvedrock`, `caverock_cornerwall`,
+    `caverock_flowstone`, `caverock_floorbig/floorsmall`, `caverock_(ice_)stalagmite`,
+    `caverock_ice_stalagtite(_falling)`, `caverock_pillar`, `crystal_wall_1x1`, `Ice_floor`.
+    ZNetScene has `Pickable_MountainCaveCrystal/Obsidian/Random`, `TreasureChest_mountaincave`,
+    `Spawner_Bat`, `Fenring_Cultist`, `Ulv`, `ice_rock1`, `Stalagtite_falling`.
+  - **Rock walls:** modular cave walls don't fit a straight hall, so the walls are boulders
+    (the kit's rocks, randomly turned, fitted to a box), each pushed out by half its size
+    less 0.35 m so the hall keeps its width.
+  - **Sounds and effects:** `sfx_ice_hit`, `sfx_ice_destroyed`, `vfx_ice_hit`,
+    `vfx_ice_destroyed`, `sfx_fenring_idle/howl`, `sfx_bat_idle/alerted`. Ulvs only have
+    `sfx_ulv_death`.
+  - **Schema settings:** a new creature's schema reaches existing settings files through an
+    `s_added` list in `Schemas.Upgrade`, appended when no entry names that key, behind a
+    Balance Version bump.
 
 ## 8. Working with this user
 
