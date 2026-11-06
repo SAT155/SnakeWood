@@ -1551,6 +1551,22 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - **Schema settings:** a new creature's schema reaches existing settings files through an
     `s_added` list in `Schemas.Upgrade`, appended when no entry names that key, behind a
     Balance Version bump.
+- **1.16.48 (2026-11-06): infested mines, the fourth dungeon (SurfMine.cs).** Not yet tested
+  in-game.
+  - **`Room.Theme` in full:** None 0, Crypt 1, SunkenCrypt 2, Cave 4, ForestCrypt 8,
+    GoblinCamp 0x10, MeadowsVillage 0x20, MeadowsFarm 0x40, DvergerTown 0x80 (the infested
+    mines' `dvergr_*` rooms), DvergerBoss 0x100, ForestCryptHildir 0x200, CaveHildir 0x400,
+    PlainsFortHildir 0x800, AshlandRuins 0x1000, FortressRuins 0x2000, Hole 0x4000,
+    NorthVillage 0x10000, MorkHalla 0x20000.
+  - **Names:** `blackmarble_*` (tile walls and floors, columns 1–3, arch, pile),
+    `dvergrprops_*` (crate, barrel, lantern(_standing), wood_beam, pickaxe, hooknchain),
+    `dvergrtown_*` room parts, `SeekerEgg(_alwayshatch)`, `Spawner_Seeker/SeekerBrute/Tick`,
+    `TreasureChest_dvergrtown`, `Pickable_DvergrMineTreasure`, `Pickable_RoyalJelly`,
+    `sfx_gjall_tick_drop`, `sfx_tick_attack_land`, `sfx_seeker_idle/alerted/land`,
+    `sfx_seeker_brute_idle/mandible`.
+  - **Drops from the roof:** a planned (lane, z) list spawns its creature when you're
+    `m_speed * 1.2 + 5` m away. It drops into your lane if that lane is clear there, with a
+    red mark, eased down from 4.5 m in 0.45 s, and is collidable once it lands.
 
 ## 8. Working with this user
 
