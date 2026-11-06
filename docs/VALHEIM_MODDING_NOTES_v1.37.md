@@ -1567,6 +1567,19 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - **Drops from the roof:** a planned (lane, z) list spawns its creature when you're
     `m_speed * 1.2 + 5` m away. It drops into your lane if that lane is clear there, with a
     red mark, eased down from 4.5 m in 0.45 s, and is collidable once it lands.
+- **1.16.49 (2026-11-06): troll caves (SurfTrollCave.cs), taking turns with the burial
+  chambers in the Black Forest.** Not yet tested in-game.
+  - **Not a DungeonDB dungeon:** `TrollCave02` is a single location, so the walls are
+    ZNetScene rocks: `rock4_forest`, `Rock_3`, `Rock_4`, `Rock_7`, `rock1/2/3_mountain`,
+    `rock4_coast/copper/heath`, `RockFinger`. `Pickable_Mushroom_blue` is the cave
+    mushroom; `TreasureChest_trollcave` is its chest.
+  - **Sounds and effects:** `sfx_troll_alerted/idle/footstep`, `sfx_rock_wall_crumble`,
+    `sfx_rocks`, `sfx_rock_destroyed/hit`, `vfx_RockHit`, `vfx_RockDestroyed` (capital R, D),
+    `vfx_troll_groundslam`.
+  - **Lurker:** one creature placed in the longest inner hall, with rows kept clear ±9 m.
+    It spawns when its hall is built and stays still while a corner hides it. When you
+    round into its hall (≤36 m, no corner between), it roars, the camera shakes and two
+    falling rocks are planned between you and it, the first over your lane.
 
 ## 8. Working with this user
 
