@@ -1599,6 +1599,23 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     (half length 0.8): jump it. Rows are kept clear ±6 m.
   - **Theme fields added:** `LavaChance`, and `GateBars` (the dropping gate's bar prefabs, so
     the fortress drops flametal gates where the sunken crypt drops iron grates).
+- **1.16.51 (2026-11-06): traders by the track (SurfTraders.cs), the first point of interest.**
+  Not yet tested in-game. Haldor (Black Forest), the Bog Witch (Swamp), Hildir (Meadows, from
+  the 1-star lap); 40% per open stretch, planned once the stretch's dungeon is laid out and kept
+  35 m clear of it. Pass them in the lane on their side: lives back to full, or +1 if full.
+  - **Prefabs:** ZNetScene `Haldor`, `Hildir`, `BogWitch` (they have a `Trader` component, not a
+    `Character`, so `Pictures.Monster` won't find them). Camps are ZoneSystem locations:
+    `Vendor_BlackForest`, `Hildir_camp`, `BogWitch_Camp`; each holds its own trader as a child
+    of the same name (hidden in the picture). Props inside: `trader_wagon`, `TraderTent`,
+    `TraderLamp`, `TraderChest_static`, `hildir_wagon`, `HildirTent`, `bogwitch_cauldron`, `BogWitch_Hut`.
+  - **`Trader` fields:** `m_randomGreetFX`, `m_randomGoodbyeFX`, `m_randomStartTradeFX`,
+    `m_randomTalkFX`, `m_randomBuyFX`, `m_randomSellFX` (EffectLists); `m_standRange` 15,
+    `m_greetRange` 5, `m_byeRange` 5. Animator: bool `Stand`, triggers `Greet` (hello and
+    goodbye) and `Talk`. Sounds by name: `sfx_haldor_greet/laugh/yea`,
+    `sfx_hildir_hello/bye/talk/trade`, `sfx_bogwitch_greet/random/trade/creak`. Music:
+    `Music_Haldor`, `Music_Haldor2`, `Music_Hildir`, `Music_BogWitch`.
+  - **HUD rich text:** `GUI.Label` with `richText` colours the shadow pass too, so the shadow
+    is drawn from the plain string and only the top pass carries the `<color>` tag.
 
 ## 8. Working with this user
 
