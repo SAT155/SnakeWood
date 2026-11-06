@@ -1473,6 +1473,25 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     raised by the water depth, or they sit under the water.
   - **Pitfall:** a private method with the same signature in two partial-class files fails
     the build (`BossAttackFor`). Check new names against the other files before pushing.
+- **1.16.43–44 (2026-11-06): the sea batch from the user's first crossing.** Not yet tested
+  in-game.
+  - **Ship health:** at sea `Hit` hands the blow to the hull first (6 planks; heavy blows cost
+    2), so a life is only lost when the hull breaks. Blocks and parries still run before it.
+    Driftwood and island workbenches mend it. A broken hull sits lower and lists.
+  - **Islands:** they are raised in the shore terrain function, so the waves and the terrain
+    shader's waterline work on them for free. Their vertex colour is blended to
+    `Heightmap.GetBiomeColor(Meadows)` to get grass on top.
+  - **Wind gauge:** `Ship.GetWindAngleFactor()` is `Lerp(0.7, 1, 1 - |d|) × (1 - LerpStep(0.75,
+    0.8, d))` with `d = dot(windDir, -forward)`. So there is no drive within about 37–41° of
+    the wind's source. `GetWindAngle()` is `-YawFromDirection(local windDir)`, and the HUD
+    rotates `m_shipWindIconRoot` by it. The run draws its own ring: the dark arc is centred
+    on where the wind comes from, and a tick marks the bow. The game's ship HUD hierarchy is
+    logged once (`Ship HUD:`) for checking against the real one.
+  - **Assets:** vanilla `Serpent` has only `Serpent_attack` and `Serpent_taunt`, with no
+    breath. Breath effects exist only for the Ashlands `BonemawSerpent_*` and Moder's
+    `vfx_dragon_coldbreath`; the run reuses the latter as spray. Leeches are `Leech` and
+    `Leech_cave` (`Leech_BiteAttack`). `piece_workbench_ext1`–`ext4` are the workbench
+    upgrades.
 
 ## 8. Working with this user
 
