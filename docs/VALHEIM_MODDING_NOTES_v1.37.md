@@ -1516,6 +1516,25 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     `Pickable_ForestCryptRemains01–04`, `Skeleton(_NoArcher/_Poison)`, `Ghost`,
     `sfx_skeleton_rise`, `vfx_ghost_spawn`. `forestcrypt_*` rooms are DungeonDB `RoomData`
     with soft-referenced prefabs. They could later replace the built halls.
+- **1.16.46 (2026-11-06): sunken crypts, the second dungeon (SurfCryptThemes.cs).** Not yet
+  tested in-game.
+  - **Themes:** the crypt code takes a `CryptTheme` (piece names as `a|b` fallback lists,
+    creature tables, pile, chest, low obstacle, gate torch and light, fog and ambient colours,
+    idle sounds, flooding chance, iron gates). `PlanCrypt` picks one by biome name.
+  - **The dungeon's own kit:** `SunkenKit_*` walls and floors are not ZNetScene prefabs. They
+    are children inside the dungeon's room prefabs. `DungeonDB.GetRooms()` returns `RoomData`
+    with `m_theme` (a `Room.Theme` flags enum: Crypt 1, SunkenCrypt 2, Cave 4, ForestCrypt 8)
+    and a `SoftReference<GameObject> m_prefab`. Call `Load()`, read `.Asset`, index the
+    children that have renderers by name (strip " (N)"), and `Release()` them on destroy.
+    Some kits build their walls long along z, so measure the bounds once and turn them 90°.
+  - **Flooded halls:** a water quad with the swamp's water material and swamp vertex colour,
+    plus a `WaterWeight` override inside the crypt (1 when flooded, else 0). Ripples, the
+    markers' height and the player's splashes all follow it. The "is this hall flooded" test
+    must use the floor's extent, not the corner z: a corner's square of floor belongs to the
+    hall that runs into it.
+  - **Iron gates:** three `Kind.High` things on empty GameObjects with no Label (so they can't
+    be blocked), not collidable until the gate drops. It drops when it is
+    `m_speed * 1.5 + 6` m ahead with no corner between, over 0.45 s, with slide markers.
 
 ## 8. Working with this user
 
