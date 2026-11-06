@@ -1636,6 +1636,20 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     names; not every name is certain to be a ZoneSystem location, so the code tries a group.)
   - Renderers over 45 m across are hidden (water planes, decals, mist volumes) before the
     bounds push.
+- **1.16.53 (2026-11-06): lava in the open Ashlands (SurfLava.cs).** Not yet tested in-game.
+  22% of Ashlands rows become lava: a channel across the track (three Kind.Low lane things,
+  half length 0.75: jump) or a 7-12 m pool along one or two lanes (Kind.Low with half length
+  = pool/2: a jump only lands you in it, so it reads as "avoid"). Pools are built from ~2 m
+  cubes each at `RoadY` and tilted by the road's slope. The lava material is the plain shader
+  with `_EMISSION` at 2x the colour, its `_EmissionColor` pulsed each frame (one shared
+  material). No game lava material or `sfx_lava*` sounds were found.
+- **1.16.54 (2026-11-06): Fader as the Ashlands' boss (Progress.Bosses[6]).** Not yet tested.
+  Prefab `Fader`, key `defeated_fader`, location `FaderLocation` (guessed from the
+  `GraveStone_CharredFaderLocation` child; falls back to the boss's shadow), items
+  `BellFragment|Bell|FlametalNew|Flametal` (guessed; `ItemTemplate` tries each), hit items
+  `SwordDyrnwyn|SwordNiedhogg|SwordMistwalker|FreezeGland` (guessed). A new boss move "lava"
+  reuses LavaPool/LavaChannel. Gotcha: `FullRush()` compared against `Progress.Bosses.Length`,
+  so adding a seventh boss would have made the golden shoes need Fader; it's pinned to 6.
 
 ## 8. Working with this user
 
