@@ -1580,6 +1580,25 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     It spawns when its hall is built and stays still while a corner hides it. When you
     round into its hall (≤36 m, no corner between), it roars, the camera shakes and two
     falling rocks are planned between you and it, the first over your lane.
+- **1.16.50 (2026-11-06): charred fortresses (SurfFortress.cs) in the Ashlands, the last of
+  the dungeons.** Not yet tested in-game. The Ashlands only come up with Loop Biomes ≥ 7
+  (the default 6 stops at the Mistlands).
+  - **DungeonDB rooms:** `Room.Theme.FortressRuins` (0x2000) and `AshlandRuins` (0x1000).
+    Their kit holds `Fortress_Spikey_Beam`, `flametal_gate`, `lavalantern`, `grausten_pile`,
+    `Grausten_box_low`, `Grausten_Wall_4x2`, `Charred_Skull`; the build pieces are
+    `Piece_grausten_wall_4x2/2x2`, `Piece_grausten_floor_2x2/4x4`,
+    `Piece_grausten_pillarbeam_small/medium`, `Piece_grausten_pillarbase_small/tapered`.
+    Chest `TreasureChest_charredfortress`; spawner `charredspawner` / `CharredStone_Spawner`.
+  - **Creatures and sounds:** `Charred_Melee`, `Charred_Archer`, `Charred_Mage`,
+    `Charred_Twitcher` (also `_Fader`, `_Summoned`, `Charred_Melee_Dyrnwyn` variants);
+    `sfx_charred_idle`, `sfx_charred_alert`, `sfx_charred_mage_spawn_ground`,
+    `sfx_charred_twitcher_idle`, `sfx_charred_spawner_loop`. There are no `sfx_lava*` names.
+  - **Lava channels:** at most one per hall (60%), clear of corners and gates (±9 m), planned
+    before the spawners so nothing rises in it. A glowing untextured strip across the hall
+    with dark crust edges and its own orange point light, plus three Kind.Low lane things
+    (half length 0.8): jump it. Rows are kept clear ±6 m.
+  - **Theme fields added:** `LavaChance`, and `GateBars` (the dropping gate's bar prefabs, so
+    the fortress drops flametal gates where the sunken crypt drops iron grates).
 
 ## 8. Working with this user
 
