@@ -1655,6 +1655,21 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   in a biome's spawn tables, so a keeper falls back to `Pictures.Monster(who)` when the biome's
   monster list has no match. With this every item of the gap analysis's suggested order is in
   (1.16.45-1.16.55), all untested in-game as of this note.
+- **1.16.56 (2026-11-06): the run's messages from Hugin (SurfRaven.cs), Sam's idea.** Not
+  yet tested in-game. **`Raven`** (public): `m_visual` (holds the Animator), `m_exclamation`,
+  `m_isMunin`, `m_textOffset` 1.5, `m_textCullDistance` 20, `m_dialogVisibleTime` 10,
+  `m_despawnEffect`, `m_idleEffect`; a private static `m_instance`, found with
+  `Resources.FindObjectsOfTypeAll<Raven>()`. Animator triggers: `flyin` (normal arrival),
+  `teleportin` (forced or under a roof), `talk`, `flyaway` (normal leave), `poff` (forced);
+  state tags `visible`, `away`, `flying`; float `anglevel`. `Raven.Say` =
+  `Chat.instance.SetNpcText(go, Vector3.up * m_textOffset, cull, ttl, name or "", text, large)`
+  with the topic folded into the text as `<color=orange>topic</color>\n`.
+  **`Chat` NPC texts** are positioned each frame through `Utils.GetMainCamera()`
+  (`WorldToScreenPointScaled`, then `ClampToScreenEdge`), hidden past `m_cullDistance` from the
+  main camera or off screen, and refused while `Hud.instance.m_userHidden`. So they only line up
+  when the minigame draws through the game's main camera; with its own camera the mod draws the
+  text itself. Assets: `Hugin`, `Munin`, `Ravens`, `sfx_raven_flap/kaw/poof/teleport`,
+  `fx_raven_despawn`, `vfx_raven_feathers/land`.
 
 ## 8. Working with this user
 
