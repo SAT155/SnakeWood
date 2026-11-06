@@ -1650,6 +1650,11 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   `SwordDyrnwyn|SwordNiedhogg|SwordMistwalker|FreezeGland` (guessed). A new boss move "lava"
   reuses LavaPool/LavaChannel. Gotcha: `FullRush()` compared against `Progress.Bosses.Length`,
   so adding a seventh boss would have made the golden shoes need Fader; it's pinned to 6.
+- **1.16.55 (2026-11-06): places' own creatures (SurfSights.cs `SightKeeper`).** Creatures
+  that only live at locations (growths `BlobTar` at tar pits, draugr at mountain graves) aren't
+  in a biome's spawn tables, so a keeper falls back to `Pictures.Monster(who)` when the biome's
+  monster list has no match. With this every item of the gap analysis's suggested order is in
+  (1.16.45-1.16.55), all untested in-game as of this note.
 
 ## 8. Working with this user
 
