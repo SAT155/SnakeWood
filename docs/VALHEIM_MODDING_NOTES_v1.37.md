@@ -1492,6 +1492,30 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
     `vfx_dragon_coldbreath`; the run reuses the latter as spray. Leeches are `Leech` and
     `Leech_cave` (`Leech_BiteAttack`). `piece_workbench_ext1`–`ext4` are the workbench
     upgrades.
+- **1.16.45 (2026-11-06): burial chambers, the first dungeon (SurfCrypt.cs).** Not yet tested
+  in-game.
+  - **Turns on a straight track:** the run's z still counts along the track. Each hall between
+    two corners has its own frame Transform under the stage, turned 90° about the corner's
+    centre point `(0, 0, z_c)`: `P_k = P_{k-1} + Q_{k-1}(c - R c)`, `Q_k = Q_{k-1} R`. In
+    LateUpdate every direct child of the stage and of the frames is reparented by its
+    `localPosition.z` with `SetParent(frame, false)`. So all the existing lane code works
+    unchanged, as long as world positions are worked out from the right frame, never from
+    `m_stage`. The grass matrices are a case of this: they are baked at spawn time.
+  - **Turns come in out-and-back pairs**, so the heading ends north and the last frame has no
+    rotation. Once you are out, the stage moves to the last frame's pose and that frame's
+    children move back onto it.
+  - **Corners:** the avatar's world jump at a frame change is eased out as a decaying offset.
+    A missed corner holds z at the turn point while the avatar runs on toward the wall. A
+    late press still turns. Reaching the wall costs a life (an unblockable `Hit`), then the
+    turn happens on its own. Things round a corner from you don't update or move, and movers
+    that pass you round a corner are removed.
+  - **Darkness:** the game's camera draws its sky behind ours, so in the crypt it clears to a
+    solid colour, restored on exit and on destroy.
+  - **Assets:** `stone_wall_4x2`, `stone_floor_2x2`, `stone_pillar(_high)`, `piece_walltorch`,
+    `BonePileSpawner`, `TreasureChest_forestcrypt`, `crypt_skeleton_*`,
+    `Pickable_ForestCryptRemains01–04`, `Skeleton(_NoArcher/_Poison)`, `Ghost`,
+    `sfx_skeleton_rise`, `vfx_ghost_spawn`. `forestcrypt_*` rooms are DungeonDB `RoomData`
+    with soft-referenced prefabs. They could later replace the built halls.
 
 ## 8. Working with this user
 
