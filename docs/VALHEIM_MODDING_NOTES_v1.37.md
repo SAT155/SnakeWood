@@ -1759,6 +1759,13 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   own layer, plus a Light culled to that layer; `Chat.SetNpcText` still places the speech bubble.
   A local, non-networked copy of a piece: Instantiate under an inactive holder, read its
   components (TeleportWorld.m_target_found / m_proximityRoot / m_model), Strip, then reparent.
+- **1.16.72-1.16.75 (2026-11-07): sea feedback.** Telegraphed attacks must stop tracking once they
+  wind up (lock the aim at the start; Sam found tracking until 70% of the wind-up undodgeable),
+  and only one attacker should wind up at a time. A collision push clamped to "never backwards"
+  pins a ship against an obstacle ahead: convert the backward part into a sideways slide and swing
+  the heading away. Vanilla repair: `Player.Repair` swings the hammer (its attack animation,
+  "swing_hammer"), plays the piece's place effect (wood: sfx_build_hammer_wood + vfx_Place_*);
+  station item repair sounds are sfx_gui_repairitem_workbench / _forge.
 
 ## 8. Working with this user
 
