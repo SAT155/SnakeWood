@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.38 |
-| **Last updated** | 2026-11-07 10:16 UTC |
-| **Updated by** | Claude Code, SnakeSkills Dead Raiser session (`claude/project-thread-17k50f`) |
+| **Version** | 1.39 |
+| **Last updated** | 2026-11-07 10:51 UTC |
+| **Updated by** | Claude Code, SnakeSkills bubble shield session (`claude/project-thread-711mwk`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -376,7 +376,7 @@ player still, equip duration), sounds (`ZSFX` volume, positional audio), and net
 (custom skills lost to unmodded loads, `Player.m_customData`:
 [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
 skill raises ([`fishing.md`](game/fishing.md)), and projectiles, AoE and rock damage
-([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)), synced animation floats, input locks, helmet overrides, `Inventory.AddItem`, `Skill.Raise` and private camera scenes ([`player-anim-input-visuals.md`](game/player-anim-input-visuals.md)), and the Dead Raiser, `SpawnAbility` summons and skeleton weapons ([`summons-and-dead-raiser.md`](game/summons-and-dead-raiser.md)). Read the matching file before decompiling the same system again.
+([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)), synced animation floats, input locks, helmet overrides, `Inventory.AddItem`, `Skill.Raise` and private camera scenes ([`player-anim-input-visuals.md`](game/player-anim-input-visuals.md)), and the Dead Raiser, `SpawnAbility` summons and skeleton weapons ([`summons-and-dead-raiser.md`](game/summons-and-dead-raiser.md)), and the Staff of Protection bubble (`SE_Shield`) and what "in combat" means ([`staff-shield-and-combat-state.md`](game/staff-shield-and-combat-state.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -842,7 +842,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.26.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.27.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -1151,7 +1151,21 @@ lost after starting the game unmodded once.
   uses the same rig with a mace, so probably fine), monster weapon icons may be missing (trophy
   shown instead).
 
-Known open items: never tested in-game (1.26 Dead Raiser menu and skeleton types, 1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.27 Bubble shield autocast** (`BubbleShield.cs`, section *11 - Bubble Shield*, local
+  unsynced config, **off by default**; branch `claude/project-thread-711mwk` on 17k50f 1.26;
+  2026-11-07). The user asked for a toggle that recasts the Staff of Protection bubble when ALL of:
+  standing still > 5 s, not in combat, <= 5 s left on the bubble, full health and full eitr; the
+  flag arms when the conditions are met and clears once cast, until they are met again. Built as:
+  staff (`StaffShield`) must be the current weapon; still = on ground, no `m_moveDir`, body speed
+  < 0.2 m/s, not attacking/attached; in combat = `m_lastCombatTimer` < 10 s, a hit (`Player.OnDamaged`
+  postfix) < 10 s ago, or an alerted enemy within 30 m; no bubble counts as 0 s left. Edge-armed
+  flag, cleared when `StartAttack(null, false)` returns true (tries at most once a second, not while
+  a menu is open). Both 5 s values are config. Mechanics:
+  [`staff-shield-and-combat-state.md`](game/staff-shield-and-combat-state.md). Release v1.27.104
+  (pre-release), untested in-game. Gotcha: SnakeSkills.csproj lists `<Compile Include>` files one by
+  one, so a new .cs file must be added there (CS0103 otherwise).
+
+Known open items: never tested in-game (1.27 bubble autocast, 1.26 Dead Raiser menu and skeleton types, 1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1899,3 +1913,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.36 | 2026-11-04 03:26 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.2.4 test results (what renders fine, vanilla rocks are huge, borrowed floor material too bright) and 1.3 (hill mesh, scenery push-out, leaping troll). |
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
 | 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
+| 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast; csproj Compile list gotcha. |
