@@ -1786,6 +1786,10 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   scaled picture to AvatarHand instead. Emotes go through SetTrigger("emote_sit"/"emote_flex"/
   "emote_stop"). Thunderstore README: alpha notice, a teaser intro, then a "Spoilers ahead" rule.
   CS0136: a foreach variable can't reuse a name declared later in the method.
+- **1.16.82: overlay birds at night.** A black raven on a layer-only overlay camera disappears on a
+  night sky. Give it a back rim light, and a camera MonoBehaviour whose OnPreRender/OnPostRender
+  turns off RenderSettings fog and sets flat ambient for that camera only. Keep NPC speech under
+  y = 0.2 of the view height so it clears the vanilla buff row at the top right.
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
