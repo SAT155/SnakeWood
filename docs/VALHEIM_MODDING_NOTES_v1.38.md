@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.37 |
-| **Last updated** | 2026-11-04 03:45 UTC |
-| **Updated by** | Claude Code, SnakewaySurfer session (`claude/project-thread-9zfoi6`) |
+| **Version** | 1.38 |
+| **Last updated** | 2026-11-07 10:16 UTC |
+| **Updated by** | Claude Code, SnakeSkills Dead Raiser session (`claude/project-thread-17k50f`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -246,6 +246,16 @@ has a smaller copy with only `types` that prints whole types plus `Humanoid` att
     them at runtime instead (see §6 debug tricks).
   - The asset search adds ~2 min to the run. Effect and sound names found so far are in
     [`docs/game/asset-names.md`](game/asset-names.md); check there before searching again.
+- `prefabs` (+ optional `skip`, a regex of field names to leave out): full-match regex of prefab
+  names; dumps every component and the **serialized MonoBehaviour field values** (Humanoid,
+  ItemDrop shared data and attacks, SpawnAbility, ...) using UnityPy's `TypeTreeGenerator` (pip
+  `TypeTreeGeneratorAPI`) over the game's Managed DLLs; object references print as names.
+  Script `.github/scripts/prefab_dump.py`, output also in the `decompiled` artifact as
+  `prefabs.txt`. Answers "what weapon/eitr/projectile does prefab X use" without running the game
+  (~2 min extra). Added 2026-11-07 (SnakeSkills Dead Raiser session); on the default branch once
+  that notes PR merges, until then dispatch with `ref` `claude/project-thread-17k50f`. Big dumps
+  overflow `get_job_logs` tail limits: pass a large `tail_lines` and read the saved file.
+  Workflow artifacts can't be downloaded from the sandbox (blob host blocked); use the log.
 - The workflow can be dispatched on the default branch (`ref`) of a repo that has it; no push
   needed. Several types in one run, with one `grep` alternation and `after` 10–40, keeps the
   log small.
@@ -366,7 +376,7 @@ player still, equip duration), sounds (`ZSFX` volume, positional audio), and net
 (custom skills lost to unmodded loads, `Player.m_customData`:
 [`player-save-and-custom-skills.md`](game/player-save-and-custom-skills.md)), and fishing XP and
 skill raises ([`fishing.md`](game/fishing.md)), and projectiles, AoE and rock damage
-([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)), synced animation floats, input locks, helmet overrides, `Inventory.AddItem`, `Skill.Raise` and private camera scenes ([`player-anim-input-visuals.md`](game/player-anim-input-visuals.md)). Read the matching file before decompiling the same system again.
+([`projectiles-and-rocks.md`](game/projectiles-and-rocks.md)), build menu and pieces ([`build-menu-and-pieces.md`](game/build-menu-and-pieces.md)), synced animation floats, input locks, helmet overrides, `Inventory.AddItem`, `Skill.Raise` and private camera scenes ([`player-anim-input-visuals.md`](game/player-anim-input-visuals.md)), and the Dead Raiser, `SpawnAbility` summons and skeleton weapons ([`summons-and-dead-raiser.md`](game/summons-and-dead-raiser.md)). Read the matching file before decompiling the same system again.
 
 **Networking (ZDO/ZNetView)**
 
@@ -832,7 +842,7 @@ effects that have a `ZNetView`.
 Known open items: confirm the burst crash is gone; in-game test of the weapon version (attack animations from the cloned
 attacks, hand model position in the right hand, standing still while charging, default sounds).
 
-## 7f. SnakeSkills (SnakeSailing repo, 1.25.x)
+## 7f. SnakeSkills (SnakeSailing repo, 1.26.x)
 
 From the SnakeSkills session, 2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2)
 (draft). The user asked to combine Sailing, Ranching and Mining into one mod and fix levels being
@@ -1120,7 +1130,28 @@ lost after starting the game unmodded once.
   `Invalid` (e.g. `m_groundOnly` off-ground) into `Valid`, so plants can go on rocks/buildings there.
   Release v1.25.97.
 
-Known open items: never tested in-game (1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
+- **1.26 Dead Raiser skeleton choice** (`DeadRaiser.cs`, section *10 - Dead Raiser*, branch
+  `claude/project-thread-17k50f` on qwehcw 1.25; 2026-11-07). The user asked to pick the skeleton
+  type from a build-style menu, each type costing different eitr, Random always cheapest, costs
+  still scaling with Blood Magic; then added that at high skill some lower-tier types may become
+  cheaper than Random. Middle click (config `Menu Key`, Mouse2; the staff has no secondary attack)
+  opens an IMGUI list with icons (weapon icon or `TrophySkeleton`, shield icon in the corner), the
+  current cost per type (green when below Random) and a short description. Types: Random (vanilla),
+  Warrior `skeleton_sword2`, Guard + `ShieldBronzeBuckler`, Archer `skeleton_bow2`, Marksman
+  `skeleton_bow_mountains`, Brute `skeleton_mace`, Fire knight `skeleton_sword_hildir`, Champion
+  `skeleton_mace_DeepNorth` + `ShieldWood`. Cost = staff `m_attackEitr` × lerp(cost@0, cost@100,
+  Blood Magic factor), defaults 1.10→0.50, 1.20→0.60, 1.25→0.62, 1.40→0.75, 1.45→0.80, 1.70→1.00,
+  1.80→1.05 (Random 1→0.67, so Warrior passes it near level 37, Guard ~74, Archer ~83). The
+  choice is saved in `Player.m_customData["SnakeSkills_DeadRaiserType"]`; the skeleton's ZDO
+  string `SnakeSkills_SkeletonType` carries it (set in a `Character.SetLevel` prefix from a queue
+  filled at `SpawnAbility.Setup`), and `GiveDefaultItems` reads it on every client. The menu frees
+  the cursor and blocks input/look/`Menu.Show` like SmartBuild's panels. How the summon works:
+  [`summons-and-dead-raiser.md`](game/summons-and-dead-raiser.md). Release v1.26.99 (pre-release),
+  untested in-game; risks: mace attack animation on `Skeleton_Friendly` (the Deep North skeleton
+  uses the same rig with a mace, so probably fine), monster weapon icons may be missing (trophy
+  shown instead).
+
+Known open items: never tested in-game (1.26 Dead Raiser menu and skeleton types, 1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
 join, quit, start with SnakeSkills; the log should say `Restored level`. The repo could be renamed
 SnakeSkills on GitHub if the user wants.
@@ -1867,3 +1898,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.35 | 2026-11-04 03:16 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.1–1.2 (food wear-off lowers health, `RequireComponent`-aware stripping, 2D sounds from `ZSFX` clips, per-biome fog/ambient, troll set pieces); sound prefab names in `asset-names.md`. |
 | 1.36 | 2026-11-04 03:26 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.2.4 test results (what renders fine, vanilla rocks are huge, borrowed floor material too bright) and 1.3 (hill mesh, scenery push-out, leaping troll). |
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
+| 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
