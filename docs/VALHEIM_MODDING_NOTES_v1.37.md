@@ -1730,6 +1730,16 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   opening; after the turn the cloud squashes and lags behind. Sam wants a Don't Starve-like
   hand-drawn look: keep it original shapes, not copied art.
 
+- **1.16.67-1.16.68 (2026-11-07): boss landmark as a sky picture (Sam's idea).** A big 3D
+  location kept at a distance by its pivot reaches back over the track (keep its near side at the
+  distance). Better: render it once with a disabled orthographic Camera (`cam.Render()` into a
+  RenderTexture, forward path, fog off, model moved 3000 m below the stage so it's alone on the
+  layer), twice, on black and on white: alpha = 1 - (white - black), colour = black / alpha
+  (Valheim's shaders don't all write a usable alpha). Then a `Sprites/Default` quad (no fog)
+  stands upright at 420 m facing the camera. **Thunderstore/r2modman "Edit config" on this mod
+  opened `mm_v2_manifest.json`**: the real file is `BepInEx/config/com.snakesquad.snakewaysurfer.cfg`,
+  created on the first start where the plugin loads (Sam's 1.16.56-57 never loaded).
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
