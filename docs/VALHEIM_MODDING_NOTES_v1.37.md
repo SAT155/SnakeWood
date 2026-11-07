@@ -1722,6 +1722,14 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   pitched down) repeats while the window is open. Food reward: one food from each biome run
   through (HashSet of segment biomes, ocean excluded) instead of one from the furthest.
 
+- **1.16.66 (2026-11-07), Sam's sketch for the corner cue (SurfGust.cs).** Flat, camera-facing
+  cut-out shapes (procedural double-sided disc and triangle meshes, `Unlit/Color` fill with a
+  bigger ink copy 0.03 behind for the outline, mirrored by a parent's x scale for left turns,
+  positions re-jittered every 0.11 s for a drawn "boil"). Sam's layout: billowy cloud on the far
+  side (shrinks nearing the corner), spiky gusts on the turn side (grow), curling dots toward the
+  opening; after the turn the cloud squashes and lags behind. Sam wants a Don't Starve-like
+  hand-drawn look: keep it original shapes, not copied art.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
