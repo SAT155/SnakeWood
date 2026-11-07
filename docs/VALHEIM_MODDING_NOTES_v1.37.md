@@ -1739,6 +1739,14 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   stands upright at 420 m facing the camera. **Thunderstore/r2modman "Edit config" on this mod
   opened `mm_v2_manifest.json`**: the real file is `BepInEx/config/com.snakesquad.snakewaysurfer.cfg`,
   created on the first start where the plugin loads (Sam's 1.16.56-57 never loaded).
+- **1.16.69 (2026-11-07): fog through the game's camera.** RenderSettings fog set only in
+  `OnPreRender` didn't show when drawing through Valheim's main camera (EnvMan rewrites fog and
+  `_SunFogColor` every Update; deferred/post effects read it earlier). Set it in `OnPreCull` and in
+  `LateUpdate` too, plus `Shader.SetGlobalColor("_SunFogColor", ...)`, and as a shader-proof
+  backup stand a few camera-facing `Sprites/Default` quads of fog colour (alpha fading upward)
+  across the far end of the view: depth-tested, so only what's behind them is hazed. A model
+  scaled to a fixed share of the screen from its mesh bounds can blow up if measured mid-flap:
+  clamp the scale.
 
 ## 8. Working with this user
 
