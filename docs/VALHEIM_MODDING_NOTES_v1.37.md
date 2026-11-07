@@ -1792,6 +1792,8 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   y = 0.2 of the view height so it clears the vanilla buff row at the top right.
 - **Overlay camera lighting: never swap RenderSettings in OnPreRender/OnPostRender (SnakewaySurfer 1.16.85).** Turning fog off and ambient flat around a second camera's render made the whole world's terrain lighting flicker. Light overlay models only with lights culled to their layer. Also: a custom `Hoverable` must implement `GetHoverOffset()` (CS0535 otherwise), and a cloned piece without Jotunn works by adding it to `ZNetScene.m_prefabs` in an Awake prefix and to the Hammer PieceTable in ObjectDB Awake/CopyOtherDB postfixes.
 - **Animated overlay models drift out of frame (SnakewaySurfer 1.16.87).** Bounds measured on Instantiate don't match where the animator puts a skinned model (Raven visual showed only its talons). Set `updateWhenOffscreen` on its SkinnedMeshRenderers and ease size and centre from the live `Renderer.bounds` each LateUpdate.
+- **Raven visual bounds are bogus until skinned bounds update (SnakewaySurfer 1.16.92).** Hugin's SkinnedMeshRenderer reported ~32-36 m tall with its centre ~200 m off before rendering. Set `updateWhenOffscreen = true`, then fit size/centre from live bounds each frame. For a hovering raven, play a fly clip found in `runtimeAnimatorController.animationClips` (checked with `Animator.HasState`) and replay its middle; face the camera using the head bone's direction.
+- **Screen copies for transitions: render the camera into a RenderTexture in LateUpdate (half size), and only draw it in OnGUI (SnakewaySurfer 1.16.93).** Calling `Camera.Render()` from inside OnGUI was the suspect in a crash to desktop.
 
 ## 8. Working with this user
 
