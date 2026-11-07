@@ -1778,6 +1778,14 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   Flicker under Hud.m_loadingScreen: put our own black Canvas at rootCanvas.sortingOrder - 1.
   Mouse aim at sea uses the bow's MouseLook() (ZInput.GetMouseDelta via reflection).
   Dungeon spoils go through inventory.AddItem with their own 30-minute timer key.
+- **1.16.81 (2026-11-07): harpoon tow + campfire break.** The dead sea boss stays in m_seaFoes and is
+  steered behind the stern. f.T is capped so it isn't culled and stays rolled belly-up. A
+  LineRenderer rope sags between the stern and the head. At landfall it moves to the beach as
+  Scenery. The camp is a timed list of (time, Action) steps run while m_camping replaces
+  UpdateRun. Food and tankards have no "attach" child, so Wield() fails on them; parent a
+  scaled picture to AvatarHand instead. Emotes go through SetTrigger("emote_sit"/"emote_flex"/
+  "emote_stop"). Thunderstore README: alpha notice, a teaser intro, then a "Spoilers ahead" rule.
+  CS0136: a foreach variable can't reuse a name declared later in the method.
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
