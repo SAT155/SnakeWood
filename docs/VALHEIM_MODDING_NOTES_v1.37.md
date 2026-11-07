@@ -1691,6 +1691,20 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   `Plugin.Awake` and the whole plugin failed to load (Sam's log). Renamed to "Hugin Messages".
   CI can't catch it: check new key names by eye.
 
+- **1.16.59-1.16.60 (2026-11-07), from Sam's first test of 1.16.58.** The Hud loading screen's
+  CanvasGroup with every progress child off is not a solid black: the world showed through and
+  flickered behind the dream text. The dream now draws on its own ScreenSpaceOverlay Canvas
+  (sortingOrder 30000, CanvasScaler copied from the Hud's) with a black UI Image under the
+  cloned `SleepText.m_dreamField` (it came out light blue; Sam loved it). Hugin's
+  `m_visual` copy showed only a huge foot at the top right: his mesh bounds' middle is far from
+  the pivot, so he is now scaled to a share of the view and placed by his bounds' middle (taken
+  in his own frame, measured again once he lands). Two-line IMGUI labels need a taller rect than
+  the 72 px font. **View distance**: the track was built 150 m ahead (const) and the biome fogs
+  (0.009-0.04) were tuned for that; it's now the config View Distance (default 230). The fog
+  scales by 150/view, the boss backdrop's max distance by view/150, and `CloseSegment` before a
+  boss, the coast or after a boss uses a share of the view, since it destroys anything built
+  past its end (things vanished in plain view).
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
