@@ -1686,6 +1686,11 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   Sounds found: `sfx_OpenPortal`, `sfx_demister_start`, `sfx_runestone_activate/interact`,
   `sfx_gui_select`, `sfx_gui_inventory_open/close`, `sfx_gui_biomefound`.
 
+- **1.16.58 (2026-11-07): BepInEx config keys can't contain `= \n \t \\ " ' [ ]`.**
+  1.16.56 added the key "Hugin's Messages"; `Config.Bind` threw ArgumentException in
+  `Plugin.Awake` and the whole plugin failed to load (Sam's log). Renamed to "Hugin Messages".
+  CI can't catch it: check new key names by eye.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
