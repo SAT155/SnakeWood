@@ -19,12 +19,20 @@ on:
       assets:
         description: Optional regex; list unique strings in the game's asset files that match (for prefab and item names)
         default: ""
+      prefabs:
+        description: Optional regex (full match); dump the serialized fields of these prefabs (components, MonoBehaviour values)
+        default: ""
+      skip:
+        description: With prefabs, regex of field names to leave out (e.g. Effect|m_hitEffect)
+        default: ""
 
 env:
   TYPES: ${{ inputs.types }}
   GREP: ${{ inputs.grep }}
   AFTER: ${{ inputs.after }}
   ASSETS: ${{ inputs.assets }}
+  PREFABS: ${{ inputs.prefabs }}
+  SKIP: ${{ inputs.skip }}
   # ilspycmd targets .NET 6, which the runner image no longer ships.
   DOTNET_ROLL_FORWARD: Major
 
@@ -114,6 +122,18 @@ jobs:
           print("=================== matching text lines ===================")
           print("\n".join(sorted(set(texts))[:1500]))
           PY
+
+      - uses: actions/checkout@v4
+        if: ${{ inputs.prefabs != '' }}
+        with:
+          path: src
+          sparse-checkout: .github/scripts
+
+      - name: Dump prefab fields
+        if: ${{ inputs.prefabs != '' }}
+        run: |
+          pip install --quiet "UnityPy>=1.20,<2" TypeTreeGeneratorAPI
+          python3 src/.github/scripts/prefab_dump.py "$RUNNER_TEMP/valheim" | tee decompiled/prefabs.txt
 
       # Full sources too, for types too long to read back from the job log.
       - uses: actions/upload-artifact@v4
