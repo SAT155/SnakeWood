@@ -1767,6 +1767,17 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   "swing_hammer"), plays the piece's place effect (wood: sfx_build_hammer_wood + vfx_Place_*);
   station item repair sounds are sfx_gui_repairitem_workbench / _forge.
 
+- **1.16.76-1.16.79 (2026-11-07): sea clarity, wreck, checkpoints.** A wrecked ship lists and sinks
+  with CargoCrate pictures bobbing up. The menu's IMGUI hover eases, breathes and draws motes.
+  Mid-biome checkpoints: one resume slot per world in customData ("biome,stars,sea,items,along").
+  Resume a land biome by starting the first Segment at Start = -along with m_itemSeg/m_items preset.
+  Resume a crossing by m_seaSkip added to the voyage's `along`, with islands behind it skipped.
+  The guard_stone picture plus a point Light plus sfx_runestone_activate is the "lit" cue.
+  Menu-to-run transition: m_camera.Render() into a RenderTexture inside OnGUI. It is drawn back
+  in 90 horizontal rows offset by sines, giving a full-screen ripple without a shader.
+  Flicker under Hud.m_loadingScreen: put our own black Canvas at rootCanvas.sortingOrder - 1.
+  Mouse aim at sea uses the bow's MouseLook() (ZInput.GetMouseDelta via reflection).
+  Dungeon spoils go through inventory.AddItem with their own 30-minute timer key.
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
