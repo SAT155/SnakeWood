@@ -1790,6 +1790,9 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   night sky. Give it a back rim light, and a camera MonoBehaviour whose OnPreRender/OnPostRender
   turns off RenderSettings fog and sets flat ambient for that camera only. Keep NPC speech under
   y = 0.2 of the view height so it clears the vanilla buff row at the top right.
+- **Overlay camera lighting: never swap RenderSettings in OnPreRender/OnPostRender (SnakewaySurfer 1.16.85).** Turning fog off and ambient flat around a second camera's render made the whole world's terrain lighting flicker. Light overlay models only with lights culled to their layer. Also: a custom `Hoverable` must implement `GetHoverOffset()` (CS0535 otherwise), and a cloned piece without Jotunn works by adding it to `ZNetScene.m_prefabs` in an Awake prefix and to the Hammer PieceTable in ObjectDB Awake/CopyOtherDB postfixes.
+- **Animated overlay models drift out of frame (SnakewaySurfer 1.16.87).** Bounds measured on Instantiate don't match where the animator puts a skinned model (Raven visual showed only its talons). Set `updateWhenOffscreen` on its SkinnedMeshRenderers and ease size and centre from the live `Renderer.bounds` each LateUpdate.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
