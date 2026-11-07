@@ -28,11 +28,14 @@ internal static class HoverLogDisguise
 		["ElderBark"] = new[] { "swamp" },
 		["YggdrasilWood"] = new[] { "ygga", "yggdrasil" },
 		["Blackwood"] = new[] { "ash" },
-		["Frostwood"] = new[] { "frost", "fir" },
+		["Frostwood"] = new[] { "snow" },
 		["Sled"] = new[] { "beech", "birch" },
 		["Fish2"] = new[] { "beech" },
 	};
 	private static readonly Dictionary<string, (int hash, Vector3 offset)> s_disguises = new();
+	// The scale each disguise is saved at so vanilla games show it at the hover log's own size
+	// (zero when its prefab can't be scaled that way).
+	private static readonly Dictionary<string, Vector3> s_scales = new();
 	private static bool s_listed;
 
 	// The offset already applied to a log's synced rotation (none for a log never seen by this code).
@@ -56,6 +59,9 @@ internal static class HoverLogDisguise
 		}
 		zdo.Set(VariantKey, log.m_variant);
 		zdo.Set(OffsetHash, offset);
+		// Vanilla half logs take their scale from the ZDO (a felled tree passes its own size on to
+		// its halves), so the disguise is shrunk or stretched to the hover log instead.
+		zdo.Set(ZDOVars.s_scaleHash, disguise != 0 && s_scales.TryGetValue(log.m_variant, out Vector3 scale) ? scale : Vector3.zero);
 		GameObject? own = HoverLogPrefabs.PrefabFor(log.m_variant);
 		zdo.SetPrefab(disguise != 0 ? disguise : own != null ? own.name.GetStableHashCode() : zdo.GetPrefab());
 		log.SetDisguiseOffset(wanted);
@@ -79,7 +85,7 @@ internal static class HoverLogDisguise
 			return known;
 		}
 		GameObject? prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefabHash) : null;
-		if (prefab == null || prefab.GetComponent<TreeLog>() == null)
+		if (prefab == null || prefab.GetComponent<TreeLog>() == null || SyncsScale(prefab))
 		{
 			return null;
 		}
@@ -90,6 +96,33 @@ internal static class HoverLogDisguise
 		return (length, girth);
 	}
 
+	// A fish log can show as its own vanilla fish (the user accepted the risk: a player without the
+	// mod who ends up owning it can pick it up, which deletes the ride). Turned the way LayFlat turns
+	// the modded model, so both face the same way. Vanilla can't be told to scale it, so it shows at
+	// the fish item's own size.
+	private static (int hash, Vector3 offset)? FishDisguise(string variant)
+	{
+		if (!SnakeWoodPlugin.FishDisguise.Value || ZNetScene.instance == null
+			|| HoverLogVariant.Get(variant) is not HoverLogVariant v || !v.IsFish)
+		{
+			return null;
+		}
+		GameObject? fish = ZNetScene.instance.GetPrefab(v.WoodItem);
+		if (fish == null || fish.GetComponent<ZSyncTransform>() == null)
+		{
+			SnakeWoodPlugin.Log.LogWarning($"{variant}: the vanilla {v.WoodItem} can't follow a moving log, so it shows as a tree log to players without the mod.");
+			return null;
+		}
+		Vector3 size = HoverLogPrefabs.Bounds(fish.transform).size;
+		Vector3 offset = size.y >= size.x && size.y >= size.z ? new Vector3(90f, 0f, 0f)
+			: size.x >= size.z ? new Vector3(0f, 90f, 0f)
+			: Vector3.zero;
+		SnakeWoodPlugin.Log.LogInfo($"{variant} logs show as the vanilla {fish.name} to players without the mod (size {size}, turn {offset}).");
+		return (fish.name.GetStableHashCode(), offset);
+	}
+
+	private static bool SyncsScale(GameObject prefab) => prefab.GetComponent<ZNetView>() is ZNetView view && view.m_syncInitialScale;
+
 	// The vanilla log to disguise as, and the turn that lays its longest side along +Z (forward).
 	private static (int hash, Vector3 offset) DisguiseFor(string variant)
 	{
@@ -99,29 +132,38 @@ internal static class HoverLogDisguise
 		}
 		int hash = 0;
 		Vector3 offset = Vector3.zero;
+		if (FishDisguise(variant) is (int, Vector3) fish)
+		{
+			s_disguises[variant] = fish;
+			return fish;
+		}
 		if (ZNetScene.instance != null)
 		{
 			string[] hints = s_hints.TryGetValue(variant, out string[] h) ? h : variant.StartsWith("Fish") ? s_hints["Fish2"] : new string[0];
 			// Half logs (what a felled trunk splits into) are the right sort of size; whole trunks are
 			// the entire tree. The real hover log is then sized to match (SizeOf).
 			var logs = ZNetScene.instance.m_prefabs
-				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null)
+				.Where(p => p != null && p.GetComponent<TreeLog>() != null && p.GetComponent<ZSyncTransform>() != null
+					&& p.name.ToLowerInvariant().Contains("log")
+					&& !p.name.ToLowerInvariant().Contains("old") && !p.name.ToLowerInvariant().Contains("troll"))
 				.Select(p =>
 				{
 					Vector3 size = HoverLogPrefabs.Bounds(p.transform).size;
 					string lower = p.name.ToLowerInvariant();
-					return (prefab: p, size, half: lower.Contains("half"), own: hints.Any(lower.Contains));
+					return (prefab: p, size, half: lower.Contains("half"), own: hints.Any(lower.Contains), scales: SyncsScale(p));
 				})
-				// Its own tree's half log if that's no longer than 5 m; otherwise the smallest half log.
-				.OrderBy(c => c.half ? 0 : 1)
-				.ThenBy(c => c.own && LongSide(c.size) <= 5f ? 0 : 1)
+				// Its own tree's log, a half log if there is one (the Ancient tree only has a whole
+				// one): at any size if vanilla can be told to resize it, otherwise only if it's no
+				// longer than 5 m (the hover log would grow to match). Else the smallest half log.
+				.OrderBy(c => c.own && (c.scales || LongSide(c.size) <= 5f) ? 0 : 1)
+				.ThenBy(c => c.half ? 0 : 1)
 				.ThenBy(c => c.size.x * c.size.y * c.size.z)
 				.ToList();
 			if (!s_listed)
 			{
 				s_listed = true;
 				SnakeWoodPlugin.Log.LogInfo("Vanilla tree logs available as disguises: " +
-					string.Join(", ", logs.Select(c => $"{c.prefab.name} {c.size}")));
+					string.Join(", ", logs.Select(c => $"{c.prefab.name} {c.size}{(c.scales ? " scalable" : "")}")));
 			}
 			GameObject? pick = logs.Count > 0 ? logs[0].prefab : null;
 			if (pick != null)
@@ -143,7 +185,21 @@ internal static class HoverLogDisguise
 				{
 					axis = "Z";
 				}
-				SnakeWoodPlugin.Log.LogInfo($"{variant} logs show as {pick.name} to players without the mod (long side {axis}, size {size}).");
+				Vector3 scale = Vector3.zero;
+				if (SyncsScale(pick) && HoverLogVariant.Get(variant) is HoverLogVariant v)
+				{
+					// Long side to the hover log's length, the other two to its thickness (keeping
+					// the log's own cross-section).
+					Vector3 longAxis = axis == "Y" ? Vector3.up : axis == "X" ? Vector3.right : Vector3.forward;
+					Vector3 cross = Vector3.Scale(size, Vector3.one - longAxis);
+					float girth = Mathf.Max(cross.x, Mathf.Max(cross.y, cross.z));
+					float along = v.Length / Mathf.Max(0.01f, LongSide(size));
+					float across = 0.45f * v.Thickness / Mathf.Max(0.01f, girth);
+					scale = Vector3.Scale(pick.transform.localScale, longAxis * along + (Vector3.one - longAxis) * across);
+				}
+				s_scales[variant] = scale;
+				SnakeWoodPlugin.Log.LogInfo($"{variant} logs show as {pick.name} to players without the mod (long side {axis}, size {size}" +
+					(scale != Vector3.zero ? $", scaled {scale} to match)." : ", not scalable: the hover log grows to match)."));
 			}
 			else
 			{
