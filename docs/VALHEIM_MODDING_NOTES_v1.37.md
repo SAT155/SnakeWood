@@ -1705,6 +1705,15 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   boss, the coast or after a boss uses a share of the view, since it destroys anything built
   past its end (things vanished in plain view).
 
+- **1.16.61-1.16.62 (2026-11-07).** Dungeon corners: the 10 m turn window was under a second
+  at speed, and a press just before it counted as a lane change (Sam pressed D and hit the
+  wall). Now about 1.6 s, a press up to 0.6 s early counts, and being in the lane on the
+  opening's side takes the turn; rows keep clear of the window. Boss landmarks (the boss's
+  location on the skyline) got a size config, default extra large. **Render Limits** (Jere's,
+  MagiCorp fork) only changes the world's zone loading, clutter, LOD bias and shadows: the
+  minigame builds its own stage on its own layer, so it isn't needed; anything like LOD bias
+  can be set through `QualitySettings` directly.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
