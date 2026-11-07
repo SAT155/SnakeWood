@@ -42,11 +42,13 @@ def fields(o):
     return None
 
 
-def dump(name, v, depth, out):
+def dump(name, v, depth, out, af):
     pad = "  " * depth
     if skip.search(name):
         return
-    if isinstance(v, PPtr):
+    if isinstance(v, dict) and set(v.keys()) == {"m_FileID", "m_PathID"}:
+        out.append(f"{pad}{name}: {ref_name(PPtr(m_FileID=v['m_FileID'], m_PathID=v['m_PathID'], assetsfile=af))}")
+    elif isinstance(v, PPtr):
         out.append(f"{pad}{name}: {ref_name(v)}")
     elif isinstance(v, (list, tuple)):
         if len(v) == 0:
@@ -59,25 +61,16 @@ def dump(name, v, depth, out):
         if depth >= MAX_DEPTH:
             return
         for i, x in enumerate(v[:MAX_LIST]):
-            dump(f"[{i}]", x, depth + 1, out)
+            dump(f"[{i}]", x, depth + 1, out, af)
     elif isinstance(v, (int, float, str, bool)) or v is None:
-        s = repr(v)
-        out.append(f"{pad}{name}: {s[:200]}")
+        out.append(f"{pad}{name}: {repr(v)[:200]}")
     elif isinstance(v, dict):
-        out.append(f"{pad}{name}: {{dict {len(v)}}}")
-        if depth < MAX_DEPTH:
-            for k, x in list(v.items())[:MAX_LIST]:
-                dump(str(k), x, depth + 1, out)
-    else:
-        fs = fields(v)
-        if fs is None:
-            out.append(f"{pad}{name}: {str(v)[:200]}")
-            return
         out.append(f"{pad}{name}:")
-        if depth >= MAX_DEPTH:
-            return
-        for k, x in fs:
-            dump(k, x, depth + 1, out)
+        if depth < MAX_DEPTH:
+            for k, x in v.items():
+                dump(str(k), x, depth + 1, out, af)
+    else:
+        out.append(f"{pad}{name}: {str(v)[:200]}")
 
 
 paths = []
@@ -122,13 +115,14 @@ for obj in env.objects:
             print(f"  [{r.type.name}]")
             continue
         try:
-            mb = r.parse_as_object()
-            script = ref_name(mb.m_Script)
+            mb = r.parse_as_dict()
+            script = dump_script = mb.get("m_Script")
+            script = ref_name(PPtr(m_FileID=script["m_FileID"], m_PathID=script["m_PathID"], assetsfile=r.assets_file)) if isinstance(script, dict) else script
             out = []
-            for k, x in fields(mb) or []:
+            for k, x in mb.items():
                 if k in ("m_GameObject", "m_Enabled", "m_Script", "m_Name", "m_EditorHideFlags", "m_EditorClassIdentifier", "m_ObjectHideFlags"):
                     continue
-                dump(k, x, 2, out)
+                dump(k, x, 2, out, r.assets_file)
             print(f"  [MonoBehaviour {script}]")
             print("\n".join(out))
         except Exception as e:
