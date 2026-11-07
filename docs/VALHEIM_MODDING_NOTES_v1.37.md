@@ -1714,6 +1714,14 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   minigame builds its own stage on its own layer, so it isn't needed; anything like LOD bias
   can be set through `QualitySettings` directly.
 
+- **1.16.63-1.16.65 (2026-11-07), Sam's ideas.** Dungeon corners: the top-down camera turns
+  only once the player has pressed for the corner (per-corner 0-1 eased value, forced on just
+  past the corner), and the cue is a gust of puffy cloud (sphere puffs with a bigger, lower dark
+  sphere under each as an inked rim seen from above, SolidTint materials) moving along a cubic
+  Bezier up the hall and round the corner with a growing curl, swaying; a whoosh (`sfx_dodge`
+  pitched down) repeats while the window is open. Food reward: one food from each biome run
+  through (HashSet of segment biomes, ocean excluded) instead of one from the furthest.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
