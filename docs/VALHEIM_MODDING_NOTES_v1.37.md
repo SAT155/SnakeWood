@@ -1747,6 +1747,18 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   across the far end of the view: depth-tested, so only what's behind them is hazed. A model
   scaled to a fixed share of the screen from its mesh bounds can blow up if measured mid-flap:
   clamp the scale.
+- **1.16.70-1.16.71 (2026-11-07): maze readability, frozen birds, the ravens' story.** TentaRoot
+  vines sprawl far wider than their height: scale them non-uniformly (x,z * 0.4) and lay a
+  continuous log hedge so a wall reads as a line. Location prefabs carry `RandomFlyingBird`
+  children (gulls, crows): stripped of the script they hang frozen, so delete those children.
+  Both ravens are `Raven` objects (`m_isMunin`, `m_visual`, `m_exclamation`); Munin's prefab is
+  "Munin". Bed sleep: `Bed.UpdateSleeping` (every 2 s, afternoon or night, everyone in bed) sends
+  "SleepStart"/"SleepStop"; on stop the local player gets `SetSleeping(false)` then `AttachStop()`,
+  so `Player.IsSleeping()` going true to false is "woke up, standing". A HUD-like 3D model over
+  the world: a second Camera parented to the main camera, `clearFlags = Depth`, culling only its
+  own layer, plus a Light culled to that layer; `Chat.SetNpcText` still places the speech bubble.
+  A local, non-networked copy of a piece: Instantiate under an inactive holder, read its
+  components (TeleportWorld.m_target_found / m_proximityRoot / m_model), Strip, then reparent.
 
 ## 8. Working with this user
 
