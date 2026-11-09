@@ -1817,6 +1817,8 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 
 - **SnakewaySurfer 1.16.123** (2026-11-09): the corner gust (SurfGust) is off; `UpdateGust` was replaced by `RemoveGust` because Sam said the smoke cue wasn't working. `UpdateForks`: a wrong fork lane rewinds `m_z` to `Z0 - 14` with a dark flash and no damage. A flooded wrong lane (`Flood`) is a water quad, swum at 0.55x speed. It sets `m_wetTime` to 30 s, which halves stamina regen and makes roll and block cost 1.5x; the icon comes from ObjectDB `Wet`.
 
+- **SnakewaySurfer 1.16.128** (2026-11-09): Yagluth's totem gimmick is in `SurfTotem.cs`. The move `totembeam` charges for the beam attack's real wind-up (`TriggerWatched`). When it lands, a mouse within the boss's screen radius (`BossOnScreen`, from MeshBounds) bounces the beam and calls `BossHit()`, spending a totem; otherwise the beam hits the lane. There are `def.Amount` totems, reset in `StartBoss`, and with none left the move becomes a lane breath strike.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
