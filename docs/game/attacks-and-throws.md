@@ -92,6 +92,10 @@ item (e.g. the Wisplight) turned weapon needs `m_equipDuration = 0`.
   "OnAttackTrigger"` gives the seconds from the clip's start to the blow. Find the clip
   through `GetNext/GetCurrentAnimatorClipInfo(0)` a frame after `SetTrigger`, and divide by
   `state.speed * speedMultiplier * animator.speed`.
+- **Also accept `functionName == "Hit"`** (decompiled 2026-11-09): `CharacterAnimEvent.Hit()` calls
+  `m_character.OnAttackTrigger()` just like `OnAttackTrigger()`. Many clips use `Hit` (Bjorn, Eikthyr,
+  GoblinKing, greydwarfs, Seekers, lox, deathsquito). Other receivers on `CharacterAnimEvent`
+  are Speed(float), Chain, ResetChain, FootStep, Jump, Land, TakeOff, Stop, TrailOn/Off, GPower and Die.
 - Attack triggers are often random variants: `Attack.m_attackRandomAnimations` gives triggers
   like `attack0`, `attack1`. The GoblinBrute's animator has no plain `attack` trigger, so look
   for name+digit when the exact trigger isn't a parameter.
