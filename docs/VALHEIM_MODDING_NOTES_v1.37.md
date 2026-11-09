@@ -1815,6 +1815,8 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - Decompile asset names: GoblinKing_Meteors, projectile_meteor, fx_goblinking_meteor_hit, projectile_beam, fx_goblinking_beam_hit.
   - Watch for SurfGame partial-class name clashes (`s_ring`, `Ring()`, `m_icons` already exist). Grep for a member name before adding it.
 
+- **SnakewaySurfer 1.16.123** (2026-11-09): the corner gust (SurfGust) is off; `UpdateGust` was replaced by `RemoveGust` because Sam said the smoke cue wasn't working. `UpdateForks`: a wrong fork lane rewinds `m_z` to `Z0 - 14` with a dark flash and no damage. A flooded wrong lane (`Flood`) is a water quad, swum at 0.55x speed. It sets `m_wetTime` to 30 s, which halves stamina regen and makes roll and block cost 1.5x; the icon comes from ObjectDB `Wet`.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
