@@ -1798,6 +1798,23 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 - **SnakewaySurfer 1.16.95** (2026-11-09, branch `claude/project-thread-2zimly`, draft PR SnakewaySurfer#1 into 9zfoi6; released by dispatching Build on the branch, so the version is the run number). Fixes from Sam's playtest: `Hit()` ignores hits while `InCombo` and `EndCombo` sets a 0.8 s `m_hurtTime` grace. `SurfTomb.cs` raises a tinted `Player_tombstone` picture on a land death. `Plugin.Difficulty` (0 Gentle, 1 Normal, 2 Hard), with `StartLives`, `SpeedScale` and `FoeScale`; use `Plugin.StartLives`, not `Lives.Value`. It's picked in the menu with Tab or a click. Elder maze: `PathWidth = LaneWidth`; `ExtraTrack(z)` widens the track mesh in `StripMesh`. Attack timing: `AnimTiming.Prewarm` steps a hidden active copy's animator (`Rebind`, `SetTrigger`, `Update(1/60)`) until `Remaining()` finds the OnAttackTrigger clip. It runs once per prefab from `Picture()`, so timings are no longer guessed from clip names. Open: Sam reports missing projectile effects and needs to name which creatures.
 - **SnakewaySurfer 1.16.101** (2026-11-09): Sam's log showed many attacks that were "no blow marked". The blow event is `Hit` as well as `OnAttackTrigger` (see docs/game/attacks-and-throws.md). A clip with neither now logs its event names. The Decompile workflow (`types`, `grep`, `assets` inputs) is a cheap way to answer questions like this one.
 
+- **SnakewaySurfer 1.16.108 and 1.16.111** (2026-11-09, branch 2zimly). 1.16.108:
+  - `SurfParryCue.cs`: a gold approach ring from `NextBlowIn()`, using duel `m_duelLand` or the nearest labelled Thing in your lane.
+  - Yagluth gets `Aim = true` (bow). His meteors are `projectile_meteor` pictures that fall onto the strike, with `fx_goblinking_meteor_hit` (`DropMeteor` / `UpdateMeteors`).
+  - Moder's `LandedMove` only claws.
+  - `BossLow` / `BossHigh` use `BossEnergy` (a tinted cylinder with the attack's FX and a light). The Elder uses `VinePiece`.
+  - Hugin and Munin are flat UI. `RavenUi.Portrait` renders the template once to a texture, off-stage at y -6000 with its own camera and lights; call it from Update, never OnGUI. `RavenUi.Draw` paints the portrait and a typed speech bubble at a fixed spot under the minimap. There's no Chat NPC text any more.
+
+  1.16.111:
+  - `SurfCryptPlus.cs` adds forks: three walled lanes via `m_dividers`, dead-end Block Things, and a light on the open passage.
+  - Sunken crypts get mud banks to dig through: `UpdateDig` holds `m_z` until 3 attack presses, with `swing_pickaxe`.
+  - `CryptExitFor(seg)` makes summoning items and the mid-biome stone wait for the dungeon exit.
+  - Dungeons are about 2x longer, with hall lengths from 12 to 80 m.
+  - `SurfShop.cs` adds the bank (`SnakewaySurfer.Bank` in customData) and owned abilities (`SnakewaySurfer.Abilities`, kept on a checkpoint retry, cleared at `BossDeath`). Traders trigger in any lane and open the OnGUI store.
+  - Only 12 of the doc's 20 abilities are in. Missing: resin torch, surtling spark, wolf pelt, Moder's breath, eitr sight, Elder's seed, Megingjord, Odin's eye.
+  - Decompile asset names: GoblinKing_Meteors, projectile_meteor, fx_goblinking_meteor_hit, projectile_beam, fx_goblinking_beam_hit.
+  - Watch for SurfGame partial-class name clashes (`s_ring`, `Ring()`, `m_icons` already exist). Grep for a member name before adding it.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
