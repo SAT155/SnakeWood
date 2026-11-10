@@ -282,3 +282,7 @@ with their own numbers. Settings aren't synced from the server.
 
 Hammer it like any build piece (with its crafting station nearby) to get the materials and any resin
 in it back.
+
+## Feedback
+
+Feedback, bug reports and requests are welcome at [feedback@snakesquad.net](mailto:feedback@snakesquad.net).
