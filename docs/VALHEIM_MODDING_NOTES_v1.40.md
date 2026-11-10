@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.39 |
-| **Last updated** | 2026-11-07 10:51 UTC |
-| **Updated by** | Claude Code, SnakeSkills bubble shield session (`claude/project-thread-711mwk`) |
+| **Version** | 1.40 |
+| **Last updated** | 2026-11-10 22:50 UTC |
+| **Updated by** | Claude Code, repos-going-public session (`claude/project-thread-g2sfq6`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -59,7 +59,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only, works on a vanilla dedicated server. Shows as **SnakeyRoadCraft** in Configuration Manager (GUID `com.jubaroo.smarterhoe` unchanged, so it replaces upstream). Fixes terrain-edit multiplayer sync, long-ramp zone gaps, ±8 m limit warnings; replaces auto-build with **shared blueprints**. Fork changes marked `// Fork` or in `TerrainSync.cs`, `Blueprints.cs`, `StrikeGate.cs`. See §7b. |
 | **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
-| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Snapshot key comes from a CI secret (`SNAPSHOT_KEY`) packaged as `snapshot-key.txt`, never committed. CoordMarker also has the **North Wisp** item, see §7e. |
+| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Map server credentials (snapshot key + Cloudflare Access token) are never committed and, since package 1.8.1, never packaged either: CI ships a blank `snapshot-credentials.txt` and Sam hands players a filled one privately (releases and Thunderstore are public). CoordMarker also has the **North Wisp** item, see §7e. |
 | **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
 | **SnakewaySurfer** (`snakewaysurfer`, default branch `claude/project-thread-9zfoi6`) | Original mod (2026-11-04): console command `surfsup` starts a client-side 3-lane endless runner through all eight biomes; others see the player running in place in a Dverger circlet. Rewards Run XP and one biome food. Boss fights, star laps, and (1.16) an ocean crossing by longship. ~18k lines. | Client-only, vanilla-server safe. Good example of a private scene (own camera + layer 30 + stripped prefab pictures), vanilla-synced animation/helmet overrides. See §7g. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
@@ -269,6 +269,17 @@ Always verify an API by decompiling before relying on it. Signatures drift betwe
 cost a CI round-trip).
 
 ---
+
+### Public repos and secrets (2026-11-10)
+
+Private-repo Actions minutes ran out (budget $0), so Sam is making mod repos public (Actions is
+free there). Rules that follow: release assets and Actions logs are public too, so never put a
+secret in a release zip, a Thunderstore package or a log (CI secrets are masked in logs, but not
+inside zips). Decompile workflow logs print game code; delete old runs if that matters. Forks of
+mods with no licence (SnakeHammer = decompiled codepeople SmartBuild, SnakeSmarterHoe = decompiled
+Jubaroo SmarterHoe, SnakeSailing = blaxxun-boop Sailing/Ranching/Mining, which have no licence
+file; ServerSync/SkillManager are MIT-0) need the author's permission before going public. None of
+the SnakeSquad repos has a LICENSE file yet.
 
 ## 4. BepInEx / Harmony patterns that worked
 
@@ -1956,4 +1967,5 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
 | 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
 | 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast (+1.28 ready icon via `Hud.UpdateStatusEffects`, 0.5 s default); csproj Compile list gotcha. |
+| 1.40 | 2026-11-10 22:50 | Claude Code, repos-going-public session | Added: §3 public repos and secrets (credentials out of release zips, unlicensed forks, public logs). Changed: §1 ValheimMapMarker credentials are shared privately, not packaged. |
 | 1.39.1 | 2026-11-10 22:10 | Claude Code, public changelogs session | Added: §8 changelogs and package text stay public facing. Merged the 2zimly notes (SnakewaySurfer 1.16.140) into the u27urh line. |
