@@ -45,3 +45,13 @@ in-game:
   object that everyone sees.
 - Unmodded clients have no handler for it. That is assumed harmless (at most a log line) but not
   verified.
+
+## Custom pieces seen by unmodded players
+
+An unmodded client or server that loads a ZDO whose prefab hash it doesn't know logs
+`Missing prefab hash: <hash>` from ZNetScene **every frame** while that area is loaded. The ZDO is
+kept, so nothing is lost, but the log floods. To find the mod: hash the prefab names with
+`GetStableHashCode` (SnakewaySurfer's Strange Portal was -1982128). Fix used in SnakewaySurfer
+1.16.132: save the piece under the vanilla prefab it was copied from (`zdo.SetPrefab(hash)` in a
+component Awake that runs after ZNetView's) plus a ZDO flag. Modded clients convert flagged
+instances in a postfix on that prefab's own Awake. Unverified in-game as of 2026-11-10.
