@@ -1883,6 +1883,8 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 
 - SnakewaySurfer camp (SurfCamp.BuildCampSteps): the rest menu step is queued 1.2 s after emote_sit, with lives/boss drop given on sitting; eat/drink steps keep running behind the menu, and PickCamp clears m_campSteps so leftovers do not fire during the leave animation (v1.16.140).
 
+- SnakewaySurfer roll (CheckCollisions, Kind.Block): while sliding, a Block with a Label (creature, strike, attack) is Dodged unless Thing.Wall (SurfBranches roots and vines). Unlabeled blocks (rocks, gates) and Kind.Low (logs, leeches) still hit (v1.16.149).
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
