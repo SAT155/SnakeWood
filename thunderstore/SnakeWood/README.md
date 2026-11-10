@@ -232,6 +232,10 @@ fast the log was moving into it; a parked or stopped log doesn't hurt anything t
 - Build pieces, other players and tames are left alone (by the ram and the poison cloud) unless
   you turn on **Ram Damages Buildings** or **Ram Damages Players And Tames**.
 
+Unfortunately, while riding hovering logs fuelled by Surtling cores may be possible, this mod cannot
+give your character the ability to hold and use two spears at the same time, one in the main hand
+and one in the off hand.
+
 ## Config
 
 `BepInEx/config/com.snakesquad.snakewood.cfg`, or Configuration Manager (F1):
