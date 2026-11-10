@@ -1904,6 +1904,11 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 - When they ask whether something "can be added" in a config option, they usually mean "add it":
   build it, and say what it actually changes in vanilla terms (e.g. pass-through only matters
   with PvP on).
+- **Changelogs and package text are public.** Sam publishes the mods on Thunderstore, so
+  changelog entries, package READMEs and manifest descriptions are written for players: no
+  personal names ("Sam asked", "from Sam's playtest"), no thread or test-build talk, no
+  "private fork" / "for our own use" wording. Say what changed for the player. Internal
+  detail goes in these notes instead (2026-11-10).
 
 ---
 
@@ -1951,3 +1956,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
 | 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
 | 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast (+1.28 ready icon via `Hud.UpdateStatusEffects`, 0.5 s default); csproj Compile list gotcha. |
+| 1.39.1 | 2026-11-10 22:10 | Claude Code, public changelogs session | Added: §8 changelogs and package text stay public facing. Merged the 2zimly notes (SnakewaySurfer 1.16.140) into the u27urh line. |
