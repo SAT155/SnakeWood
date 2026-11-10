@@ -1164,6 +1164,11 @@ lost after starting the game unmodded once.
   [`staff-shield-and-combat-state.md`](game/staff-shield-and-combat-state.md). Release v1.27.104
   (pre-release), untested in-game. Gotcha: SnakeSkills.csproj lists `<Compile Include>` files one by
   one, so a new .cs file must be added there (CS0103 otherwise).
+  **1.28** (v1.28.108, 2026-11-10, same branch): the user asked for an icon while the flag is set and
+  a 0.5 s default stand-still time. A `Hud.UpdateStatusEffects` prefix (param taken as `__0`)
+  appends a local `StatusEffect` (`ScriptableObject.CreateInstance`, `m_icon` = staff
+  `GetIcon()`) to the list the HUD draws, so nothing touches SEMan or syncs. Existing configs keep
+  their old 5 s value (BepInEx keeps saved values when a default changes).
 
 Known open items: never tested in-game (1.27 bubble autocast, 1.26 Dead Raiser menu and skeleton types, 1.20 decor icons/placement/V+ modes, 1.18 undo, decor plants and their icons, Shift rounding, 1.22 blueprint pictures, 1.24 materials panel and picture rig, 1.14 Ctrl incline and Alt ramp blueprints, Ember Blast 1.13, skill backup, fishing XP, Landscaping, earrings, fish yield, Restore terrain, Shift ramps, 1.5 slope ramps, 1.7 red flash, 1.8 edge-safe bumps and hoe wear, 1.9 skill limits; 1.10 FromFeet ramps, 1.11 click to feet, 1.12 raise ramps/no bench/stone); slope easing on
 level ground and big brushes may feel off; Deep North fish prefab names. Test: play with SnakeSkills, quit, start unmodded and
@@ -1913,4 +1918,4 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.36 | 2026-11-04 03:26 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.2.4 test results (what renders fine, vanilla rocks are huge, borrowed floor material too bright) and 1.3 (hill mesh, scenery push-out, leaping troll). |
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
 | 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
-| 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast; csproj Compile list gotcha. |
+| 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast (+1.28 ready icon via `Hud.UpdateStatusEffects`, 0.5 s default); csproj Compile list gotcha. |
