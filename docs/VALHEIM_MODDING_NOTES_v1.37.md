@@ -1820,6 +1820,8 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 - **SnakewaySurfer 1.16.128** (2026-11-09): Yagluth's totem gimmick is in `SurfTotem.cs`. The move `totembeam` charges for the beam attack's real wind-up (`TriggerWatched`). When it lands, a mouse within the boss's screen radius (`BossOnScreen`, from MeshBounds) bounces the beam and calls `BossHit()`, spending a totem; otherwise the beam hits the lane. There are `def.Amount` totems, reset in `StartBoss`, and with none left the move becomes a lane breath strike.
 - SnakewaySurfer camp (SurfCamp.BuildCampSteps): the rest menu step is queued 1.2 s after emote_sit, with lives/boss drop given on sitting; eat/drink steps keep running behind the menu, and PickCamp clears m_campSteps so leftovers do not fire during the leave animation (v1.16.140).
 
+- SnakewaySurfer roll (CheckCollisions, Kind.Block): while sliding, a Block with a Label (creature, strike, attack) is Dodged unless Thing.Wall (SurfBranches roots and vines). Unlabeled blocks (rocks, gates) and Kind.Low (logs, leeches) still hit (v1.16.149).
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
