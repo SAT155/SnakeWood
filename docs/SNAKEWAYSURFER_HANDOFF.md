@@ -1,6 +1,6 @@
 # SnakewaySurfer handoff (2026-11-07)
 
-**State:** v1.16.140 (2026-11-10; includes u27urh v1.16.132 Strange Portal fix; camp rest menu opens on sitting) is on branch `claude/project-thread-2zimly`, which is draft PR #1 into the default branch `claude/project-thread-9zfoi6`. A branch that isn't the default releases only when Build is dispatched on it with `workflow_dispatch`. Code is in `SnakewaySurfer/*.cs`, about 29k lines. Never publish to Thunderstore.
+**State:** v1.16.163 (2026-11-10, branch `claude/project-thread-jzg0yv`, draft PR #5 stacked on #1: dungeon junctions, chase cam in dungeons, health regen, star mixes, boss fixes; see notes §7g). Before that v1.16.149 (2026-11-10; a dodge roll passes labeled Block attacks and creatures, except Wall roots and vines; includes u27urh v1.16.132 Strange Portal fix; camp rest menu opens on sitting) is on branch `claude/project-thread-2zimly`, which is draft PR #1 into the default branch `claude/project-thread-9zfoi6`. A branch that isn't the default releases only when Build is dispatched on it with `workflow_dispatch`. Code is in `SnakewaySurfer/*.cs`, about 29k lines. Never publish to Thunderstore.
 
 ## Build and release
 - CI is the only compiler. Each push that builds auto-releases as v1.16.N.
@@ -18,7 +18,7 @@
   - CS0535: a missing interface member. Hoverable needs `GetHoverOffset`.
 - After each release:
   - Add a changelog line to `thunderstore/SnakewaySurfer/README.md` under "Changelog (spoilers)".
-  - Add a notes bullet to `docs/VALHEIM_MODDING_NOTES_v1.37.md` (section 7g, before "## 8.").
+  - Add a notes bullet to `docs/VALHEIM_MODDING_NOTES_v1.40.md` (section 7g, before "## 8.").
   - Update memory in `snakewaysurfer.md` (keep it under 4 KB) and MEMORY.md.
   - Rename the thread to "SnakewaySurfer vX".
 - Pushing prints "repository moved". This is harmless.
@@ -55,7 +55,7 @@
 - **Rewards and timers:** `Rewards.cs`.
 - **Sea:** `SurfSea.cs`, `SurfSeaFoes.cs` and `SurfHull.cs` (islands).
 - **Bosses:** `SurfBoss.cs`, `SurfArena.cs` and `SurfChase.cs`.
-- **Dungeons:** `SurfCrypt.cs` and `SurfCryptThemes.cs`.
+- **Dungeons:** `SurfCrypt.cs`, `SurfCryptThemes.cs`, and `SurfCryptPlus.cs` (junctions, mud banks).
 - **Configs and console commands:** `Plugin.cs`. The commands are surfsup, surfstory, surfportal and surfprogress.
 - **Player data:** everything per character is in `player.m_customData`, with keys prefixed "SnakewaySurfer.". `surfprogress reset` wipes them all, including the story stage.
 
