@@ -1885,6 +1885,18 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 
 - SnakewaySurfer roll (CheckCollisions, Kind.Block): while sliding, a Block with a Label (creature, strike, attack) is Dodged unless Thing.Wall (SurfBranches roots and vines). Unlabeled blocks (rocks, gates) and Kind.Low (logs, leeches) still hit (v1.16.149).
 
+- **SnakewaySurfer 1.16.163** (2026-11-10, branch `claude/project-thread-jzg0yv`, draft PR SnakewaySurfer#5 stacked on #1; released by dispatching Build).
+  - **Dungeon junctions** (`SurfCryptPlus.cs`, replaced the 3-lane forks): `CryptJunction` at an even (outbound) corner (`Corner = k`, the turn is the way on) or mid-hall (`Corner = -1`, straight on). Dead ends are `SidePocket`/`AheadPocket` (14 m, floor + walls + theme `Door`). Your lane picks the branch; `CryptCorner` calls `WrongWay` instead of the wall bonk at a junction corner, and `UpdateForks` checks mid-hall junctions. `WrongWay` rewinds `m_z` before the junction with a dark flash, no life lost. Planning needs hall ≥ 34 m, side ≥ 26 m, next hall ≥ 40 m so pockets don't overlap other halls.
+  - `CryptHalf = TrackHalf + 1.2` (one flagstone per lane plus a strip); the crypt camera is now a chase cam turned by the corner yaw. Mud banks: `DigBetween(a, b)` hides creatures and blocks `FireShot`; burst piles sit 22-24 m past the bank. Rows stay clear `max(12, speed*1.4+6)` m after each corner.
+  - Themes: `StandingSconce`/`SconceRange` (sunken crypt: `piece_groundtorch_green` every ~9 m); burial chamber is `Rocky` with `wood_pole*` props and `Door = dungeon_forestcrypt_door`. Low mud mounds use `Thing.ClearHeight` for the Low jump check.
+  - Health: `UpdateRegen` refills one life per 30/45/70 s (Gentle/Normal/Hard), 3x for 20 s after a food pickup (`SpawnFood`, Kind.Coin Label "Food", from the biome's Foods list). `HealthBarGui` draws it under the HUD text. Roll cooldown `m_rollCooldown = SlideTime + 0.45`. `JumpBonus` gives 1-5 coins once per creature.
+  - Stars: `MixStars(lap)` (55% lap, 30% lap-1, 15% lap-2); `StarTraits` makes starred schema creatures `Meander` (slow `Switcher`), 0-star `Greydwarf` on starred laps swarm, 2+ stars get `Haste` (cooldown) and speed. Bosses: interval /(1 + 0.2*stars), `StarFollowUp` chains a move at 2+ stars.
+  - Bosses: `ChaseDash` moves the real boss (an empty `m_dash` Thing carries the collision), then it drops back beside the lanes. Eikthyr's `BossEnergy` is a `Crackle` LineRenderer bolt. `PickupBeam` on BossHit items; picking one runs `ClearBossAttacks`. Elder maze: `UpdateMazeVines` (red tile, vine on your path), `BurnMaze` on the torch. `m_quietToBoss` stops rows on a resume at the boss until `StartBoss`.
+  - Parry cue: the head ring is gone; `UpdateTileCue` puts a closing ground ring in your lane and turns the shared `m_markerMaterial` yellow while `NextBlowIn() <= ParryWindowNow`.
+  - Raven portrait (`RavenUi.Portrait`) came out empty: render forward with fog off on black and white and take alpha from the difference (as the sky landmark does).
+  - Swamp: `WaterWeight` times `SwampPool(z)` (Perlin, about half pools); water `StripMesh` sinks 0.6 m where dry. Camp over water stands on a mound (`CampY`). Traders: `TraderChance = 1`, first half of the stretch, Haldor in 0-star Meadows (`MaxStars = 0`). Meadows spawn tables skip Greydwarf/Skeleton/Troll.
+  - Build gotcha: CS0136 again, a deconstructed foreach `(t, wait, vine)` clashed with later locals of the same name in the method.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
