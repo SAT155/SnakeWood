@@ -55,3 +55,4 @@ kept, so nothing is lost, but the log floods. To find the mod: hash the prefab n
 1.16.132: save the piece under the vanilla prefab it was copied from (`zdo.SetPrefab(hash)` in a
 component Awake that runs after ZNetView's) plus a ZDO flag. Modded clients convert flagged
 instances in a postfix on that prefab's own Awake. Unverified in-game as of 2026-11-10.
+Migration of saved ZDOs only happens where the object is instantiated, so an unmodded server keeps old ones until a modded client visits. SnakewaySurfer 1.16.156 adds a server-only mode (batch mode: patch just the piece) so the server migrates them itself.
