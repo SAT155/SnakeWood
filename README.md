@@ -55,3 +55,7 @@ relies on (`Player`, `Sadle`, `IDoodadController`, `ZSyncTransform`) after a gam
 `thunderstore/SnakeWood/icon.png`).
 
 Notes for future Claude Code sessions (environment, CI, game APIs, the SnakeSquad repos): [`docs/VALHEIM_MODDING_NOTES_v1.4.md`](docs/VALHEIM_MODDING_NOTES_v1.4.md) (the version is in the filename; the newest version is the current one).
+
+## License
+
+MIT, see [LICENSE](LICENSE).
