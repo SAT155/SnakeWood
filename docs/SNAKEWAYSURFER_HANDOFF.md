@@ -23,6 +23,11 @@
   - Rename the thread to "SnakewaySurfer vX".
 - Pushing prints "repository moved". This is harmless.
 
+## Testing without Sam's eyes (2026-11-11)
+- `surftest` in the console plays the run by itself and saves screenshots, `log.txt` and `report.txt` to `BepInEx/SnakewaySurferTest/<time>/`. Ask Sam for that folder (zipped) after each release instead of single bug reports. Details: notes section 7g, "SnakewaySurfer self-test and review".
+- Every hit is in the BepInEx log as `Hit: ...`.
+- Review and plan: https://claude.ai/artifact/Sa48CY9QvnaGMexzBYf9tn. Work lives on branch `claude/project-thread-8ph0gw` (PR #6, stacked on #5).
+
 ## Open bugs and owed items
 - **Crash to desktop:** cause unknown. It happened on a retry in the Plains on v1.16.88 or older, and the log has no exception. Sam still owes the newest folder from `%userprofile%\AppData\LocalLow\IronGate\Valheim\Crashes`. v1.16.93 moved the ripple's `Camera.Render` out of OnGUI on a hunch.
 - **Untested in game:**
