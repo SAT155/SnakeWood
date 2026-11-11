@@ -2,9 +2,9 @@
 
 | | |
 | --- | --- |
-| **Version** | 1.40 |
-| **Last updated** | 2026-11-10 22:50 UTC |
-| **Updated by** | Claude Code, repos-going-public session (`claude/project-thread-g2sfq6`) |
+| **Version** | 1.41 |
+| **Last updated** | 2026-11-11 03:53 UTC |
+| **Updated by** | Claude Code, SnakeGravityHammer session (`claude/project-thread-sc2t30`) |
 | **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
 
 ## How to update this file (for Claude instances)
@@ -62,6 +62,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Map server credentials (snapshot key + Cloudflare Access token) are never committed and, since package 1.8.1, never packaged either: CI ships a blank `snapshot-credentials.txt` and Sam hands players a filled one privately (releases and Thunderstore are public). CoordMarker also has the **North Wisp** item, see §7e. |
 | **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
 | **SnakewaySurfer** (`snakewaysurfer`, default branch `claude/project-thread-9zfoi6`) | Original mod (2026-11-04): console command `surfsup` starts a client-side 3-lane endless runner through all eight biomes; others see the player running in place in a Dverger circlet. Rewards Run XP and one biome food. Boss fights, star laps, and (1.16) an ocean crossing by longship. ~18k lines. | Client-only, vanilla-server safe. Good example of a private scene (own camera + layer 30 + stripped prefab pictures), vanilla-synced animation/helmet overrides. See §7g. |
+| **SnakeGravityHammer** (`snakegravityhammer`, default branch `claude/project-thread-sc2t30`) | Original mod (2026-11-11): hold Left Alt while placing with the hammer and the piece tilts (pitch and roll) and settles onto the terrain/rocks/pieces under it, balanced over its center. ~450 lines, one file. | Client-only; placed pieces keep the tilt for everyone. Standalone so it can go on Thunderstore (unlike SnakeSkills). Scaffold copied from SnakePolearms. See §7h. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
 
 Common conventions across the Valheim repos:
@@ -1897,6 +1898,36 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - Swamp: `WaterWeight` times `SwampPool(z)` (Perlin, about half pools); water `StripMesh` sinks 0.6 m where dry. Camp over water stands on a mound (`CampY`). Traders: `TraderChance = 1`, first half of the stretch, Haldor in 0-star Meadows (`MaxStars = 0`). Meadows spawn tables skip Greydwarf/Skeleton/Troll.
   - Build gotcha: CS0136 again, a deconstructed foreach `(t, wait, vine)` clashed with later locals of the same name in the method.
 
+## 7h. SnakeGravityHammer (1.1.x)
+
+Repo `SAT155/SnakeGravityHammer` (created empty by Sam 2026-11-11; this session's branch became the
+default). Its Actions ran fine on the first push (release v1.0.1, then v1.1.2) even though the API
+reported the repo private at the time. Scaffold copied from SnakePolearms (net48, same build.yml
+release scheme); the copied `decompile.yml` gained `grep`/`after` inputs.
+
+- **How it works:** one Harmony postfix on `Player.UpdatePlacementGhost` (private, `Priority.Last`,
+  `HarmonyAfter` Valheim Plus and SmartBuild), local player only, while the key is held (or toggled).
+  It keeps the ghost's XZ position and yaw from whatever vanilla/V+ set, takes the ghost's base
+  from local bounds of its solid colliders (else MeshFilter meshes, cached per ghost), casts an
+  n×n grid of rays down (`RaycastNonAlloc`, layers Default/static_solid/Default_small/terrain, plus
+  piece/piece_nonsolid if *Rest On Pieces*; hits on the ghost itself and on non-kinematic
+  rigidbodies are skipped), then fits a plane and moves/rotates the ghost. Placing uses the ghost's
+  transform, so the piece lands tilted and the ZDO rotation carries the tilt to everyone (expected
+  from the compiled behaviour; not yet confirmed in-game).
+- **Fit CenterOfMass (default, 1.1):** Sam asked whether it accounts for center of mass. The
+  resting plane of a rigid flat base is the upper convex-hull facet over its center: brute force
+  every triple of ground points, keep planes within *Max Tilt* that have every point on or under
+  them, pick the one lowest under the base center. Center = middle of the base bounds (pieces
+  carry no mass data). Falls back to *Average* (least-squares plane, clamped, lifted onto the
+  highest point) when no triple qualifies. Then sinks by *Sink Depth* (0.1 m) to hide gaps.
+  Samples capped at 7×7 because the triple search is O(n⁶).
+- **Re-entry guard:** if the ghost pose is unchanged since our last write (a mode that doesn't
+  reset the ghost each frame), start again from the stored pre-tilt pose instead of tilting twice.
+- Skips water pieces, `m_cultivatedGroundOnly`, and ghosts with `TerrainOp`/`TerrainModifier`.
+- Compiles against the current game (so `m_placementGhost`, `UpdatePlacementGhost` names are right);
+  the vanilla placement-status checks run before the postfix on the untilted pose. Untested
+  in-game, including with V+ Advanced Building Mode and the SnakeSkills smart hammer.
+
 ## 8. Working with this user
 
 - They test in-game and iterate quickly; small frequent releases are welcome, but **every push
@@ -1981,5 +2012,6 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
 | 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
 | 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast (+1.28 ready icon via `Hud.UpdateStatusEffects`, 0.5 s default); csproj Compile list gotcha. |
+| 1.41 | 2026-11-11 03:53 | Claude Code, SnakeGravityHammer session | Added: §1 row and §7h SnakeGravityHammer 1.1 (placement-ghost postfix, center-of-mass resting plane). Built on jzg0yv. |
 | 1.40 | 2026-11-10 22:50 | Claude Code, repos-going-public session | Added: §3 public repos and secrets (credentials out of release zips, unlicensed forks, public logs). Changed: §1 ValheimMapMarker credentials are shared privately, not packaged. |
 | 1.39.1 | 2026-11-10 22:10 | Claude Code, public changelogs session | Added: §8 changelogs and package text stay public facing. Merged the 2zimly notes (SnakewaySurfer 1.16.140) into the u27urh line. |
