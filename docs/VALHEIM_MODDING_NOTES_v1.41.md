@@ -1898,7 +1898,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - Swamp: `WaterWeight` times `SwampPool(z)` (Perlin, about half pools); water `StripMesh` sinks 0.6 m where dry. Camp over water stands on a mound (`CampY`). Traders: `TraderChance = 1`, first half of the stretch, Haldor in 0-star Meadows (`MaxStars = 0`). Meadows spawn tables skip Greydwarf/Skeleton/Troll.
   - Build gotcha: CS0136 again, a deconstructed foreach `(t, wait, vine)` clashed with later locals of the same name in the method.
 
-## 7h. SnakeGravityHammer (1.1.x)
+## 7h. SnakeGravityHammer (1.2.x)
 
 Repo `SAT155/SnakeGravityHammer` (created empty by Sam 2026-11-11; this session's branch became the
 default). Its Actions ran fine on the first push (release v1.0.1, then v1.1.2) even though the API
@@ -1923,6 +1923,12 @@ release scheme); the copied `decompile.yml` gained `grep`/`after` inputs.
   Samples capped at 7×7 because the triple search is O(n⁶).
 - **Re-entry guard:** if the ghost pose is unchanged since our last write (a mode that doesn't
   reset the ghost each frame), start again from the stored pre-tilt pose instead of tilting twice.
+- **Snapping wins (1.2, v1.2.3):** with the key held, wall pieces snapping to each other got
+  tilted anyway (user screenshot). Now, before fitting, the ghost is put back at its base pose and
+  checked: any child tagged `snappoint` within 2 cm of a snap point (`Piece.GetSnapPoints`) of a
+  piece from `Piece.GetAllPiecesInRadius` means it's snapped, so the postfix leaves it alone. The
+  repo went public 2026-11-11 after its private Actions minutes ran out (billing error before the
+  job starts; re-run the failed run after the flip).
 - Skips water pieces, `m_cultivatedGroundOnly`, and ghosts with `TerrainOp`/`TerrainModifier`.
 - Compiles against the current game (so `m_placementGhost`, `UpdatePlacementGhost` names are right);
   the vanilla placement-status checks run before the postfix on the untilted pose. Untested
@@ -2012,6 +2018,6 @@ release scheme); the copied `decompile.yml` gained `grep`/`after` inputs.
 | 1.37 | 2026-11-04 03:45 | Claude Code, SnakewaySurfer session | Added: §7g SnakewaySurfer 1.4 (reading creature attacks/weapons/projectiles from Humanoid items for pictures, rolling road, swamp water, procedural ground texture, config default migration). |
 | 1.38 | 2026-11-07 10:16 | Claude Code, SnakeSkills Dead Raiser session | Added: topic file `docs/game/summons-and-dead-raiser.md` (Dead Raiser cast, `SpawnAbility` flow, eitr formula, `GiveDefaultItems` runs on every load, skeleton prefabs and weapon damage); Decompile workflow `prefabs` input (serialized prefab field dump via UnityPy TypeTreeGenerator, §3); §7f SnakeSkills 1.26 Dead Raiser skeleton choice. |
 | 1.39 | 2026-11-07 10:51 | Claude Code, SnakeSkills bubble shield session | Added: topic file `docs/game/staff-shield-and-combat-state.md` (`SE_Shield` duration/absorb/time left, casting from code, no player in-combat flag: `m_lastCombatTimer`, MusicMan, `BaseAI.IsAlerted`); §7f SnakeSkills 1.27 bubble shield autocast (+1.28 ready icon via `Hud.UpdateStatusEffects`, 0.5 s default); csproj Compile list gotcha. |
-| 1.41 | 2026-11-11 03:53 | Claude Code, SnakeGravityHammer session | Added: §1 row and §7h SnakeGravityHammer 1.1 (placement-ghost postfix, center-of-mass resting plane). Built on jzg0yv. |
+| 1.41 | 2026-11-11 03:53 | Claude Code, SnakeGravityHammer session | Added: §1 row and §7h SnakeGravityHammer 1.2 (placement-ghost postfix, center-of-mass resting plane, snapped pieces left alone). Built on jzg0yv. |
 | 1.40 | 2026-11-10 22:50 | Claude Code, repos-going-public session | Added: §3 public repos and secrets (credentials out of release zips, unlicensed forks, public logs). Changed: §1 ValheimMapMarker credentials are shared privately, not packaged. |
 | 1.39.1 | 2026-11-10 22:10 | Claude Code, public changelogs session | Added: §8 changelogs and package text stay public facing. Merged the 2zimly notes (SnakewaySurfer 1.16.140) into the u27urh line. |
