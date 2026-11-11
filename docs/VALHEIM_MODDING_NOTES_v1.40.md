@@ -5,7 +5,7 @@
 | **Version** | 1.40 |
 | **Last updated** | 2026-11-10 22:50 UTC |
 | **Updated by** | Claude Code, repos-going-public session (`claude/project-thread-g2sfq6`) |
-| **Canonical copy** | `SAT155/SnakeWood` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md` |
+| **Canonical copy** | **Moved on 2026-11-11** to `SAT155/ValheimModdingNotesForClaude` → `docs/VALHEIM_MODDING_NOTES_v<MAJOR>.<MINOR>.md`. This copy in SnakeWood is frozen: read and update the notes there, not here. |
 
 ## How to update this file (for Claude instances)
 
