@@ -23,13 +23,13 @@
   - Rename the thread to "SnakewaySurfer vX".
 - Pushing prints "repository moved". This is harmless.
 
-## Testing without Sam's eyes (2026-11-11)
-- `surftest` in the console plays the run by itself and saves screenshots, `log.txt` and `report.txt` to `BepInEx/SnakewaySurferTest/<time>/`. Ask Sam for that folder (zipped) after each release instead of single bug reports. Details: notes section 7g, "SnakewaySurfer self-test and review".
+## Testing without SAT's eyes (2026-11-11)
+- `surftest` in the console plays the run by itself and saves screenshots, `log.txt` and `report.txt` to `BepInEx/SnakewaySurferTest/<time>/`. Ask SAT for that folder (zipped) after each release instead of single bug reports. Details: notes section 7g, "SnakewaySurfer self-test and review".
 - Every hit is in the BepInEx log as `Hit: ...`.
 - Review and plan: https://claude.ai/artifact/Sa48CY9QvnaGMexzBYf9tn. Work lives on branch `claude/project-thread-8ph0gw` (PR #6, stacked on #5).
 
 ## Open bugs and owed items
-- **Crash to desktop:** cause unknown. It happened on a retry in the Plains on v1.16.88 or older, and the log has no exception. Sam still owes the newest folder from `%userprofile%\AppData\LocalLow\IronGate\Valheim\Crashes`. v1.16.93 moved the ripple's `Camera.Render` out of OnGUI on a hunch.
+- **Crash to desktop:** cause unknown. It happened on a retry in the Plains on v1.16.88 or older, and the log has no exception. SAT still owes the newest folder from `%userprofile%\AppData\LocalLow\IronGate\Valheim\Crashes`. v1.16.93 moved the ripple's `Camera.Render` out of OnGUI on a hunch.
 - **Untested in game:**
   - Ravens:
     - The flying clip that `SurfStory.FlyClip` chooses. It's logged as "Raven flight: ...". If the log says "none", the ravens perch.
@@ -39,7 +39,7 @@
   - Strange Portal behaviour.
   - Camp emotes and the harpoon animation.
   - The serpent tow.
-- **Next feature:** coin bank and trader ability shop. Doc: https://claude.ai/artifact/PJ5gsWZaYt83pmpUDoCWHK. Sam's answers are in its comments:
+- **Next feature:** coin bank and trader ability shop. Doc: https://claude.ai/artifact/PJ5gsWZaYt83pmpUDoCWHK. SAT's answers are in its comments:
   - Coins only go to the bank, and score resets each run.
   - The shops replace the life-refill stalls.
   - "Dreamify" the game's own store UI.
@@ -67,9 +67,9 @@
 ## Gotchas
 - **Don't touch RenderSettings** around an overlay camera. Changing them makes the world's terrain lighting flicker.
 - **Raven skinned bounds are bogus** (about 35 m) unless `updateWhenOffscreen` is set.
-- **Sam's preferences:**
+- **SAT's preferences:**
   - No popup text. Hugin speaks the messages.
   - Use Valheim's own assets.
   - Don't copy other games.
-  - Sam runs Valheim Plus.
-- **Sam's log:** it may not include our Info lines if it was taken at a lower log level. Ask for LogOutput.log from BepInEx.
+  - SAT runs Valheim Plus.
+- **SAT's log:** it may not include our Info lines if it was taken at a lower log level. Ask for LogOutput.log from BepInEx.

@@ -59,7 +59,7 @@ server** with a handful of friends; some players run mods, some don't.
 | **SnakeSmarterHoe** (`snakesmarterhoe`) | Private fork of Jubaroo's SmarterHoe 1.2.2, decompiled from the released DLL. **Do not publish/redistribute.** | Client-only, works on a vanilla dedicated server. Shows as **SnakeyRoadCraft** in Configuration Manager (GUID `com.jubaroo.smarterhoe` unchanged, so it replaces upstream). Fixes terrain-edit multiplayer sync, long-ramp zone gaps, ±8 m limit warnings; replaces auto-build with **shared blueprints**. Fork changes marked `// Fork` or in `TerrainSync.cs`, `Blueprints.cs`, `StrikeGate.cs`. See §7b. |
 | **SnakeHammer** (`snakehammer`, default branch `claude/project-thread-55fg1l`) | Private fork of codepeople's **SmartBuild** 1.21.0 (Jotunn mod, no public source), decompiled from the released DLL. **Do not publish/redistribute.** ~9k lines. | Keeps upstream's DLL name `SmartBuild.dll` and GUID `com.codepeople.smartbuild`, so it replaces SmartBuild with its config and blueprints. Fork changes marked `// Fork` (`PlacementAnchor.cs` is new): blueprint material lists in the build panel, and grid/blueprint placement lands where the preview shows even with Valheim Plus (preview drawn at `Priority.Last`, pose recorded and restored before placing). `upstream/` holds the untouched decompile; an **Import upstream** workflow re-decompiles a newer SmartBuild. Builds against Jotunn (`JOTUNN_VERSION`). |
 | **SnakePolearms** (`snakepolearms`) | Original mod: atgeir primary attacks pierce through enemies (falloff or split damage), optional pass-through friendlies. ~320 lines, one file. | Good small example of a **transpiler** (`Attack.DoMeleeAttack`, swaps one `m_hitThroughWalls` read), prefix/finalizer state save-restore, `Attack.ModifyDamage` postfix, `AddHitPoint` prefix. Build setup copied from ValheimMapMarker. See §7c. |
-| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Map server credentials (snapshot key + Cloudflare Access token) are never committed and, since package 1.8.1, never packaged either: CI ships a blank `snapshot-credentials.txt` and Sam hands players a filled one privately (releases and Thunderstore are public). CoordMarker also has the **North Wisp** item, see §7e. |
+| **ValheimMapMarker** (`valheimmapmarker`, default branch `main`) | Two original mods in one Thunderstore package **SnakeTography** (the user calls the repo by that name): **SnakeSquadCoordMarker** (`mark` / `marklist` / `markexport` console commands, copies `note\|x,z; ...` to the clipboard via user32 P/Invoke) and **SnakeSquadCartographySnapshot** (Cartography Tables show the group's shared Excalidraw map from `draw.snakesquad.net`, pannable/zoomable, tile cache). | Worked on in the "Valheim Sailing mod resurrection" session (that session's title and main repo don't say so). Origin of the "Reload Config From Disk" button. `markexport` exports **raw** in-game coordinates since CoordMarker 1.3.0; the Excalidraw import does the one Z flip. Map server credentials (snapshot key + Cloudflare Access token) are never committed and, since package 1.8.1, never packaged either: CI ships a blank `snapshot-credentials.txt` and SAT hands players a filled one privately (releases and Thunderstore are public). CoordMarker also has the **North Wisp** item, see §7e. |
 | **SnakeSailing** (repo name kept; builds **SnakeSkills**) | blaxxun-boop's **Sailing**, **Ranching**, **Mining** skill mods combined into one plugin, **SnakeSkills** (2026-10-29, [SAT155/SnakeSailing#2](https://github.com/SAT155/SnakeSailing/pull/2), draft). Before that, three separate projects. | Uses **ServerSync** (config locked to server admin) and **SkillManager**, merged with **ILRepack** into one DLL. Skill levels survive unmodded sessions (backup in `Player.m_customData`). Upstream's ValheimPlus hard block is a warning. Since 1.17 also carries the smart hammer (SnakeHammer port; never publish SnakeSkills now). See §7f. |
 | **SnakewaySurfer** (`snakewaysurfer`, default branch `claude/project-thread-9zfoi6`) | Original mod (2026-11-04): console command `surfsup` starts a client-side 3-lane endless runner through all eight biomes; others see the player running in place in a Dverger circlet. Rewards Run XP and one biome food. Boss fights, star laps, and (1.16) an ocean crossing by longship. ~18k lines. | Client-only, vanilla-server safe. Good example of a private scene (own camera + layer 30 + stripped prefab pictures), vanilla-synced animation/helmet overrides. See §7g. |
 | **SnakeDiscoBot**, **SnakeSquad.net** | Not Valheim mods (Discord bot, website). | Not covered here. |
@@ -272,7 +272,7 @@ cost a CI round-trip).
 
 ### Public repos and secrets (2026-11-10)
 
-Private-repo Actions minutes ran out (budget $0), so Sam is making mod repos public (Actions is
+Private-repo Actions minutes ran out (budget $0), so SAT is making mod repos public (Actions is
 free there). Rules that follow: release assets and Actions logs are public too, so never put a
 secret in a release zip, a Thunderstore package or a log (CI secrets are masked in logs, but not
 inside zips). Decompile workflow logs print game code; delete old runs if that matters. Forks of
@@ -1716,7 +1716,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   in a biome's spawn tables, so a keeper falls back to `Pictures.Monster(who)` when the biome's
   monster list has no match. With this every item of the gap analysis's suggested order is in
   (1.16.45-1.16.55), all untested in-game as of this note.
-- **1.16.56 (2026-11-06): the run's messages from Hugin (SurfRaven.cs), Sam's idea.** Not
+- **1.16.56 (2026-11-06): the run's messages from Hugin (SurfRaven.cs), SAT's idea.** Not
   yet tested in-game. **`Raven`** (public): `m_visual` (holds the Animator), `m_exclamation`,
   `m_isMunin`, `m_textOffset` 1.5, `m_textCullDistance` 20, `m_dialogVisibleTime` 10,
   `m_despawnEffect`, `m_idleEffect`; a private static `m_instance`, found with
@@ -1749,14 +1749,14 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 
 - **1.16.58 (2026-11-07): BepInEx config keys can't contain `= \n \t \\ " ' [ ]`.**
   1.16.56 added the key "Hugin's Messages"; `Config.Bind` threw ArgumentException in
-  `Plugin.Awake` and the whole plugin failed to load (Sam's log). Renamed to "Hugin Messages".
+  `Plugin.Awake` and the whole plugin failed to load (SAT's log). Renamed to "Hugin Messages".
   CI can't catch it: check new key names by eye.
 
-- **1.16.59-1.16.60 (2026-11-07), from Sam's first test of 1.16.58.** The Hud loading screen's
+- **1.16.59-1.16.60 (2026-11-07), from SAT's first test of 1.16.58.** The Hud loading screen's
   CanvasGroup with every progress child off is not a solid black: the world showed through and
   flickered behind the dream text. The dream now draws on its own ScreenSpaceOverlay Canvas
   (sortingOrder 30000, CanvasScaler copied from the Hud's) with a black UI Image under the
-  cloned `SleepText.m_dreamField` (it came out light blue; Sam loved it). Hugin's
+  cloned `SleepText.m_dreamField` (it came out light blue; SAT loved it). Hugin's
   `m_visual` copy showed only a huge foot at the top right: his mesh bounds' middle is far from
   the pivot, so he is now scaled to a share of the view and placed by his bounds' middle (taken
   in his own frame, measured again once he lands). Two-line IMGUI labels need a taller rect than
@@ -1767,7 +1767,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   past its end (things vanished in plain view).
 
 - **1.16.61-1.16.62 (2026-11-07).** Dungeon corners: the 10 m turn window was under a second
-  at speed, and a press just before it counted as a lane change (Sam pressed D and hit the
+  at speed, and a press just before it counted as a lane change (SAT pressed D and hit the
   wall). Now about 1.6 s, a press up to 0.6 s early counts, and being in the lane on the
   opening's side takes the turn; rows keep clear of the window. Boss landmarks (the boss's
   location on the skyline) got a size config, default extra large. **Render Limits** (Jere's,
@@ -1775,7 +1775,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   minigame builds its own stage on its own layer, so it isn't needed; anything like LOD bias
   can be set through `QualitySettings` directly.
 
-- **1.16.63-1.16.65 (2026-11-07), Sam's ideas.** Dungeon corners: the top-down camera turns
+- **1.16.63-1.16.65 (2026-11-07), SAT's ideas.** Dungeon corners: the top-down camera turns
   only once the player has pressed for the corner (per-corner 0-1 eased value, forced on just
   past the corner), and the cue is a gust of puffy cloud (sphere puffs with a bigger, lower dark
   sphere under each as an inked rim seen from above, SolidTint materials) moving along a cubic
@@ -1783,15 +1783,15 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   pitched down) repeats while the window is open. Food reward: one food from each biome run
   through (HashSet of segment biomes, ocean excluded) instead of one from the furthest.
 
-- **1.16.66 (2026-11-07), Sam's sketch for the corner cue (SurfGust.cs).** Flat, camera-facing
+- **1.16.66 (2026-11-07), SAT's sketch for the corner cue (SurfGust.cs).** Flat, camera-facing
   cut-out shapes (procedural double-sided disc and triangle meshes, `Unlit/Color` fill with a
   bigger ink copy 0.03 behind for the outline, mirrored by a parent's x scale for left turns,
-  positions re-jittered every 0.11 s for a drawn "boil"). Sam's layout: billowy cloud on the far
+  positions re-jittered every 0.11 s for a drawn "boil"). SAT's layout: billowy cloud on the far
   side (shrinks nearing the corner), spiky gusts on the turn side (grow), curling dots toward the
-  opening; after the turn the cloud squashes and lags behind. Sam wants a Don't Starve-like
+  opening; after the turn the cloud squashes and lags behind. SAT wants a Don't Starve-like
   hand-drawn look: keep it original shapes, not copied art.
 
-- **1.16.67-1.16.68 (2026-11-07): boss landmark as a sky picture (Sam's idea).** A big 3D
+- **1.16.67-1.16.68 (2026-11-07): boss landmark as a sky picture (SAT's idea).** A big 3D
   location kept at a distance by its pivot reaches back over the track (keep its near side at the
   distance). Better: render it once with a disabled orthographic Camera (`cam.Render()` into a
   RenderTexture, forward path, fog off, model moved 3000 m below the stage so it's alone on the
@@ -1799,7 +1799,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   (Valheim's shaders don't all write a usable alpha). Then a `Sprites/Default` quad (no fog)
   stands upright at 420 m facing the camera. **Thunderstore/r2modman "Edit config" on this mod
   opened `mm_v2_manifest.json`**: the real file is `BepInEx/config/com.snakesquad.snakewaysurfer.cfg`,
-  created on the first start where the plugin loads (Sam's 1.16.56-57 never loaded).
+  created on the first start where the plugin loads (SAT's 1.16.56-57 never loaded).
 - **1.16.69 (2026-11-07): fog through the game's camera.** RenderSettings fog set only in
   `OnPreRender` didn't show when drawing through Valheim's main camera (EnvMan rewrites fog and
   `_SunFogColor` every Update; deferred/post effects read it earlier). Set it in `OnPreCull` and in
@@ -1821,7 +1821,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   A local, non-networked copy of a piece: Instantiate under an inactive holder, read its
   components (TeleportWorld.m_target_found / m_proximityRoot / m_model), Strip, then reparent.
 - **1.16.72-1.16.75 (2026-11-07): sea feedback.** Telegraphed attacks must stop tracking once they
-  wind up (lock the aim at the start; Sam found tracking until 70% of the wind-up undodgeable),
+  wind up (lock the aim at the start; SAT found tracking until 70% of the wind-up undodgeable),
   and only one attacker should wind up at a time. A collision push clamped to "never backwards"
   pins a ship against an obstacle ahead: convert the backward part into a sideways slide and swing
   the heading away. Vanilla repair: `Player.Repair` swings the hammer (its attack animation,
@@ -1856,8 +1856,8 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 - **Raven visual bounds are bogus until skinned bounds update (SnakewaySurfer 1.16.92).** Hugin's SkinnedMeshRenderer reported ~32-36 m tall with its centre ~200 m off before rendering. Set `updateWhenOffscreen = true`, then fit size/centre from live bounds each frame. For a hovering raven, play a fly clip found in `runtimeAnimatorController.animationClips` (checked with `Animator.HasState`) and replay its middle; face the camera using the head bone's direction.
 - **Screen copies for transitions: render the camera into a RenderTexture in LateUpdate (half size), and only draw it in OnGUI (SnakewaySurfer 1.16.93).** Calling `Camera.Render()` from inside OnGUI was the suspect in a crash to desktop.
 
-- **SnakewaySurfer 1.16.95** (2026-11-09, branch `claude/project-thread-2zimly`, draft PR SnakewaySurfer#1 into 9zfoi6; released by dispatching Build on the branch, so the version is the run number). Fixes from Sam's playtest: `Hit()` ignores hits while `InCombo` and `EndCombo` sets a 0.8 s `m_hurtTime` grace. `SurfTomb.cs` raises a tinted `Player_tombstone` picture on a land death. `Plugin.Difficulty` (0 Gentle, 1 Normal, 2 Hard), with `StartLives`, `SpeedScale` and `FoeScale`; use `Plugin.StartLives`, not `Lives.Value`. It's picked in the menu with Tab or a click. Elder maze: `PathWidth = LaneWidth`; `ExtraTrack(z)` widens the track mesh in `StripMesh`. Attack timing: `AnimTiming.Prewarm` steps a hidden active copy's animator (`Rebind`, `SetTrigger`, `Update(1/60)`) until `Remaining()` finds the OnAttackTrigger clip. It runs once per prefab from `Picture()`, so timings are no longer guessed from clip names. Open: Sam reports missing projectile effects and needs to name which creatures.
-- **SnakewaySurfer 1.16.101** (2026-11-09): Sam's log showed many attacks that were "no blow marked". The blow event is `Hit` as well as `OnAttackTrigger` (see docs/game/attacks-and-throws.md). A clip with neither now logs its event names. The Decompile workflow (`types`, `grep`, `assets` inputs) is a cheap way to answer questions like this one.
+- **SnakewaySurfer 1.16.95** (2026-11-09, branch `claude/project-thread-2zimly`, draft PR SnakewaySurfer#1 into 9zfoi6; released by dispatching Build on the branch, so the version is the run number). Fixes from SAT's playtest: `Hit()` ignores hits while `InCombo` and `EndCombo` sets a 0.8 s `m_hurtTime` grace. `SurfTomb.cs` raises a tinted `Player_tombstone` picture on a land death. `Plugin.Difficulty` (0 Gentle, 1 Normal, 2 Hard), with `StartLives`, `SpeedScale` and `FoeScale`; use `Plugin.StartLives`, not `Lives.Value`. It's picked in the menu with Tab or a click. Elder maze: `PathWidth = LaneWidth`; `ExtraTrack(z)` widens the track mesh in `StripMesh`. Attack timing: `AnimTiming.Prewarm` steps a hidden active copy's animator (`Rebind`, `SetTrigger`, `Update(1/60)`) until `Remaining()` finds the OnAttackTrigger clip. It runs once per prefab from `Picture()`, so timings are no longer guessed from clip names. Open: SAT reports missing projectile effects and needs to name which creatures.
+- **SnakewaySurfer 1.16.101** (2026-11-09): SAT's log showed many attacks that were "no blow marked". The blow event is `Hit` as well as `OnAttackTrigger` (see docs/game/attacks-and-throws.md). A clip with neither now logs its event names. The Decompile workflow (`types`, `grep`, `assets` inputs) is a cheap way to answer questions like this one.
 
 - **SnakewaySurfer 1.16.108 and 1.16.111** (2026-11-09, branch 2zimly). 1.16.108:
   - `SurfParryCue.cs`: a gold approach ring from `NextBlowIn()`, using duel `m_duelLand` or the nearest labelled Thing in your lane.
@@ -1876,7 +1876,7 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - Decompile asset names: GoblinKing_Meteors, projectile_meteor, fx_goblinking_meteor_hit, projectile_beam, fx_goblinking_beam_hit.
   - Watch for SurfGame partial-class name clashes (`s_ring`, `Ring()`, `m_icons` already exist). Grep for a member name before adding it.
 
-- **SnakewaySurfer 1.16.123** (2026-11-09): the corner gust (SurfGust) is off; `UpdateGust` was replaced by `RemoveGust` because Sam said the smoke cue wasn't working. `UpdateForks`: a wrong fork lane rewinds `m_z` to `Z0 - 14` with a dark flash and no damage. A flooded wrong lane (`Flood`) is a water quad, swum at 0.55x speed. It sets `m_wetTime` to 30 s, which halves stamina regen and makes roll and block cost 1.5x; the icon comes from ObjectDB `Wet`.
+- **SnakewaySurfer 1.16.123** (2026-11-09): the corner gust (SurfGust) is off; `UpdateGust` was replaced by `RemoveGust` because SAT said the smoke cue wasn't working. `UpdateForks`: a wrong fork lane rewinds `m_z` to `Z0 - 14` with a dark flash and no damage. A flooded wrong lane (`Flood`) is a water quad, swum at 0.55x speed. It sets `m_wetTime` to 30 s, which halves stamina regen and makes roll and block cost 1.5x; the icon comes from ObjectDB `Wet`.
 
 - **SnakewaySurfer 1.16.128** (2026-11-09): Yagluth's totem gimmick is in `SurfTotem.cs`. The move `totembeam` charges for the beam attack's real wind-up (`TriggerWatched`). When it lands, a mouse within the boss's screen radius (`BossOnScreen`, from MeshBounds) bounces the beam and calls `BossHit()`, spending a totem; otherwise the beam hits the lane. There are `def.Amount` totems, reset in `StartBoss`, and with none left the move becomes a lane breath strike.
 - **SnakewaySurfer 1.16.132** (2026-11-10): the Strange Portal now works for unmodded players and servers. Before this, an unmodded server or client logged `Missing prefab hash: -1982128` (= `piece_surf_strangeportal`) every frame while one was loaded. Now `StrangePortal.Awake` (it runs after `ZNetView.Awake`) does `zdo.SetPrefab("portal_wood" hash)` and sets the flag `surf_strangeportal`; it also migrates old ZDOs, claiming ownership first. On modded clients, a postfix on `TeleportWorld.Awake` converts a flagged vanilla portal back (`SurfPortalPiece.Convert`: adds StrangePortal, disables and destroys the Teleport* components, copies the ecto/feather resources). Unmodded players get a plain untagged wooden portal and the vanilla deconstruct refund. Lesson: a custom networked piece must save under a vanilla prefab hash if unmodded players will be near it (see game/network-objects.md).
@@ -1897,9 +1897,9 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
   - Swamp: `WaterWeight` times `SwampPool(z)` (Perlin, about half pools); water `StripMesh` sinks 0.6 m where dry. Camp over water stands on a mound (`CampY`). Traders: `TraderChance = 1`, first half of the stretch, Haldor in 0-star Meadows (`MaxStars = 0`). Meadows spawn tables skip Greydwarf/Skeleton/Troll.
   - Build gotcha: CS0136 again, a deconstructed foreach `(t, wait, vine)` clashed with later locals of the same name in the method.
 
-- **SnakewaySurfer self-test and review** (2026-11-11, v1.16.171, branch `claude/project-thread-8ph0gw`, draft PR SnakewaySurfer#6 stacked on #5; released by dispatching Build, and note a push now starts two runs, so the dispatch number is hard to predict: write the changelog version after the dispatch). Review of Sam's requests against the code: https://claude.ai/artifact/Sa48CY9QvnaGMexzBYf9tn. Its main point: nearly every build shipped unseen, so feedback tools come before more features or refactors.
+- **SnakewaySurfer self-test and review** (2026-11-11, v1.16.171, branch `claude/project-thread-8ph0gw`, draft PR SnakewaySurfer#6 stacked on #5; released by dispatching Build, and note a push now starts two runs, so the dispatch number is hard to predict: write the changelog version after the dispatch). Review of SAT's requests against the code: https://claude.ai/artifact/Sa48CY9QvnaGMexzBYf9tn. Its main point: nearly every build shipped unseen, so feedback tools come before more features or refactors.
   - **`surftest [quick] [biome] | stop`** (`SurfTest.cs`): `Plugin` sets `SurfGame.TourRequest`, then `Begin`. `UpdateTour` (from `Update`, after `UpdateLoad`) walks `TourStage`s: menu, then per biome `run`, `dungeon`, `boss`, plus `sea` before the Plains. Each stop is `StartFrom(biome, 0, sea)`; `ApplyTourStage` (in `ResetRun` after `ApplyResume`) moves the first segment's `Start` back so the dungeon is about 45 m ahead, or fakes a boss-checkpoint resume (`m_items = boss.Amount`, `m_quietToBoss`). Invincible and Ignore Boss Gate are forced on and restored in `EndTour`. A tour grants no rewards or coins (`m_tourRan`).
-  - Output: `BepInEx/SnakewaySurferTest/<time>/` with `NNN_<stop>_<what>.jpg` (screen read at `WaitForEndOfFrame`, shrunk to 1280 wide, HUD included), `log.txt` (one fact line per shot: state, biome, z, lane, lives, flags, labelled threats ahead), `report.txt` (stops, autopilot hits, late appearances, creature census per biome/dungeon/boss, raven picture state) and `hugin_from_model.png`. The folder opens at the end (`Application.OpenURL`). Ask Sam to zip and upload it.
+  - Output: `BepInEx/SnakewaySurferTest/<time>/` with `NNN_<stop>_<what>.jpg` (screen read at `WaitForEndOfFrame`, shrunk to 1280 wide, HUD included), `log.txt` (one fact line per shot: state, biome, z, lane, lives, flags, labelled threats ahead), `report.txt` (stops, autopilot hits, late appearances, creature census per biome/dungeon/boss, raven picture state) and `hugin_from_model.png`. The folder opens at the end (`Application.OpenURL`). Ask SAT to zip and upload it.
   - **Autopilot** (`BotThink`, also the `Autopilot` debug setting): fills `m_botKeys`, which `KeyDown(...)` also accepts, so it only reaches input read through `KeyDown` (lanes, jump, roll, crypt corners) plus digging (`BotKey(KeyCode.E)` in `UpdateDig`). It costs each lane from `m_things` within `max(12, speed*1.3)` m: Low = jump, High = roll, Block = jump if `JumpOrSlide` or low `ClearHeight`, roll if labelled and not `Wall`, else no way through. It does not block, parry, sprint, play the Elder's maze, fight bosses or sail. A hit it takes is a lead, not proof of unfairness: check the screenshot and the `autopilot:` note in the hit line.
   - **Hit log**: `LogHit` (from `Hit`, after `TryBlock`) writes `Hit: <label> [kind...] in <biome> ..., in view for N s` to the BepInEx log on every run. `Thing.Born` is stamped by `NoteNewThing` on a thing's first `UpdateThings` frame; the same hook logs `Late appearance:` for a threat first seen under 0.6 s away within 1.5 lanes (Log Details or a tour).
   - **Raven picture** (`RavenUi.Portrait`): likely cause of the empty circle was framing on `Pictures.MeshBounds`, which for the raven has claimed about 35 m, leaving a few pixels that the under-50-pixel check discarded and then cached as null for the session. Now: if the radius is over 2.5 m it frames the skeleton (`SkinnedMeshRenderer.bones`), then up to 4 passes re-aim at the drawn pixels' box and change the view angle until it fills 60 to 97% of the picture; a failure is retried twice before settling. `RavenUi.Fallback(munin)` loads `Assets/hugin.png` / `munin.png` (EmbeddedResource, drawn by us) and `Draw` uses it whenever the portrait is null. Setting `Drawn Raven Picture` forces it. Log lines start `Raven portrait of`.
@@ -1938,9 +1938,9 @@ first). Built green in CI (release v1.0.2); **untested in-game**. Files in `Snak
 - When they ask whether something "can be added" in a config option, they usually mean "add it":
   build it, and say what it actually changes in vanilla terms (e.g. pass-through only matters
   with PvP on).
-- **Changelogs and package text are public.** Sam publishes the mods on Thunderstore, so
+- **Changelogs and package text are public.** SAT publishes the mods on Thunderstore, so
   changelog entries, package READMEs and manifest descriptions are written for players: no
-  personal names ("Sam asked", "from Sam's playtest"), no thread or test-build talk, no
+  personal names ("SAT asked", "from SAT's playtest"), no thread or test-build talk, no
   "private fork" / "for our own use" wording. Say what changed for the player. Internal
   detail goes in these notes instead (2026-11-10).
 
